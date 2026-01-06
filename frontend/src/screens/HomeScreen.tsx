@@ -383,6 +383,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     overflow: 'hidden',
     height: 220,
+    backgroundColor: colors.card,
     ...shadows.card,
   },
   todayImage: {
