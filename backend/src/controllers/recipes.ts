@@ -1,0 +1,168 @@
+import { Request, Response } from 'express';
+import Recipe from '../models/recipe';
+
+// GET /api/recipes - List all recipes with optional search and tag filters
+export const getRecipes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { search, tags } = req.query;
+    const userId = req.userId;
+
+    let query: any = { userId };
+
+    // Text search on title
+    if (search && typeof search === 'string') {
+      query.$text = { $search: search };
+    }
+
+    // Filter by tags
+    if (tags && typeof tags === 'string') {
+      const tagArray = tags.split(',').map(tag => tag.trim());
+      query.tags = { $in: tagArray };
+    }
+
+    const recipes = await Recipe.find(query).sort({ updatedAt: -1 });
+    res.json(recipes);
+  } catch (error) {
+    console.error('Error fetching recipes:', error);
+    res.status(500).json({ error: 'Failed to fetch recipes' });
+  }
+};
+
+// GET /api/recipes/:id - Get single recipe by ID
+export const getRecipeById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const recipe = await Recipe.findOne({ _id: req.params.id, userId });
+
+    if (!recipe) {
+      res.status(404).json({ error: 'Recipe not found' });
+      return;
+    }
+
+    res.json(recipe);
+  } catch (error) {
+    console.error('Error fetching recipe:', error);
+    res.status(500).json({ error: 'Failed to fetch recipe' });
+  }
+};
+
+// POST /api/recipes - Create new recipe
+export const createRecipe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const {
+      title,
+      imageUrl,
+      sourceUrl,
+      ingredientsText,
+      directionsText,
+      notes,
+      tags,
+      lastUsedDate,
+      complexity,
+      isVegetarian,
+      prepTime,
+      cookTime,
+      servings
+    } = req.body;
+
+    // Validation
+    if (!title || !ingredientsText || !directionsText) {
+      res.status(400).json({ error: 'Title, ingredients, and directions are required' });
+      return;
+    }
+
+    const recipe = new Recipe({
+      userId,
+      title,
+      imageUrl,
+      sourceUrl,
+      ingredientsText,
+      directionsText,
+      notes,
+      tags: tags || [],
+      lastUsedDate,
+      complexity,
+      isVegetarian: isVegetarian ?? false,
+      prepTime,
+      cookTime,
+      servings,
+    });
+
+    await recipe.save();
+    res.status(201).json(recipe);
+  } catch (error) {
+    console.error('Error creating recipe:', error);
+    res.status(500).json({ error: 'Failed to create recipe' });
+  }
+};
+
+// PUT /api/recipes/:id - Update recipe
+export const updateRecipe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const {
+      title,
+      imageUrl,
+      sourceUrl,
+      ingredientsText,
+      directionsText,
+      notes,
+      tags,
+      lastUsedDate,
+      complexity,
+      isVegetarian,
+      prepTime,
+      cookTime,
+      servings
+    } = req.body;
+
+    const recipe = await Recipe.findOneAndUpdate(
+      { _id: req.params.id, userId },
+      {
+        title,
+        imageUrl,
+        sourceUrl,
+        ingredientsText,
+        directionsText,
+        notes,
+        tags,
+        lastUsedDate,
+        complexity,
+        isVegetarian,
+        prepTime,
+        cookTime,
+        servings,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!recipe) {
+      res.status(404).json({ error: 'Recipe not found' });
+      return;
+    }
+
+    res.json(recipe);
+  } catch (error) {
+    console.error('Error updating recipe:', error);
+    res.status(500).json({ error: 'Failed to update recipe' });
+  }
+};
+
+// DELETE /api/recipes/:id - Delete recipe
+export const deleteRecipe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const recipe = await Recipe.findOneAndDelete({ _id: req.params.id, userId });
+
+    if (!recipe) {
+      res.status(404).json({ error: 'Recipe not found' });
+      return;
+    }
+
+    res.json({ message: 'Recipe deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting recipe:', error);
+    res.status(500).json({ error: 'Failed to delete recipe' });
+  }
+};

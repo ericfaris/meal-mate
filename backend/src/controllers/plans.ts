@@ -1,0 +1,136 @@
+import { Request, Response } from 'express';
+import Plan from '../models/plan';
+import { markRecipeAsUsed } from '../services/suggestionService';
+
+// GET /api/plans?start=YYYY-MM-DD&days=7 - Get plans for date range
+export const getPlans = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { start, days } = req.query;
+    const userId = req.userId;
+
+    if (!start || !days) {
+      res.status(400).json({ error: 'start and days query parameters are required' });
+      return;
+    }
+
+    const startDate = new Date(start as string);
+    const numDays = parseInt(days as string, 10);
+
+    if (isNaN(startDate.getTime()) || isNaN(numDays)) {
+      res.status(400).json({ error: 'Invalid start date or days value' });
+      return;
+    }
+
+    // Calculate end date
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + numDays - 1);
+
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+
+    const plans = await Plan.find({
+      userId,
+      date: { $gte: startStr, $lte: endStr },
+    })
+      .populate('recipeId')
+      .sort({ date: 1 });
+
+    res.json(plans);
+  } catch (error) {
+    console.error('Error fetching plans:', error);
+    res.status(500).json({ error: 'Failed to fetch plans' });
+  }
+};
+
+// GET /api/plans/:date - Get plan for specific date
+export const getPlanByDate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const plan = await Plan.findOne({ userId, date: req.params.date }).populate('recipeId');
+
+    if (!plan) {
+      res.status(404).json({ error: 'Plan not found for this date' });
+      return;
+    }
+
+    res.json(plan);
+  } catch (error) {
+    console.error('Error fetching plan:', error);
+    res.status(500).json({ error: 'Failed to fetch plan' });
+  }
+};
+
+// PUT /api/plans/:date - Update or create plan for specific date
+export const updatePlanByDate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const { date } = req.params;
+    const { recipeId, label, isConfirmed } = req.body;
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      return;
+    }
+
+    // Update or create plan
+    const plan = await Plan.findOneAndUpdate(
+      { userId, date },
+      {
+        userId,
+        recipeId: recipeId || undefined,
+        label: label || undefined,
+        isConfirmed: isConfirmed !== undefined ? isConfirmed : false,
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      }
+    ).populate('recipeId');
+
+    // If plan is confirmed with a recipe, update the recipe's lastUsedDate
+    if (isConfirmed && recipeId) {
+      await markRecipeAsUsed(recipeId, date);
+    }
+
+    res.json(plan);
+  } catch (error) {
+    console.error('Error updating plan:', error);
+    res.status(500).json({ error: 'Failed to update plan' });
+  }
+};
+
+// DELETE /api/plans - Delete all plans for current user
+export const deleteAllPlans = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const result = await Plan.deleteMany({ userId });
+
+    res.json({
+      message: 'All plans deleted successfully',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Error deleting all plans:', error);
+    res.status(500).json({ error: 'Failed to delete all plans' });
+  }
+};
+
+// DELETE /api/plans/:date - Delete plan for specific date
+export const deletePlanByDate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const plan = await Plan.findOneAndDelete({ userId, date: req.params.date });
+
+    if (!plan) {
+      res.status(404).json({ error: 'Plan not found for this date' });
+      return;
+    }
+
+    res.json({ message: 'Plan deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    res.status(500).json({ error: 'Failed to delete plan' });
+  }
+};

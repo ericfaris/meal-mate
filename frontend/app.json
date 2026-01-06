@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Meal Mate",
+    "slug": "meal-mate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FDFAF6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mealmate.app",
+      "infoPlist": {
+        "CFBundleDisplayName": "Meal Mate"
+      }
+    },
+    "android": {
+      "package": "com.mealmate.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FDFAF6"
+      }
+    }
+  }
+}
