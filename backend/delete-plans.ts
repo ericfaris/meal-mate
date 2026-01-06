@@ -1,11 +1,19 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 import Plan from './src/models/plan';
 
-const MONGODB_URI = 'mongodb+srv://meal-mate-admin:REDACTED@cluster0.blwxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+dotenv.config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('Error: MONGODB_URI is not defined in environment variables');
+  process.exit(1);
+}
 
 async function deletePlans() {
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI!);
     console.log('Connected to MongoDB');
 
     const result = await Plan.deleteMany({});
