@@ -7,6 +7,7 @@ import {
   View,
   Alert,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
@@ -153,11 +154,7 @@ export default function GoogleSignInButton({
 
 // Google "G" icon component
 function GoogleIcon() {
-  return (
-    <View style={styles.googleIcon}>
-      <Text style={styles.googleIconText}>G</Text>
-    </View>
-  );
+  return <FontAwesome name="google" size={16} color="#4285F4" />;
 }
 
 const styles = StyleSheet.create({
@@ -178,19 +175,6 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginRight: spacing.sm,
-  },
-  googleIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleIconText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4285F4',
   },
   buttonText: {
     fontSize: typography.sizes.body,
