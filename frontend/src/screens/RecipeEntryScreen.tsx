@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +23,7 @@ import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { recipeImportApi } from '../services/api/recipeImport';
 import RecipeSavedModal from '../components/RecipeSavedModal';
+import ErrorModal from '../components/ErrorModal';
 
 type Props = {
   route: { params?: { recipe?: Recipe; mode?: 'create' | 'edit' } };
@@ -81,6 +81,18 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [savedRecipe, setSavedRecipe] = useState<Recipe | null>(null);
 
+  // Error modal state
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Helper function to show error modal
+  const showError = (title: string, message: string) => {
+    setErrorTitle(title);
+    setErrorMessage(message);
+    setShowErrorModal(true);
+  };
+
   // Set header title
   useEffect(() => {
     navigation.setOptions({
@@ -90,7 +102,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
 
   const handleImport = async () => {
     if (!importUrl.trim()) {
-      Alert.alert('Error', 'Please enter a recipe URL');
+      showError('Error', 'Please enter a recipe URL');
       return;
     }
 
@@ -103,7 +115,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       setImportUrl('');
     } catch (error: any) {
       const message = error.response?.data?.error || 'Failed to import recipe. Please try again.';
-      Alert.alert('Import Failed', message);
+      showError('Import Failed', message);
     } finally {
       setImporting(false);
     }
@@ -111,7 +123,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
 
   const handleSaveFromBrowser = async () => {
     if (!currentUrl || currentUrl === 'about:blank') {
-      Alert.alert('Error', 'Please navigate to a recipe page first');
+      showError('Error', 'Please navigate to a recipe page first');
       return;
     }
 
@@ -123,7 +135,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       setShowSuccessModal(true);
     } catch (error: any) {
       const message = error.response?.data?.error || 'Failed to import recipe. This page may not contain a recognized recipe format.';
-      Alert.alert('Import Failed', message);
+      showError('Import Failed', message);
     } finally {
       setSavingFromBrowser(false);
     }
@@ -132,15 +144,15 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   const handleSave = async () => {
     // Validation
     if (!title.trim()) {
-      Alert.alert('Error', 'Recipe title is required');
+      showError('Error', 'Recipe title is required');
       return;
     }
     if (!ingredientsText.trim()) {
-      Alert.alert('Error', 'Ingredients are required');
+      showError('Error', 'Ingredients are required');
       return;
     }
     if (!directionsText.trim()) {
-      Alert.alert('Error', 'Directions are required');
+      showError('Error', 'Directions are required');
       return;
     }
 
@@ -164,12 +176,9 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       let newSavedRecipe: Recipe;
       if (isEditMode && existingRecipe) {
         newSavedRecipe = await recipeApi.update(existingRecipe._id, recipeData);
-        // For edits, use simple alert and go back
-        Alert.alert(
-          'Recipe Updated!',
-          `"${newSavedRecipe.title}" has been updated.`,
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
+        // For edits, show success modal and navigate back on close
+        setSavedRecipe(newSavedRecipe);
+        setShowSuccessModal(true);
       } else {
         // For new recipes, show the celebration modal!
         newSavedRecipe = await recipeApi.create(recipeData);
@@ -190,7 +199,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         setServings('');
       }
     } catch (error) {
-      Alert.alert('Error', `Failed to ${isEditMode ? 'update' : 'save'} recipe. Please try again.`);
+      showError('Error', `Failed to ${isEditMode ? 'update' : 'save'} recipe. Please try again.`);
     } finally {
       setSaving(false);
     }
@@ -223,7 +232,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
           color={activeTab === 'browse' ? colors.primary : colors.textMuted}
         />
         <Text style={[styles.tabText, activeTab === 'browse' && styles.tabTextActive]}>
-          Browse
+          Browse Web
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -323,6 +332,25 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
 
     return (
       <View style={styles.browserContainer}>
+        {/* Quick Links */}
+        <View style={styles.quickLinks}>
+          <Text style={styles.quickLinksLabel}>Quick access:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickLinksScroll}>
+            {DEFAULT_RECIPE_SITES.map((site) => (
+              <TouchableOpacity
+                key={site.name}
+                style={styles.quickLinkChip}
+                onPress={() => {
+                  setBrowserUrl(site.url);
+                  setCurrentUrl(site.url);
+                }}
+              >
+                <Text style={styles.quickLinkText}>{site.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Browser Navigation Bar */}
         <View style={styles.browserNav}>
           <TouchableOpacity
@@ -351,25 +379,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
               {currentUrl}
             </Text>
           </View>
-        </View>
-
-        {/* Quick Links */}
-        <View style={styles.quickLinks}>
-          <Text style={styles.quickLinksLabel}>Quick access:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickLinksScroll}>
-            {DEFAULT_RECIPE_SITES.map((site) => (
-              <TouchableOpacity
-                key={site.name}
-                style={styles.quickLinkChip}
-                onPress={() => {
-                  setBrowserUrl(site.url);
-                  setCurrentUrl(site.url);
-                }}
-              >
-                <Text style={styles.quickLinkText}>{site.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
 
         {/* WebView */}
@@ -410,7 +419,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
           ) : (
             <>
               <Ionicons name="bookmark" size={20} color={colors.textOnPrimary} />
-              <Text style={styles.saveFabText}>Save This Recipe</Text>
+              <Text style={styles.saveFabText}>Import This Page</Text>
             </>
           )}
         </TouchableOpacity>
@@ -647,14 +656,17 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   const handleAddAnother = () => {
     setShowSuccessModal(false);
     setSavedRecipe(null);
-    // Stay on the current screen, ready for another entry
-    setActiveTab('import');
+    // Stay on the current screen and current tab, ready for another entry
   };
 
   const handleCloseModal = () => {
     setShowSuccessModal(false);
     setSavedRecipe(null);
-    navigation.goBack();
+    // In edit mode, go back after closing
+    // In create mode, just dismiss and stay on current tab
+    if (isEditMode) {
+      navigation.goBack();
+    }
   };
 
   return (
@@ -673,6 +685,14 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         onViewRecipe={handleViewRecipe}
         onAddAnother={handleAddAnother}
         onClose={handleCloseModal}
+      />
+
+      {/* Error modal */}
+      <ErrorModal
+        visible={showErrorModal}
+        title={errorTitle}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
       />
     </KeyboardAvoidingView>
   );
@@ -833,6 +853,9 @@ const styles = StyleSheet.create({
   webViewContainer: {
     flex: 1,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopWidth: 0,
   },
   webView: {
     flex: 1,

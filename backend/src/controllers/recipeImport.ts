@@ -122,6 +122,7 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
 
     // Create recipe
     const recipe = new Recipe({
+      userId: req.userId,
       title: scrapedData.name || scrapedData.title || 'Untitled Recipe',
       imageUrl: scrapedData.image || '',
       sourceUrl: url,
