@@ -19,6 +19,8 @@ import { Plan } from '../types';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { PlannerStackParamList } from '../navigation/BottomTabNavigator';
 import { dateToString, addDays, getNextMonday, parseDate, getTodayString, formatDateString, getMondayOfWeek } from '../utils/dateUtils';
+import PlannerTutorial from '../components/PlannerTutorial';
+import { hasPlannerTutorialCompleted } from '../utils/tutorialStorage';
 
 type PlannerScreenNavigationProp = NativeStackNavigationProp<PlannerStackParamList, 'PlannerHome'>;
 type PlannerScreenRouteProp = RouteProp<PlannerStackParamList, 'PlannerHome'>;
@@ -52,6 +54,7 @@ export default function PlannerScreen() {
   const [promptShown, setPromptShown] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [recipeCount, setRecipeCount] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Reset week offset when route params change
   useEffect(() => {
@@ -60,6 +63,32 @@ export default function PlannerScreen() {
       setWeekOffset(newOffset);
     }
   }, [route.params?.showCurrentWeek]);
+
+  // Check if tutorial should be shown on first visit
+  useEffect(() => {
+    const checkTutorial = async () => {
+      const completed = await hasPlannerTutorialCompleted();
+      if (!completed) {
+        setShowTutorial(true);
+      }
+    };
+    checkTutorial();
+  }, []);
+
+  // Set up header with help button
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={{ padding: spacing.sm, marginRight: spacing.xs }}
+          onPress={() => setShowTutorial(true)}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="help-circle-outline" size={24} color={colors.textOnPrimary} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -511,6 +540,12 @@ export default function PlannerScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Planner Tutorial */}
+      <PlannerTutorial
+        visible={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
     </View>
   );
 }
