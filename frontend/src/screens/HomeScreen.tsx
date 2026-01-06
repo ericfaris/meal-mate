@@ -210,14 +210,18 @@ export default function HomeScreen({ navigation }: Props) {
         ) : (
           <TouchableOpacity
             style={styles.noPlanCard}
-            onPress={navigateToPlanWeek}
+            onPress={recipeCount > 0 ? navigateToPlanWeek : navigateToAddRecipe}
             activeOpacity={0.8}
           >
             <View style={styles.noPlanContent}>
-              <Text style={styles.noPlanEmoji}>🤔</Text>
-              <Text style={styles.noPlanTitle}>No dinner planned yet</Text>
+              <Text style={styles.noPlanEmoji}>{recipeCount > 0 ? '🤔' : '📝'}</Text>
+              <Text style={styles.noPlanTitle}>
+                {recipeCount > 0 ? 'No dinner planned yet' : 'No recipes yet'}
+              </Text>
               <Text style={styles.noPlanSubtext}>
-                Tap here to plan your week's meals
+                {recipeCount > 0
+                  ? 'Tap here to plan your week\'s meals'
+                  : 'Add some recipes to start planning'}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color={colors.primary} />

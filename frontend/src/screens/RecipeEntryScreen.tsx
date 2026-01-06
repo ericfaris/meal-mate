@@ -747,8 +747,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
-    height: heights.button,
+    minHeight: heights.button,
     ...shadows.button,
   },
   importButtonDisabled: {

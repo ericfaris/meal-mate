@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { planApi } from '../services/api';
+import { planApi, recipeApi } from '../services/api';
 import { suggestionApi } from '../services/api/suggestions';
 import { Plan } from '../types';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -51,6 +51,7 @@ export default function PlannerScreen() {
   const [weekOffset, setWeekOffset] = useState(getInitialWeekOffset());
   const [promptShown, setPromptShown] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [recipeCount, setRecipeCount] = useState(0);
 
   // Reset week offset when route params change
   useEffect(() => {
@@ -63,9 +64,19 @@ export default function PlannerScreen() {
   useFocusEffect(
     useCallback(() => {
       loadWeekPlans();
+      loadRecipeCount();
       setPromptShown(false); // Reset prompt when screen comes into focus
     }, [weekOffset]) // Reload when weekOffset changes OR when screen comes into focus
   );
+
+  const loadRecipeCount = async () => {
+    try {
+      const recipes = await recipeApi.getAll();
+      setRecipeCount(recipes.length);
+    } catch (error) {
+      console.error('Error loading recipe count:', error);
+    }
+  };
 
   // Removed prompt dialog for empty week - user can use "Plan This Week" button instead
 
@@ -103,6 +114,10 @@ export default function PlannerScreen() {
   };
 
   const handlePlanWeek = () => {
+    if (recipeCount === 0) {
+      // Don't show modal if no recipes, user will see the disabled state
+      return;
+    }
     setShowPlanModal(true);
   };
 
@@ -156,6 +171,8 @@ export default function PlannerScreen() {
   };
 
   const handleSuggestMeal = async (date: string) => {
+    if (recipeCount === 0) return;
+
     try {
       // Get a random suggestion with no constraints
       const recipe = await suggestionApi.getAlternative(
@@ -184,6 +201,8 @@ export default function PlannerScreen() {
   };
 
   const handlePickMeal = (date: string) => {
+    if (recipeCount === 0) return;
+
     // Navigate to recipe picker screen
     const dateObj = parseDate(date);
     navigation.navigate('RecipePicker', {
@@ -237,16 +256,18 @@ export default function PlannerScreen() {
             </View>
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.actionButton, recipeCount === 0 && styles.actionButtonDisabled]}
                 onPress={() => handleSuggestMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.actionButtonText}>Suggest</Text>
+                <Text style={[styles.actionButtonText, recipeCount === 0 && styles.actionButtonTextDisabled]}>Suggest</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton]}
+                style={[styles.actionButton, styles.pickButton, recipeCount === 0 && styles.pickButtonDisabled]}
                 onPress={() => handlePickMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.pickButtonText}>Pick</Text>
+                <Text style={[styles.pickButtonText, recipeCount === 0 && styles.pickButtonTextDisabled]}>Pick</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -256,16 +277,18 @@ export default function PlannerScreen() {
             <Text style={styles.labelText}>{item.label}</Text>
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.actionButton, recipeCount === 0 && styles.actionButtonDisabled]}
                 onPress={() => handleSuggestMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.actionButtonText}>Suggest</Text>
+                <Text style={[styles.actionButtonText, recipeCount === 0 && styles.actionButtonTextDisabled]}>Suggest</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton]}
+                style={[styles.actionButton, styles.pickButton, recipeCount === 0 && styles.pickButtonDisabled]}
                 onPress={() => handlePickMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.pickButtonText}>Pick</Text>
+                <Text style={[styles.pickButtonText, recipeCount === 0 && styles.pickButtonTextDisabled]}>Pick</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -274,16 +297,18 @@ export default function PlannerScreen() {
             <Text style={styles.emptyText}>No meal planned</Text>
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.actionButton, recipeCount === 0 && styles.actionButtonDisabled]}
                 onPress={() => handleSuggestMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.actionButtonText}>Suggest</Text>
+                <Text style={[styles.actionButtonText, recipeCount === 0 && styles.actionButtonTextDisabled]}>Suggest</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton]}
+                style={[styles.actionButton, styles.pickButton, recipeCount === 0 && styles.pickButtonDisabled]}
                 onPress={() => handlePickMeal(item.date)}
+                disabled={recipeCount === 0}
               >
-                <Text style={styles.pickButtonText}>Pick</Text>
+                <Text style={[styles.pickButtonText, recipeCount === 0 && styles.pickButtonTextDisabled]}>Pick</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -394,13 +419,34 @@ export default function PlannerScreen() {
 
       {/* Plan Week Button */}
       <View style={styles.headerActions}>
-        <TouchableOpacity
-          style={styles.planButton}
-          onPress={handlePlanWeek}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.planButtonText}>{getPlanButtonText()}</Text>
-        </TouchableOpacity>
+        {recipeCount === 0 ? (
+          <View style={styles.noRecipesContainer}>
+            <View style={styles.noRecipesCard}>
+              <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
+              <Text style={styles.noRecipesTitle}>No Recipes Yet</Text>
+              <Text style={styles.noRecipesText}>Add some recipes before planning your week</Text>
+              <TouchableOpacity
+                style={styles.addRecipeButton}
+                onPress={() => navigation.navigate('RecipesTab' as any, {
+                  screen: 'RecipeEntry',
+                  params: { mode: 'create' },
+                })}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle" size={20} color={colors.white} />
+                <Text style={styles.addRecipeButtonText}>Add Your First Recipe</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.planButton}
+            onPress={handlePlanWeek}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.planButtonText}>{getPlanButtonText()}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Week Plans */}
@@ -811,5 +857,57 @@ const styles = StyleSheet.create({
   },
   secondaryModalButtonText: {
     color: colors.primary,
+  },
+  noRecipesContainer: {
+    width: '100%',
+  },
+  noRecipesCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    alignItems: 'center',
+    ...shadows.card,
+  },
+  noRecipesTitle: {
+    fontSize: typography.sizes.h3,
+    fontWeight: typography.weights.bold as any,
+    color: colors.text,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  noRecipesText: {
+    fontSize: typography.sizes.body,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  addRecipeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+  },
+  addRecipeButtonText: {
+    color: colors.white,
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold as any,
+  },
+  actionButtonDisabled: {
+    backgroundColor: colors.border,
+    opacity: 0.5,
+  },
+  actionButtonTextDisabled: {
+    color: colors.textMuted,
+  },
+  pickButtonDisabled: {
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    opacity: 0.5,
+  },
+  pickButtonTextDisabled: {
+    color: colors.textMuted,
   },
 });
