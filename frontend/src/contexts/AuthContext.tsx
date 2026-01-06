@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getToken, getUser, clearAuth, StoredUser } from '../services/storage';
 import * as authService from '../services/auth';
+import { GoogleAuthResponse } from '../services/auth/google';
 
 interface AuthContextType {
   user: StoredUser | null;
@@ -8,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  loginWithGoogle: (response: GoogleAuthResponse) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -74,9 +76,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = (response: GoogleAuthResponse) => {
+    // Token and user are already stored by the Google auth service
+    setUser(response.user);
+  };
+
   const logout = async () => {
-    await authService.logout();
-    setUser(null);
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Always clear user state, even if storage clear fails
+      setUser(null);
+    }
   };
 
   const refreshUser = async () => {
@@ -92,6 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     login,
     signup,
+    loginWithGoogle,
     logout,
     refreshUser,
   };

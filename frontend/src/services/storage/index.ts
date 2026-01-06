@@ -11,6 +11,8 @@ export interface StoredUser {
   name: string;
   role: string;
   householdId?: string;
+  profilePicture?: string;
+  authProvider?: 'local' | 'google' | 'apple';
 }
 
 /**

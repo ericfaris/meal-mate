@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
 interface LoginScreenProps {
   onNavigateToSignup: () => void;
 }
 
 export default function LoginScreen({ onNavigateToSignup }: LoginScreenProps) {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -95,6 +96,17 @@ export default function LoginScreen({ onNavigateToSignup }: LoginScreenProps) {
               <Text style={styles.buttonText}>Log In</Text>
             )}
           </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <GoogleSignInButton
+            onSuccess={loginWithGoogle}
+            disabled={isLoading}
+          />
         </View>
 
         <View style={styles.footer}>
@@ -170,6 +182,21 @@ const styles = StyleSheet.create({
     color: colors.textOnPrimary,
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.semibold,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    marginHorizontal: spacing.md,
+    fontSize: typography.sizes.small,
+    color: colors.textMuted,
   },
   footer: {
     flexDirection: 'row',
