@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     width: STEP_WIDTH,
     paddingHorizontal: spacing.md,
-    maxHeight: 420,
+    maxHeight: 450,
   },
   stepScrollContent: {
     flexGrow: 1,
