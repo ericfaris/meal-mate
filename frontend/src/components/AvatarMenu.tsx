@@ -7,6 +7,7 @@ import {
   Modal,
   Pressable,
   Animated,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -76,8 +77,13 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
 
   const handleLogout = () => {
     hideMenu();
-    setTimeout(() => {
-      logout();
+    // Small delay to let animation finish, then logout
+    setTimeout(async () => {
+      try {
+        await logout();
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
     }, 100);
   };
 
@@ -88,9 +94,13 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
         onPress={showMenu}
         activeOpacity={0.7}
       >
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials()}</Text>
-        </View>
+        {user?.profilePicture ? (
+          <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitials()}</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <Modal
@@ -111,9 +121,13 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
           >
             <View style={styles.menu}>
               <View style={styles.menuHeader}>
-                <View style={styles.menuAvatar}>
-                  <Text style={styles.menuAvatarText}>{getInitials()}</Text>
-                </View>
+                {user?.profilePicture ? (
+                  <Image source={{ uri: user.profilePicture }} style={styles.menuAvatarImage} />
+                ) : (
+                  <View style={styles.menuAvatar}>
+                    <Text style={styles.menuAvatarText}>{getInitials()}</Text>
+                  </View>
+                )}
                 <View style={styles.menuHeaderText}>
                   <Text style={styles.menuGreeting}>
                     {user?.name || 'Welcome'}
@@ -171,6 +185,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
   },
+  avatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
   avatarText: {
     color: colors.textOnPrimary,
     fontSize: 12,
@@ -203,6 +224,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  menuAvatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   menuAvatarText: {
     color: colors.textOnPrimary,
