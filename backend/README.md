@@ -13,22 +13,26 @@ Node.js + Express REST API server for the Meal Mate dinner planner app.
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
-2. Create `.env` file:
+1. Create `.env` file:
+
 ```bash
 cp .env.example .env
 ```
 
-3. Add your MongoDB Atlas connection string to `.env`:
-```
+1. Add your MongoDB Atlas connection string to `.env`:
+
+```text
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/meal-mate?retryWrites=true&w=majority
 PORT=3001
 ```
 
-4. Start development server:
+1. Start development server:
+
 ```bash
 npm run dev
 ```
@@ -45,7 +49,7 @@ See main README.md for complete API documentation.
 
 ## Project Structure
 
-```
+```ascii
 backend/
 ├── src/
 │   ├── config/
