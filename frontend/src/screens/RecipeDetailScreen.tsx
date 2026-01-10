@@ -117,7 +117,20 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Image */}
         {recipe.imageUrl ? (
-          <Image source={{ uri: recipe.imageUrl }} style={styles.image} />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: recipe.imageUrl }} style={styles.image} />
+            <TouchableOpacity
+              style={styles.changeImageButton}
+              onPress={() => setShowImagePicker(true)}
+              disabled={updatingImage}
+            >
+              {updatingImage ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name="camera" size={20} color={colors.white} />
+              )}
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.imagePlaceholder}>
             <Ionicons name="restaurant-outline" size={64} color={colors.textMuted} />
@@ -261,10 +274,27 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 250,
+  },
   image: {
     width: '100%',
     height: 250,
     backgroundColor: colors.border,
+  },
+  changeImageButton: {
+    position: 'absolute',
+    bottom: spacing.md,
+    right: spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.button,
   },
   imagePlaceholder: {
     width: '100%',
