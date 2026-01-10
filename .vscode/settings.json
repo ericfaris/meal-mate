@@ -4,5 +4,6 @@
             "name": "Preset Connection",
             "connectionString": "mongodb://localhost:27017"
         }
-    ]
+    ],
+    "terminal.integrated.environmentChangesRelaunch": false
 }

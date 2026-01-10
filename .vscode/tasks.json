@@ -1,0 +1,105 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Kill Frontend",
+      "type": "shell",
+      "command": "powershell -Command \"Get-Process -Name 'node' -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -like '*frontend*'} | Stop-Process -Force; Start-Sleep -Milliseconds 500\"",
+      "presentation": {
+        "echo": false,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Kill Backend",
+      "type": "shell",
+      "command": "powershell -Command \"Get-Process -Name 'node' -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -like '*backend*'} | Stop-Process -Force; Start-Sleep -Milliseconds 500\"",
+      "presentation": {
+        "echo": false,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "npm start",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false,
+        "group": "dev"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Backend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false,
+        "group": "dev"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Restart Frontend",
+      "dependsOn": [
+        "Kill Frontend",
+        "Start Frontend"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Restart Backend",
+      "dependsOn": [
+        "Kill Backend",
+        "Start Backend"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Dev Environment",
+      "dependsOn": [
+        "Start Frontend",
+        "Start Backend"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Restart Dev Environment",
+      "dependsOn": [
+        "Restart Frontend",
+        "Restart Backend"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
