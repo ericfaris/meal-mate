@@ -97,6 +97,7 @@ function RecipesStackNavigator() {
         component={RecipeDetailScreen}
         options={({ route }) => ({
           title: route.params.recipe.title,
+          headerBackVisible: true,
         })}
       />
       <RecipesStack.Screen

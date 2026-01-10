@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  SectionList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -17,7 +17,6 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { recipeApi } from '../../services/api/recipes';
 import { planApi } from '../../services/api/plans';
 import { Recipe } from '../../types';
-import { DaySuggestion } from '../../services/api/suggestions';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 
 type RecipePickerScreenNavigationProp = NativeStackNavigationProp<
@@ -27,15 +26,20 @@ type RecipePickerScreenNavigationProp = NativeStackNavigationProp<
 
 type RecipePickerScreenRouteProp = RouteProp<PlannerStackParamList, 'RecipePicker'>;
 
+type RecipeSection = {
+  title: string;
+  data: Recipe[];
+};
+
 interface Props {
   navigation: RecipePickerScreenNavigationProp;
   route: RecipePickerScreenRouteProp;
 }
 
 export default function RecipePickerScreen({ navigation, route }: Props) {
-  const { date, currentSuggestions } = route.params;
+  const { date } = route.params;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
+  const [recipeSections, setRecipeSections] = useState<RecipeSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -72,7 +76,32 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       );
     }
 
-    setFilteredRecipes(filtered);
+    // Sort by title ascending
+    filtered.sort((a, b) => a.title.localeCompare(b.title));
+
+    // Group by first letter
+    const sections: RecipeSection[] = [];
+    const grouped: { [key: string]: Recipe[] } = {};
+
+    filtered.forEach((recipe) => {
+      const firstLetter = recipe.title.charAt(0).toUpperCase();
+      if (!grouped[firstLetter]) {
+        grouped[firstLetter] = [];
+      }
+      grouped[firstLetter].push(recipe);
+    });
+
+    // Convert to array of sections and sort alphabetically
+    Object.keys(grouped)
+      .sort()
+      .forEach((letter) => {
+        sections.push({
+          title: letter,
+          data: grouped[letter],
+        });
+      });
+
+    setRecipeSections(sections);
   };
 
   const handleSelectRecipe = async (recipe: Recipe) => {
@@ -128,6 +157,12 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       Alert.alert('Error', 'Failed to mark as TBD. Please try again.');
     }
   };
+
+  const renderSectionHeader = ({ section }: { section: RecipeSection }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{section.title}</Text>
+    </View>
+  );
 
   const renderRecipe = ({ item }: { item: Recipe }) => (
     <TouchableOpacity
@@ -233,7 +268,7 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       </View>
 
       {/* Recipe List */}
-      {filteredRecipes.length === 0 ? (
+      {recipeSections.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyEmoji}>
             {recipes.length === 0 ? '👩‍🍳' : '🔍'}
@@ -248,12 +283,14 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredRecipes}
+        <SectionList
+          sections={recipeSections}
           renderItem={renderRecipe}
+          renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={true}
         />
       )}
     </View>
@@ -358,6 +395,17 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.md,
     paddingBottom: spacing.xl,
+  },
+  sectionHeader: {
+    backgroundColor: colors.background,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  sectionHeaderText: {
+    fontSize: typography.sizes.h3,
+    fontWeight: typography.weights.bold as any,
+    color: colors.primary,
   },
   recipeCard: {
     backgroundColor: colors.white,

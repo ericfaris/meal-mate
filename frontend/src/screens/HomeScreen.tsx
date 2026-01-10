@@ -100,10 +100,17 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const navigateToRecipe = (recipe: Recipe) => {
+    // Navigate to RecipesTab with both screens in the stack
     navigation.navigate('RecipesTab', {
-      screen: 'RecipeDetail',
-      params: { recipe },
+      screen: 'RecipesList',
     });
+    // Small delay to ensure RecipesList is mounted first
+    setTimeout(() => {
+      navigation.navigate('RecipesTab', {
+        screen: 'RecipeDetail',
+        params: { recipe },
+      });
+    }, 10);
   };
 
   const navigateToPlanner = () => {
@@ -157,16 +164,19 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => {
               if (todayPlan.recipeId && typeof todayPlan.recipeId !== 'string') {
                 navigateToRecipe(todayPlan.recipeId as Recipe);
+              } else if (!todayPlan.recipeId && !todayPlan.label) {
+                navigateToPlanWeek();
               }
             }}
             activeOpacity={0.9}
           >
             {todayPlan.recipeId && typeof todayPlan.recipeId !== 'string' ? (
-              <>
+              <View style={{flex: 1, width: '100%', height: '100%'}}>
                 {(todayPlan.recipeId as Recipe).imageUrl ? (
                   <Image
                     source={{ uri: (todayPlan.recipeId as Recipe).imageUrl }}
                     style={styles.todayImage}
+                    resizeMode="cover"
                   />
                 ) : (
                   <View style={styles.todayImagePlaceholder}>
@@ -202,7 +212,7 @@ export default function HomeScreen({ navigation }: Props) {
                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
-              </>
+              </View>
             ) : todayPlan.label ? (
               <View style={[
                 styles.labelCard,
@@ -221,7 +231,15 @@ export default function HomeScreen({ navigation }: Props) {
                   {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : 'Decision pending'}
                 </Text>
               </View>
-            ) : null}
+            ) : (
+              <View style={styles.labelCard}>
+                <Text style={styles.labelCardEmoji}>🤔</Text>
+                <Text style={styles.labelCardText}>Plan Incomplete</Text>
+                <Text style={styles.labelCardSubtext}>
+                  Tap to update tonight's plan
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -401,7 +419,7 @@ const styles = StyleSheet.create({
   // Today's Dinner Card
   todayCard: {
     borderRadius: borderRadius.xl,
-    overflow: 'hidden',
+    // overflow: 'hidden', // Removed - causes rendering issues on Android
     height: 220,
     backgroundColor: colors.card,
     ...shadows.card,
@@ -409,6 +427,12 @@ const styles = StyleSheet.create({
   todayImage: {
     width: '100%',
     height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: borderRadius.xl,
   },
   todayImagePlaceholder: {
     width: '100%',
@@ -416,6 +440,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: borderRadius.xl,
+  },
+  todayImageBackground: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F0F0F0',
   },
   placeholderEmoji: {
     fontSize: 64,
@@ -427,7 +457,10 @@ const styles = StyleSheet.create({
     right: 0,
     padding: spacing.md,
     paddingTop: spacing.xl * 2,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 10,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
   },
   todayTitle: {
     fontSize: typography.sizes.h2,
