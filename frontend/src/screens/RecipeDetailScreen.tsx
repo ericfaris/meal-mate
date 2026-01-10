@@ -8,11 +8,13 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
+import ImagePickerModal from '../components/ImagePickerModal';
 
 type Props = {
   route: { params: { recipe: Recipe } };
@@ -23,6 +25,8 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const { recipe: initialRecipe } = route.params;
   const [recipe, setRecipe] = useState<Recipe>(initialRecipe);
   const [deleting, setDeleting] = useState(false);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [updatingImage, setUpdatingImage] = useState(false);
 
   const handleEdit = () => {
     navigation.navigate('RecipeEntry', { recipe, mode: 'edit' });
@@ -49,6 +53,27 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const handleOpenSource = () => {
     if (recipe.sourceUrl) {
       Linking.openURL(recipe.sourceUrl);
+    }
+  };
+
+  const handleSelectImage = async (imageUrl: string) => {
+    if (!recipe._id) {
+      Alert.alert('Error', 'Cannot update recipe image');
+      return;
+    }
+
+    setUpdatingImage(true);
+    try {
+      const updatedRecipe = await recipeApi.update(recipe._id, {
+        imageUrl,
+      });
+      setRecipe(updatedRecipe);
+      Alert.alert('Success', 'Image added successfully!');
+    } catch (error) {
+      console.error('Error updating recipe image:', error);
+      Alert.alert('Error', 'Failed to add image. Please try again.');
+    } finally {
+      setUpdatingImage(false);
     }
   };
 
@@ -96,6 +121,20 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         ) : (
           <View style={styles.imagePlaceholder}>
             <Ionicons name="restaurant-outline" size={64} color={colors.textMuted} />
+            <TouchableOpacity
+              style={styles.addImageButton}
+              onPress={() => setShowImagePicker(true)}
+              disabled={updatingImage}
+            >
+              {updatingImage ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="image" size={20} color={colors.white} />
+                  <Text style={styles.addImageText}>Add Image</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         )}
 
@@ -191,6 +230,14 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           <Ionicons name="trash-outline" size={20} color={colors.error} />
         </TouchableOpacity>
       </View>
+
+      {/* Image Picker Modal */}
+      <ImagePickerModal
+        visible={showImagePicker}
+        recipeTitle={recipe.title}
+        onClose={() => setShowImagePicker(false)}
+        onSelectImage={handleSelectImage}
+      />
     </View>
   );
 }
@@ -225,6 +272,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.divider,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  addImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.lg,
+    ...shadows.button,
+  },
+  addImageText: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.white,
   },
   content: {
     padding: spacing.lg,

@@ -9,6 +9,7 @@ import {
   ScrollView,
   Modal,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -31,21 +32,18 @@ export default function PlannerScreen() {
 
   // Calculate initial week offset based on route params
   const getInitialWeekOffset = (): number => {
-    if (route.params?.showCurrentWeek) {
-      // Show the week containing today
-      const todayStr = getTodayString();
-      const currentWeekMonday = getMondayOfWeek();
-      const nextMonday = getNextMonday();
+    // Show the week containing today by default
+    const todayStr = getTodayString();
+    const currentWeekMonday = getMondayOfWeek();
+    const nextMonday = getNextMonday();
 
-      // Calculate weeks difference
-      const currentDate = parseDate(currentWeekMonday);
-      const nextDate = parseDate(nextMonday);
-      const daysDiff = Math.floor((currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24));
-      const weeksDiff = Math.floor(daysDiff / 7);
+    // Calculate weeks difference
+    const currentDate = parseDate(currentWeekMonday);
+    const nextDate = parseDate(nextMonday);
+    const daysDiff = Math.floor((currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24));
+    const weeksDiff = Math.floor(daysDiff / 7);
 
-      return weeksDiff;
-    }
-    return 0; // Default: next week
+    return weeksDiff;
   };
 
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -199,6 +197,11 @@ export default function PlannerScreen() {
     return dateStr === today;
   };
 
+  const isPast = (dateStr: string): boolean => {
+    const today = getTodayString();
+    return dateStr < today;
+  };
+
   const handleSuggestMeal = async (date: string) => {
     if (recipeCount === 0) return;
 
@@ -245,43 +248,68 @@ export default function PlannerScreen() {
     });
   };
 
-  const renderPlan = ({ item }: { item: Plan }) => {
+  const renderPlan = ({ item, index }: { item: Plan; index: number }) => {
     const today = isToday(item.date);
+    const past = isPast(item.date);
+    const isFirstCard = index === 0;
+    const allPlanned = plans.length === 7 && plans.every(plan => plan.recipeId || plan.label);
 
     return (
-      <View style={[styles.planCard, today && styles.planCardToday]}>
+      <View style={[
+        styles.planCard,
+        today && styles.planCardToday,
+        past && styles.planCardPast,
+        isFirstCard && allPlanned && styles.planCardFirst
+      ]}>
         <View style={styles.planHeader}>
           <View>
-            <Text style={[styles.dayName, today && styles.dayNameToday]}>
+            <Text style={[
+              styles.dayName,
+              today && styles.dayNameToday,
+              past && styles.dayNamePast
+            ]}>
               {getDayName(item.date)}
               {today && ' (Today)'}
             </Text>
-            <Text style={styles.dateText}>{formatDate(item.date)}</Text>
+            <Text style={[styles.dateText, past && styles.dateTextPast]}>{formatDate(item.date)}</Text>
           </View>
-          {item.isConfirmed && (
-            <View style={styles.confirmedBadge}>
-              <Text style={styles.confirmedText}>✓</Text>
-            </View>
-          )}
+          <View style={styles.badgeContainer}>
+            {past && (
+              <View style={styles.completedBadge}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+              </View>
+            )}
+          </View>
         </View>
 
         {item.recipeId ? (
           <View style={styles.recipeContainer}>
-            <Text style={styles.recipeTitle}>{item.recipeId.title}</Text>
-            <View style={styles.recipeMeta}>
-              {item.recipeId.isVegetarian && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>🥬 Vegetarian</Text>
-                </View>
+            <View style={styles.recipeContent}>
+              {item.recipeId.imageUrl && (
+                <Image
+                  source={{ uri: item.recipeId.imageUrl }}
+                  style={styles.recipeImage}
+                  resizeMode="cover"
+                />
               )}
-              {item.recipeId.complexity && (
-                <View style={[styles.tag, styles.complexityTag]}>
-                  <Text style={styles.tagText}>
-                    {item.recipeId.complexity === 'simple' ? '⚡ Quick' :
-                     item.recipeId.complexity === 'medium' ? '⏱️ Medium' : '👨‍🍳 Complex'}
-                  </Text>
+              <View style={styles.recipeInfo}>
+                <Text style={styles.recipeTitle}>{item.recipeId.title}</Text>
+                <View style={styles.recipeMeta}>
+                  {item.recipeId.isVegetarian && (
+                    <View style={styles.tag}>
+                      <Text style={styles.tagText}>🥬 Vegetarian</Text>
+                    </View>
+                  )}
+                  {item.recipeId.complexity && (
+                    <View style={[styles.tag, styles.complexityTag]}>
+                      <Text style={styles.tagText}>
+                        {item.recipeId.complexity === 'simple' ? '⚡ Quick' :
+                         item.recipeId.complexity === 'medium' ? '⏱️ Medium' : '👨‍🍳 Complex'}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
+              </View>
             </View>
             <View style={styles.actionButtons}>
               <TouchableOpacity
@@ -418,6 +446,9 @@ export default function PlannerScreen() {
   today.setHours(0, 0, 0, 0);
   const isThisWeek = today >= start && today <= end;
 
+  // Check if all days in the week have plans (recipe or label)
+  const allDaysPlanned = plans.length === 7 && plans.every(plan => plan.recipeId || plan.label);
+
   // Generate dynamic button text based on week offset
   const getPlanButtonText = (): string => {
     if (isThisWeek) {
@@ -459,36 +490,38 @@ export default function PlannerScreen() {
       </View>
 
       {/* Plan Week Button */}
-      <View style={styles.headerActions}>
-        {recipeCount === 0 ? (
-          <View style={styles.noRecipesContainer}>
-            <View style={styles.noRecipesCard}>
-              <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
-              <Text style={styles.noRecipesTitle}>No Recipes Yet</Text>
-              <Text style={styles.noRecipesText}>Add some recipes before planning your week</Text>
-              <TouchableOpacity
-                style={styles.addRecipeButton}
-                onPress={() => navigation.navigate('RecipesTab' as any, {
-                  screen: 'RecipeEntry',
-                  params: { mode: 'create' },
-                })}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="add-circle" size={20} color={colors.white} />
-                <Text style={styles.addRecipeButtonText}>Add Your First Recipe</Text>
-              </TouchableOpacity>
+      {!allDaysPlanned && (
+        <View style={styles.headerActions}>
+          {recipeCount === 0 ? (
+            <View style={styles.noRecipesContainer}>
+              <View style={styles.noRecipesCard}>
+                <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
+                <Text style={styles.noRecipesTitle}>No Recipes Yet</Text>
+                <Text style={styles.noRecipesText}>Add some recipes before planning your week</Text>
+                <TouchableOpacity
+                  style={styles.addRecipeButton}
+                  onPress={() => navigation.navigate('RecipesTab' as any, {
+                    screen: 'RecipeEntry',
+                    params: { mode: 'create' },
+                  })}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="add-circle" size={20} color={colors.white} />
+                  <Text style={styles.addRecipeButtonText}>Add Your First Recipe</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.planButton}
-            onPress={handlePlanWeek}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.planButtonText}>{getPlanButtonText()}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.planButton}
+              onPress={handlePlanWeek}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.planButtonText}>{getPlanButtonText()}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Week Plans */}
       {plans.length === 0 ? (
@@ -692,8 +725,15 @@ const styles = StyleSheet.create({
   planCardToday: {
     borderLeftColor: colors.primary,
   },
+  planCardPast: {
+    opacity: 0.6,
+    backgroundColor: '#F5F5F5',
+  },
   planCardEmpty: {
     opacity: 0.7,
+  },
+  planCardFirst: {
+    marginTop: spacing.lg,
   },
   planHeader: {
     flexDirection: 'row',
@@ -709,10 +749,24 @@ const styles = StyleSheet.create({
   dayNameToday: {
     color: colors.primary,
   },
+  dayNamePast: {
+    color: colors.textMuted,
+  },
   dateText: {
     fontSize: typography.sizes.small,
     color: colors.textLight,
     marginTop: 2,
+  },
+  dateTextPast: {
+    color: colors.textMuted,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  completedBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmedBadge: {
     backgroundColor: colors.success,
@@ -729,6 +783,19 @@ const styles = StyleSheet.create({
   },
   recipeContainer: {
     marginTop: spacing.xs,
+  },
+  recipeContent: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  recipeImage: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.border,
+  },
+  recipeInfo: {
+    flex: 1,
   },
   recipeTitle: {
     fontSize: typography.sizes.body,

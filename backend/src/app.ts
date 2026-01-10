@@ -5,6 +5,7 @@ import recipeRoutes from './routes/recipes';
 import recipeImportRoutes from './routes/recipeImport';
 import planRoutes from './routes/plans';
 import suggestionRoutes from './routes/suggestions';
+import imageSearchRoutes from './routes/imageSearch';
 import { authenticate } from './middleware/auth';
 
 export const createApp = (): Express => {
@@ -34,6 +35,7 @@ export const createApp = (): Express => {
   app.use('/api/recipes', authenticate, recipeImportRoutes);
   app.use('/api/plans', authenticate, planRoutes);
   app.use('/api/suggestions', authenticate, suggestionRoutes);
+  app.use('/api/images', authenticate, imageSearchRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

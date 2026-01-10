@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  SectionList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -18,13 +19,18 @@ import { colors, typography, spacing, borderRadius, shadows, heights } from '../
 
 type FilterType = 'all' | 'vegetarian' | 'simple';
 
+type RecipeSection = {
+  title: string;
+  data: Recipe[];
+};
+
 type Props = {
   navigation: any;
 };
 
 export default function RecipesScreen({ navigation }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
+  const [recipeSections, setRecipeSections] = useState<RecipeSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -76,7 +82,32 @@ export default function RecipesScreen({ navigation }: Props) {
         break;
     }
 
-    setFilteredRecipes(filtered);
+    // Sort by title ascending
+    filtered.sort((a, b) => a.title.localeCompare(b.title));
+
+    // Group by first letter
+    const sections: RecipeSection[] = [];
+    const grouped: { [key: string]: Recipe[] } = {};
+
+    filtered.forEach((recipe) => {
+      const firstLetter = recipe.title.charAt(0).toUpperCase();
+      if (!grouped[firstLetter]) {
+        grouped[firstLetter] = [];
+      }
+      grouped[firstLetter].push(recipe);
+    });
+
+    // Convert to array of sections and sort alphabetically
+    Object.keys(grouped)
+      .sort()
+      .forEach((letter) => {
+        sections.push({
+          title: letter,
+          data: grouped[letter],
+        });
+      });
+
+    setRecipeSections(sections);
   };
 
   const handleRecipePress = (recipe: Recipe) => {
@@ -114,6 +145,12 @@ export default function RecipesScreen({ navigation }: Props) {
         {label}
       </Text>
     </TouchableOpacity>
+  );
+
+  const renderSectionHeader = ({ section }: { section: RecipeSection }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{section.title}</Text>
+    </View>
   );
 
   const renderRecipe = ({ item }: { item: Recipe }) => (
@@ -196,15 +233,8 @@ export default function RecipesScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {/* Filter Chips */}
-      <View style={styles.filterContainer}>
-        {renderFilterChip('all', 'All')}
-        {renderFilterChip('vegetarian', 'Vegetarian')}
-        {renderFilterChip('simple', 'Quick & Easy')}
-      </View>
-
       {/* Recipe List */}
-      {filteredRecipes.length === 0 ? (
+      {recipeSections.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyEmoji}>
             {recipes.length === 0 ? '👩‍🍳' : '🔍'}
@@ -225,12 +255,14 @@ export default function RecipesScreen({ navigation }: Props) {
           )}
         </View>
       ) : (
-        <FlatList
-          data={filteredRecipes}
+        <SectionList
+          sections={recipeSections}
           renderItem={renderRecipe}
+          renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={true}
         />
       )}
 
@@ -304,6 +336,17 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.md,
     paddingBottom: 100, // Space for FAB
+  },
+  sectionHeader: {
+    backgroundColor: colors.background,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  sectionHeaderText: {
+    fontSize: typography.sizes.h3,
+    fontWeight: typography.weights.bold as any,
+    color: colors.primary,
   },
   recipeCard: {
     backgroundColor: colors.white,
