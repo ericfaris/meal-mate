@@ -1,6 +1,6 @@
 import { apiClient } from '../../config/api';
 
-export interface UnsplashImage {
+export interface SearchImage {
   id: string;
   url: string;
   thumb: string;
@@ -9,10 +9,12 @@ export interface UnsplashImage {
   photographerUrl: string;
 }
 
+export type ImageSource = 'unsplash' | 'google';
+
 export const imageSearchApi = {
-  searchImages: async (query: string): Promise<UnsplashImage[]> => {
+  searchImages: async (query: string, source: ImageSource = 'unsplash'): Promise<SearchImage[]> => {
     const response = await apiClient.get('/api/images/search', {
-      params: { query },
+      params: { query, source },
     });
     return response.data.images;
   },

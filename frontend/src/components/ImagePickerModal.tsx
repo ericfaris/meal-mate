@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
-import { imageSearchApi, UnsplashImage } from '../services/api/imageSearch';
+import { imageSearchApi, SearchImage, ImageSource } from '../services/api/imageSearch';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_SIZE = (SCREEN_WIDTH - spacing.lg * 2 - spacing.md * 2) / 3;
@@ -25,36 +25,38 @@ interface Props {
 }
 
 export default function ImagePickerModal({ visible, recipeTitle, onClose, onSelectImage }: Props) {
-  const [images, setImages] = useState<UnsplashImage[]>([]);
+  const [images, setImages] = useState<SearchImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeSource, setActiveSource] = useState<ImageSource>('unsplash');
 
   const searchImages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const results = await imageSearchApi.searchImages(recipeTitle);
+      const results = await imageSearchApi.searchImages(recipeTitle, activeSource);
       setImages(results);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error searching images:', err);
-      setError('Failed to load images. Please try again.');
+      const errorMessage = err.response?.data?.error || 'Failed to load images. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [recipeTitle]);
+  }, [recipeTitle, activeSource]);
 
   useEffect(() => {
     if (visible && recipeTitle) {
       searchImages();
     }
-  }, [visible, recipeTitle, searchImages]);
+  }, [visible, recipeTitle, activeSource, searchImages]);
 
-  const handleSelectImage = (image: UnsplashImage) => {
+  const handleSelectImage = (image: SearchImage) => {
     onSelectImage(image.url);
     onClose();
   };
 
-  const renderImage = ({ item }: { item: UnsplashImage }) => (
+  const renderImage = ({ item }: { item: SearchImage }) => (
     <TouchableOpacity
       style={styles.imageCard}
       onPress={() => handleSelectImage(item)}
@@ -84,6 +86,25 @@ export default function ImagePickerModal({ visible, recipeTitle, onClose, onSele
                 {recipeTitle}
               </Text>
             </View>
+          </View>
+          {/* Source Tabs */}
+          <View style={styles.sourceTabs}>
+            <TouchableOpacity
+              style={[styles.sourceTab, activeSource === 'unsplash' && styles.sourceTabActive]}
+              onPress={() => setActiveSource('unsplash')}
+            >
+              <Text style={[styles.sourceTabText, activeSource === 'unsplash' && styles.sourceTabTextActive]}>
+                Unsplash
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sourceTab, activeSource === 'google' && styles.sourceTabActive]}
+              onPress={() => setActiveSource('google')}
+            >
+              <Text style={[styles.sourceTabText, activeSource === 'google' && styles.sourceTabTextActive]}>
+                Google
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -118,8 +139,11 @@ export default function ImagePickerModal({ visible, recipeTitle, onClose, onSele
             />
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                Photos by{' '}
-                <Text style={styles.footerLink}>Unsplash</Text>
+                {activeSource === 'unsplash' ? (
+                  <>Photos by <Text style={styles.footerLink}>Unsplash</Text></>
+                ) : (
+                  <>Images from <Text style={styles.footerLink}>Google</Text></>
+                )}
               </Text>
             </View>
           </>
@@ -147,6 +171,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  sourceTabs: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  sourceTab: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+  },
+  sourceTabActive: {
+    backgroundColor: colors.primary,
+  },
+  sourceTabText: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.medium as any,
+    color: colors.textLight,
+  },
+  sourceTabTextActive: {
+    color: colors.white,
   },
   closeButton: {
     padding: spacing.xs,
