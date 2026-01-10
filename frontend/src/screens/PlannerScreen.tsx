@@ -301,9 +301,21 @@ export default function PlannerScreen() {
             </View>
           </View>
         ) : item.label ? (
-          <View style={styles.labelContainer}>
-            <Text style={styles.labelEmoji}>🍽️</Text>
-            <Text style={styles.labelText}>{item.label}</Text>
+          <View style={styles.labelMainContainer}>
+            <View style={[
+              styles.labelBadge,
+              item.label === 'Eating Out' && styles.labelBadgeEatingOut,
+              item.label === 'TBD' && styles.labelBadgeTBD
+            ]}>
+              <Text style={styles.labelEmoji}>
+                {item.label === 'Eating Out' ? '🍽️' : '❓'}
+              </Text>
+              <Text style={[
+                styles.labelText,
+                item.label === 'Eating Out' && styles.labelTextEatingOut,
+                item.label === 'TBD' && styles.labelTextTBD
+              ]}>{item.label}</Text>
+            </View>
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[styles.actionButton, recipeCount === 0 && styles.actionButtonDisabled]}
@@ -773,18 +785,41 @@ const styles = StyleSheet.create({
   emptyMealContainer: {
     alignItems: 'center',
   },
-  labelContainer: {
+  labelMainContainer: {
+    marginTop: spacing.xs,
+  },
+  labelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+  },
+  labelBadgeEatingOut: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 2,
+    borderColor: '#FF9800',
+  },
+  labelBadgeTBD: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#9E9E9E',
   },
   labelEmoji: {
-    fontSize: 20,
+    fontSize: 24,
     marginRight: spacing.sm,
   },
   labelText: {
     fontSize: typography.sizes.body,
-    color: colors.textLight,
-    fontStyle: 'italic',
+    fontWeight: typography.weights.semibold as any,
+  },
+  labelTextEatingOut: {
+    color: '#E65100',
+  },
+  labelTextTBD: {
+    color: '#616161',
   },
   emptyText: {
     fontSize: typography.sizes.body,

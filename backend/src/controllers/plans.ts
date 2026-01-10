@@ -73,15 +73,25 @@ export const updatePlanByDate = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Build update object
+    const updateData: any = {
+      userId,
+      isConfirmed: isConfirmed !== undefined ? isConfirmed : false,
+    };
+
+    // Handle recipeId - if provided, set it; if not provided but label is, clear it
+    if (recipeId) {
+      updateData.recipeId = recipeId;
+      updateData.label = null; // Clear label when setting a recipe
+    } else if (label) {
+      updateData.label = label;
+      updateData.recipeId = null; // Clear recipeId when setting a label
+    }
+
     // Update or create plan
     const plan = await Plan.findOneAndUpdate(
       { userId, date },
-      {
-        userId,
-        recipeId: recipeId || undefined,
-        label: label || undefined,
-        isConfirmed: isConfirmed !== undefined ? isConfirmed : false,
-      },
+      updateData,
       {
         new: true,
         upsert: true,

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -88,6 +89,43 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       console.error('Error selecting recipe:', error);
+      Alert.alert('Error', 'Failed to select recipe. Please try again.');
+    }
+  };
+
+  const handleEatingOut = async () => {
+    try {
+      console.log('Marking as Eating Out for date:', date);
+      // Update the plan with eating out label
+      const updatedPlan = await planApi.updateByDate(date, {
+        label: 'Eating Out',
+        isConfirmed: false,
+      });
+      console.log('Plan updated successfully:', updatedPlan);
+
+      // Go back to the planner screen
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error marking as eating out:', error);
+      Alert.alert('Error', 'Failed to mark as eating out. Please try again.');
+    }
+  };
+
+  const handleTBD = async () => {
+    try {
+      console.log('Marking as TBD for date:', date);
+      // Update the plan with TBD label
+      const updatedPlan = await planApi.updateByDate(date, {
+        label: 'TBD',
+        isConfirmed: false,
+      });
+      console.log('Plan updated successfully:', updatedPlan);
+
+      // Go back to the planner screen
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error marking as TBD:', error);
+      Alert.alert('Error', 'Failed to mark as TBD. Please try again.');
     }
   };
 
@@ -145,6 +183,36 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
+      {/* Special Action Buttons */}
+      <View style={styles.specialActionsContainer}>
+        <TouchableOpacity
+          style={[styles.specialActionCard, styles.eatingOutCard]}
+          onPress={handleEatingOut}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.specialActionEmoji}>🍽️</Text>
+          <Text style={styles.specialActionTitle}>Eating Out</Text>
+          <Text style={styles.specialActionSubtitle}>No cooking tonight</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.specialActionCard, styles.tbdCard]}
+          onPress={handleTBD}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.specialActionEmoji}>❓</Text>
+          <Text style={styles.specialActionTitle}>TBD</Text>
+          <Text style={styles.specialActionSubtitle}>Decide later</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.dividerContainer}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>OR PICK A RECIPE</Text>
+        <View style={styles.dividerLine} />
+      </View>
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
@@ -202,6 +270,69 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
+  },
+  // Special Action Buttons
+  specialActionsContainer: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    gap: spacing.md,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  specialActionCard: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 110,
+    ...shadows.card,
+  },
+  eatingOutCard: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 2,
+    borderColor: '#FF9800',
+  },
+  tbdCard: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#9E9E9E',
+  },
+  specialActionEmoji: {
+    fontSize: 36,
+    marginBottom: spacing.xs,
+  },
+  specialActionTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold as any,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  specialActionSubtitle: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  // Divider
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    fontSize: typography.sizes.tiny,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.textMuted,
+    marginHorizontal: spacing.md,
+    letterSpacing: 0.5,
   },
   searchContainer: {
     padding: spacing.md,

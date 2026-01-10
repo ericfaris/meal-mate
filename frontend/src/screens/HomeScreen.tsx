@@ -193,17 +193,33 @@ export default function HomeScreen({ navigation }: Props) {
                       </View>
                     )}
                   </View>
-                  <TouchableOpacity style={styles.startCookingButton}>
+                  <TouchableOpacity
+                    style={styles.startCookingButton}
+                    onPress={() => navigateToRecipe(todayPlan.recipeId as Recipe)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.startCookingText}>Start Cooking</Text>
                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </>
             ) : todayPlan.label ? (
-              <View style={styles.eatingOutCard}>
-                <Ionicons name="restaurant-outline" size={48} color={colors.secondary} />
-                <Text style={styles.eatingOutText}>{todayPlan.label}</Text>
-                <Text style={styles.eatingOutSubtext}>Enjoy your meal out!</Text>
+              <View style={[
+                styles.labelCard,
+                todayPlan.label === 'Eating Out' && styles.eatingOutCard,
+                todayPlan.label === 'TBD' && styles.tbdCard
+              ]}>
+                <Text style={styles.labelCardEmoji}>
+                  {todayPlan.label === 'Eating Out' ? '🍽️' : '❓'}
+                </Text>
+                <Text style={[
+                  styles.labelCardText,
+                  todayPlan.label === 'Eating Out' && styles.eatingOutText,
+                  todayPlan.label === 'TBD' && styles.tbdText
+                ]}>{todayPlan.label}</Text>
+                <Text style={styles.labelCardSubtext}>
+                  {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : 'Decision pending'}
+                </Text>
               </View>
             ) : null}
           </TouchableOpacity>
@@ -449,18 +465,39 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold as any,
     color: colors.primary,
   },
-  eatingOutCard: {
+  labelCard: {
     flex: 1,
-    backgroundColor: colors.secondaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
+    borderWidth: 3,
   },
-  eatingOutText: {
+  eatingOutCard: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FF9800',
+  },
+  tbdCard: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#9E9E9E',
+  },
+  labelCardEmoji: {
+    fontSize: 48,
+    marginBottom: spacing.sm,
+  },
+  labelCardText: {
     fontSize: typography.sizes.h2,
     fontWeight: typography.weights.bold as any,
-    color: colors.text,
-    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  eatingOutText: {
+    color: '#E65100',
+  },
+  tbdText: {
+    color: '#616161',
+  },
+  labelCardSubtext: {
+    fontSize: typography.sizes.body,
+    color: colors.textLight,
   },
   eatingOutSubtext: {
     fontSize: typography.sizes.body,
