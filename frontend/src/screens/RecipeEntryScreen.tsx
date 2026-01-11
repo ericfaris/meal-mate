@@ -147,14 +147,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       showError('Error', 'Recipe title is required');
       return;
     }
-    if (!ingredientsText.trim()) {
-      showError('Error', 'Ingredients are required');
-      return;
-    }
-    if (!directionsText.trim()) {
-      showError('Error', 'Directions are required');
-      return;
-    }
 
     setSaving(true);
     try {

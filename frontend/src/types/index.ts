@@ -3,8 +3,8 @@ export interface Recipe {
   title: string;
   imageUrl?: string;
   sourceUrl?: string;
-  ingredientsText: string;
-  directionsText: string;
+  ingredientsText?: string;
+  directionsText?: string;
   notes?: string;
   tags: string[];
   lastUsedDate?: string;

@@ -91,8 +91,8 @@ export const createRecipe = async (req: Request, res: Response): Promise<void> =
     } = req.body;
 
     // Validation
-    if (!title || !ingredientsText || !directionsText) {
-      res.status(400).json({ error: 'Title, ingredients, and directions are required' });
+    if (!title) {
+      res.status(400).json({ error: 'Title is required' });
       return;
     }
 

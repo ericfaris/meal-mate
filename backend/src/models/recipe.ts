@@ -42,11 +42,11 @@ const recipeSchema = new Schema<IRecipe>(
     },
     ingredientsText: {
       type: String,
-      required: true,
+      required: false,
     },
     directionsText: {
       type: String,
-      required: true,
+      required: false,
     },
     notes: {
       type: String,
