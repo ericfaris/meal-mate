@@ -355,10 +355,10 @@ export default function HomeScreen({ navigation }: Props) {
       {/* Stats Summary */}
       <View style={styles.section}>
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
+          <TouchableOpacity style={styles.statCard} onPress={navigateToRecipes}>
             <Text style={styles.statNumber}>{recipeCount}</Text>
             <Text style={styles.statLabel}>Recipes</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
           <TouchableOpacity style={styles.statCard} onPress={navigateToPlanner}>
             <Ionicons name="calendar-outline" size={28} color={colors.primary} />
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: spacing.md,
     paddingTop: spacing.xl * 2,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     zIndex: 10,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
