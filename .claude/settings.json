@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__MongoDB__connect"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You just modified a file. Based on the changes in $ARGUMENTS, determine if CLAUDE.md or any .claude/rules/*.md files should be updated to reflect this change. If yes, briefly note what documentation should be updated (1-2 sentences). If no, just say 'No documentation update needed.'",
+            "statusMessage": "Checking if documentation needs updating..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '📚 Remember: Update CLAUDE.md or .claude/rules/* if you make significant changes'"
+          }
+        ]
+      }
+    ]
+  }
+}
