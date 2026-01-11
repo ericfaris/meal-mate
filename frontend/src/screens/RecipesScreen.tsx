@@ -201,6 +201,12 @@ export default function RecipesScreen({ navigation }: Props) {
           )}
         </View>
       </View>
+      {item.planCount !== undefined && (
+        <View style={styles.planCountBadge}>
+          <Ionicons name="calendar-outline" size={15} color={colors.textMuted} />
+          <Text style={styles.planCountText}>{item.planCount}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -353,10 +359,28 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
     overflow: 'hidden',
+    position: 'relative',
     ...shadows.card,
   },
   recipeContent: {
     flexDirection: 'row',
+  },
+  planCountBadge: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+  },
+  planCountText: {
+    fontSize: typography.sizes.tiny * 1.25,
+    color: colors.textMuted,
+    fontWeight: typography.weights.medium,
   },
   recipeImage: {
     width: 100,

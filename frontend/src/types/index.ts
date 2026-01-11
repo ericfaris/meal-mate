@@ -13,6 +13,7 @@ export interface Recipe {
   prepTime?: number;
   cookTime?: number;
   servings?: number;
+  planCount?: number;
   createdAt: string;
   updatedAt: string;
 }

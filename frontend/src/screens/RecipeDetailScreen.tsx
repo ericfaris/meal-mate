@@ -168,6 +168,12 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.badgeText}>{getComplexityLabel(recipe.complexity)}</Text>
               </View>
             )}
+            {recipe.planCount !== undefined && recipe.planCount > 0 && (
+              <View style={[styles.badge, styles.planCountBadge]}>
+                <Ionicons name="calendar-outline" size={16} color={colors.white} />
+                <Text style={[styles.badgeText, { color: colors.white }]}>Planned {recipe.planCount}x</Text>
+              </View>
+            )}
           </View>
 
           {/* Meta Info */}
@@ -338,6 +344,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
+  },
+  planCountBadge: {
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   badgeText: {
     fontSize: typography.sizes.small,

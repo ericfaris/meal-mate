@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import Recipe from '../models/recipe';
+import Plan from '../models/plan';
 
 // GET /api/recipes - List all recipes with optional search and tag filters
 export const getRecipes = async (req: Request, res: Response): Promise<void> => {
@@ -20,8 +22,30 @@ export const getRecipes = async (req: Request, res: Response): Promise<void> => 
       query.tags = { $in: tagArray };
     }
 
-    const recipes = await Recipe.find(query).sort({ updatedAt: -1 });
-    res.json(recipes);
+    const recipes = await Recipe.find(query).sort({ updatedAt: -1 }).lean();
+
+    // Get plan counts for each recipe
+    const recipeIds = recipes.map(r => r._id);
+    const planCounts = await Plan.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          recipeId: { $in: recipeIds }
+        }
+      },
+      { $group: { _id: '$recipeId', count: { $sum: 1 } } }
+    ]);
+
+    // Create a map of recipeId to count
+    const countMap = new Map(planCounts.map(pc => [pc._id.toString(), pc.count]));
+
+    // Add planCount to each recipe
+    const recipesWithCounts = recipes.map(recipe => ({
+      ...recipe,
+      planCount: countMap.get(recipe._id.toString()) || 0
+    }));
+
+    res.json(recipesWithCounts);
   } catch (error) {
     console.error('Error fetching recipes:', error);
     res.status(500).json({ error: 'Failed to fetch recipes' });
