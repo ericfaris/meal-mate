@@ -232,12 +232,17 @@ LoginScreen → auth.login()
 ### Google OAuth Flow:
 ```
 LoginScreen → Google Sign-In Button
-  → expo-auth-session redirect
-  → Google consent → Get ID token
+  → @react-native-google-signin/google-signin
+  → Google Play Services / iOS native
+  → User consent → Get ID token
   → Send to /api/auth/google
   → Backend validates → Returns JWT
   → Store token → Navigate to MainTabs
 ```
+
+**Library**: Uses `@react-native-google-signin/google-signin` (officially recommended by Expo)
+**Note**: Requires custom dev build (cannot use Expo Go)
+**Configuration**: Plugin configured in app.json with iOS URL scheme
 
 ### Session Persistence:
 - Check for token in SecureStore on app launch

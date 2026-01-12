@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_ENDPOINTS, apiClient } from '../../config/api';
 import { setToken, setUser, clearAuth, StoredUser, getToken } from '../storage';
+import { signOutFromGoogle } from './google';
 
 export interface AuthResponse {
   message: string;
@@ -74,9 +75,13 @@ export const signup = async (credentials: SignupCredentials): Promise<AuthRespon
 };
 
 /**
- * Logout - clear stored auth data
+ * Logout - clear stored auth data and sign out from Google
  */
 export const logout = async (): Promise<void> => {
+  // Sign out from Google if user was signed in via Google
+  await signOutFromGoogle();
+
+  // Clear local auth data
   await clearAuth();
 };
 

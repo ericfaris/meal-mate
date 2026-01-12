@@ -1,12 +1,7 @@
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { AuthSessionResult } from 'expo-auth-session';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
 import { setToken, setUser, StoredUser } from '../storage';
-
-// Ensure browser session is completed on web
-WebBrowser.maybeCompleteAuthSession();
 
 export interface GoogleConfig {
   webClientId: string;
@@ -34,33 +29,36 @@ export async function getGoogleConfig(): Promise<GoogleConfig | null> {
 }
 
 /**
- * Create Google auth request hook configuration
+ * Configure Google Sign-In with client IDs
  */
-export function useGoogleAuthConfig(config: GoogleConfig | null) {
-  return Google.useAuthRequest({
-    webClientId: config?.webClientId,
-    iosClientId: config?.iosClientId,
-    androidClientId: config?.androidClientId,
+export function configureGoogleSignIn(config: GoogleConfig): void {
+  console.log('[Google] Configuring with:', {
+    webClientId: config.webClientId?.substring(0, 20) + '...',
+    hasIosClientId: !!config.iosClientId,
+    hasAndroidClientId: !!config.androidClientId,
+  });
+
+  // Note: androidClientId was removed in library v7.2.2+
+  // Android authentication is handled via SHA-1 fingerprint + webClientId
+  GoogleSignin.configure({
+    webClientId: config.webClientId, // Required for idToken
+    iosClientId: config.iosClientId, // Optional, can be auto-detected
+    offlineAccess: true,
     scopes: ['profile', 'email'],
   });
+
+  console.log('[Google] Configuration complete');
 }
 
 /**
- * Exchange Google auth response for backend JWT
- * Supports both ID token (preferred) and access token (fallback for web)
+ * Exchange Google ID token for backend JWT
  */
 export async function authenticateWithGoogle(
-  idToken?: string,
-  accessToken?: string
+  idToken: string
 ): Promise<GoogleAuthResponse> {
-  if (!idToken && !accessToken) {
-    throw new Error('Either ID token or access token is required');
-  }
-
   try {
     const response = await axios.post(`${API_ENDPOINTS.auth}/google`, {
       idToken,
-      accessToken,
     });
 
     const { token, user } = response.data;
@@ -77,32 +75,59 @@ export async function authenticateWithGoogle(
 }
 
 /**
- * Handle the full Google Sign-In flow
- * Returns true if successful, throws error otherwise
- *
- * On web, the OAuth flow may only return an access token (no ID token),
- * so we support both authentication methods.
+ * Handle the full Google Sign-In flow using the new library
  */
-export async function handleGoogleSignIn(
-  response: AuthSessionResult
-): Promise<GoogleAuthResponse | null> {
-  if (response.type !== 'success') {
-    if (response.type === 'cancel') {
-      return null; // User cancelled, not an error
+export async function handleGoogleSignIn(): Promise<GoogleAuthResponse> {
+  try {
+    console.log('[Google] Checking Play Services...');
+    // Check if Google Play Services are available (Android)
+    await GoogleSignin.hasPlayServices();
+    console.log('[Google] Play Services available');
+
+    console.log('[Google] Starting sign-in...');
+    // Sign in and get user info
+    const response = await GoogleSignin.signIn();
+    console.log('[Google] Sign-in response:', JSON.stringify(response, null, 2));
+
+    // Extract ID token from response
+    // Response structure: { type: 'success', data: { idToken, serverAuthCode, scopes, user } }
+    const idToken = (response as any).data?.idToken;
+
+    console.log('[Google] ID Token present:', !!idToken);
+
+    if (!idToken) {
+      console.error('[Google] Full response object:', response);
+      throw new Error('No ID token received from Google');
     }
-    throw new Error('Google Sign-In failed');
+
+    console.log('[Google] Authenticating with backend...');
+    // Authenticate with backend
+    return await authenticateWithGoogle(idToken);
+  } catch (error: any) {
+    console.error('[Google] Sign-In error:', error);
+    console.error('[Google] Error code:', error.code);
+    console.error('[Google] Error message:', error.message);
+
+    // Handle specific error cases
+    if (error.code === 'SIGN_IN_CANCELLED') {
+      throw new Error('Sign-in was cancelled');
+    } else if (error.code === 'IN_PROGRESS') {
+      throw new Error('Sign-in already in progress');
+    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+      throw new Error('Google Play Services not available');
+    }
+
+    throw new Error(error.message || 'Google Sign-In failed');
   }
+}
 
-  const { authentication } = response;
-
-  // Check if we have at least one token
-  if (!authentication?.idToken && !authentication?.accessToken) {
-    throw new Error('No authentication token received from Google');
+/**
+ * Sign out from Google
+ */
+export async function signOutFromGoogle(): Promise<void> {
+  try {
+    await GoogleSignin.signOut();
+  } catch (error) {
+    console.error('Google sign-out error:', error);
   }
-
-  // Send both tokens to backend - it will prefer ID token but fall back to access token
-  return authenticateWithGoogle(
-    authentication.idToken || undefined,
-    authentication.accessToken || undefined
-  );
 }

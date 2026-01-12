@@ -8,18 +8,14 @@ import {
   Alert,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import {
   GoogleConfig,
   getGoogleConfig,
+  configureGoogleSignIn,
   handleGoogleSignIn,
   GoogleAuthResponse,
 } from '../../services/auth/google';
-
-// Required for web
-WebBrowser.maybeCompleteAuthSession();
 
 interface GoogleSignInButtonProps {
   onSuccess: (response: GoogleAuthResponse) => void;
@@ -27,64 +23,65 @@ interface GoogleSignInButtonProps {
   disabled?: boolean;
 }
 
-// Inner component that uses the Google auth hook (only rendered when config is ready)
-function GoogleAuthButton({
-  config,
+export default function GoogleSignInButton({
   onSuccess,
   onError,
-  disabled,
-}: {
-  config: GoogleConfig;
-  onSuccess: (response: GoogleAuthResponse) => void;
-  onError?: (error: Error) => void;
-  disabled: boolean;
-}) {
+  disabled = false,
+}: GoogleSignInButtonProps) {
+  const [config, setConfig] = useState<GoogleConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Setup Google auth request - only called when config is available
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: config.webClientId,
-    iosClientId: config.iosClientId,
-    androidClientId: config.androidClientId,
-    scopes: ['profile', 'email'],
-  });
-
-  // Handle auth response
+  // Fetch and configure Google Sign-In on mount
   useEffect(() => {
-    if (response) {
-      handleResponse();
-    }
-  }, [response]);
+    loadConfig();
+  }, []);
 
-  const handleResponse = async () => {
-    if (!response) return;
+  const loadConfig = async () => {
+    setConfigLoading(true);
+    const googleConfig = await getGoogleConfig();
 
-    setIsLoading(true);
-    try {
-      const result = await handleGoogleSignIn(response);
-      if (result) {
-        onSuccess(result);
-      }
-    } catch (error: any) {
-      console.error('Google Sign-In error:', error);
-      onError?.(error);
-      Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
-    } finally {
-      setIsLoading(false);
+    if (googleConfig && googleConfig.webClientId) {
+      setConfig(googleConfig);
+      // Configure Google Sign-In with the fetched config
+      configureGoogleSignIn(googleConfig);
     }
+
+    setConfigLoading(false);
   };
 
   const handlePress = async () => {
     setIsLoading(true);
     try {
-      await promptAsync();
+      const result = await handleGoogleSignIn();
+      onSuccess(result);
     } catch (error: any) {
-      console.error('Google prompt error:', error);
+      console.error('Google Sign-In error:', error);
+      onError?.(error);
+
+      // Don't show alert for user cancellation
+      if (error.message !== 'Sign-in was cancelled') {
+        Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const isDisabled = disabled || isLoading || !request;
+  if (configLoading) {
+    return (
+      <View style={[styles.button, styles.buttonDisabled]}>
+        <ActivityIndicator size="small" color={colors.text} />
+      </View>
+    );
+  }
+
+  // Don't show button if no valid config (no webClientId configured)
+  if (!config || !config.webClientId) {
+    return null;
+  }
+
+  const isDisabled = disabled || isLoading;
 
   return (
     <TouchableOpacity
@@ -104,51 +101,6 @@ function GoogleAuthButton({
         </>
       )}
     </TouchableOpacity>
-  );
-}
-
-// Main component that loads config first
-export default function GoogleSignInButton({
-  onSuccess,
-  onError,
-  disabled = false,
-}: GoogleSignInButtonProps) {
-  const [config, setConfig] = useState<GoogleConfig | null>(null);
-  const [configLoading, setConfigLoading] = useState(true);
-
-  // Fetch Google config on mount
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
-    setConfigLoading(true);
-    const googleConfig = await getGoogleConfig();
-    setConfig(googleConfig);
-    setConfigLoading(false);
-  };
-
-  if (configLoading) {
-    return (
-      <View style={[styles.button, styles.buttonDisabled]}>
-        <ActivityIndicator size="small" color={colors.text} />
-      </View>
-    );
-  }
-
-  // Don't show button if no valid config (no webClientId configured)
-  if (!config || !config.webClientId) {
-    return null;
-  }
-
-  // Render the inner component only when config is ready
-  return (
-    <GoogleAuthButton
-      config={config}
-      onSuccess={onSuccess}
-      onError={onError}
-      disabled={disabled}
-    />
   );
 }
 

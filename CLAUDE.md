@@ -315,17 +315,18 @@ useEffect(() => { loadData(); }, []);
 
 ## 🎯 Recent Development
 
-Current branch: `eas-build`
+Current branch: `google-oauth`
 
 Recent changes:
+- **Google OAuth Migration** - Migrated from deprecated `expo-auth-session` to `@react-native-google-signin/google-signin`
+- **Android OAuth Fix** - Resolved "invalid_request" error by using native Google Sign-In SDK
+- **SHA-1 Configuration** - Properly configured Android OAuth client with SHA-1 certificate fingerprint
+- **Logout Enhancement** - Added Google sign-out to logout flow
 - **Android APK build configuration** - HTTP cleartext traffic enabled for local development
 - **Enhanced error logging** - Detailed network error messages in auth service
-- **EAS Build setup** - Production build pipeline with expo-build-properties plugin
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation
-- Image picker enhancements
-- UI responsiveness improvements
 
 ---
 
