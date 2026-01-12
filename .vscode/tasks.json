@@ -114,6 +114,77 @@
         "clear": false
       },
       "problemMatcher": []
+    },
+    {
+      "label": "EAS Build: Android Preview (APK)",
+      "type": "shell",
+      "command": "npx eas-cli build --platform android --profile preview",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false,
+        "group": "eas-build"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "EAS Build: Android Production",
+      "type": "shell",
+      "command": "npx eas-cli build --platform android --profile production",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false,
+        "group": "eas-build"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "EAS Build: iOS Production",
+      "type": "shell",
+      "command": "npx eas-cli build --platform ios --profile production",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false,
+        "group": "eas-build"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "EAS Build: List Recent Builds",
+      "type": "shell",
+      "command": "npx eas-cli build:list --platform android --limit 5",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
     }
   ]
 }
