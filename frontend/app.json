@@ -27,6 +27,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FDFAF6"
       }
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "910a682b-5db4-440a-af99-ee987b813edf"
+      }
+    },
+    "owner": "ericfaris"
   }
 }

@@ -485,5 +485,102 @@ const styles = StyleSheet.create({
 npm start            # Start Expo dev server
 npm run android      # Run on Android emulator
 npm run ios          # Run on iOS simulator
-npm run build        # Build for production (EAS)
 ```
+
+## Production Builds with EAS
+
+### Prerequisites
+
+```bash
+# Install EAS CLI globally (if not already installed)
+npm install -g eas-cli
+
+# Login to Expo account (one-time)
+npx eas-cli login
+
+# Initialize project with EAS (one-time)
+npx eas-cli init --id 910a682b-5db4-440a-af99-ee987b813edf
+```
+
+### Build Profiles
+
+The project uses [eas.json](../eas.json) to configure build profiles:
+
+- **preview**: Builds APK for Android sideloading (internal distribution)
+- **production**: Builds App Bundle (Android) or IPA (iOS) for store submission
+- **development**: Development builds with dev client enabled
+
+### Building for Android
+
+```bash
+# Build APK for sideloading (fastest for testing)
+npx eas-cli build --platform android --profile preview
+
+# Build AAB for Google Play Store
+npx eas-cli build --platform android --profile production
+```
+
+### Building for iOS
+
+```bash
+# Build IPA for App Store
+npx eas-cli build --platform ios --profile production
+
+# Build for development (requires Apple Developer account)
+npx eas-cli build --platform android --profile development
+```
+
+### Managing Builds
+
+```bash
+# List recent builds
+npx eas-cli build:list --platform android --limit 5
+
+# Check build status
+npx eas-cli build:view [BUILD_ID]
+
+# Download build artifact (requires build ID from build:list)
+# APK download URL is shown in build details
+```
+
+### Distribution
+
+**For Android APK (preview profile):**
+
+1. Build completes on EAS servers (~15-20 minutes)
+2. Get download URL from build output or `eas build:list`
+3. Download APK from URL (e.g., `https://expo.dev/artifacts/eas/xxxxx.apk`)
+4. Transfer to device via:
+   - Direct download on device
+   - USB transfer
+   - Cloud storage (Google Drive, etc.)
+5. Enable "Install from unknown sources" on Android device
+6. Install APK
+
+**For Store Submission:**
+
+Use `production` profile and follow respective app store guidelines (Google Play, Apple App Store).
+
+### Build Configuration
+
+Key settings in [app.json](../frontend/app.json):
+
+- `version`: App version number (1.0.0)
+- `expo.android.versionCode`: Build number (auto-incremented by EAS)
+- `expo.ios.buildNumber`: Build number (auto-incremented by EAS)
+- `expo.android.package`: Android package name
+- `expo.ios.bundleIdentifier`: iOS bundle identifier
+
+### Troubleshooting
+
+**Build fails with dependency errors:**
+- Ensure all dependencies are compatible with Expo SDK version
+- Check for native module compatibility
+
+**Credentials issues:**
+- EAS manages Android keystore automatically
+- For iOS, ensure Apple Developer account is linked
+
+**Build takes too long:**
+- Build queue times vary based on Expo server load
+- Average build time: 15-20 minutes for Android, 20-30 for iOS

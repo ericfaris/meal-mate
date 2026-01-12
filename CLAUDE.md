@@ -180,7 +180,38 @@ npm run android      # Android emulator
 npm run ios          # iOS simulator
 ```
 
+### Building for Production
+
+#### EAS Build (Android/iOS)
+
+```bash
+cd frontend
+
+# Login to Expo account (one-time)
+npx eas-cli login
+
+# Initialize EAS project (one-time)
+npx eas-cli init --id 910a682b-5db4-440a-af99-ee987b813edf
+
+# Build Android APK for sideloading
+npx eas-cli build --platform android --profile preview
+
+# Build for production (App Store/Play Store)
+npx eas-cli build --platform android --profile production
+npx eas-cli build --platform ios --profile production
+
+# Check build status
+npx eas-cli build:list --platform android --limit 5
+```
+
+**Build Profiles** (configured in [eas.json](eas.json)):
+
+- `preview` - APK builds for sideloading (internal distribution)
+- `production` - App Bundle/IPA for store submission
+- `development` - Development builds with dev client
+
 ### Environment Variables
+
 ```bash
 # backend/.env
 MONGODB_URI=mongodb+srv://...
