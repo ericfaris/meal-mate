@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Claude Code directory - keep settings.local.json private
 .claude/settings.local.json
+
+# expo
+.expo
