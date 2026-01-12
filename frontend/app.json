@@ -14,13 +14,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.mealmate.app",
-      "infoPlist": {
-        "CFBundleDisplayName": "Meal Mate"
-      }
-    },
     "android": {
       "package": "com.mealmate.app",
       "adaptiveIcon": {
@@ -30,6 +23,11 @@
       "permissions": [
         "INTERNET"
       ]
+    },
+    "scheme": "mealmate",
+    "web": {
+      "favicon": "./assets/icon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
