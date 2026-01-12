@@ -16,6 +16,48 @@ import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import ImagePickerModal from '../components/ImagePickerModal';
 
+// Helper function to parse text into list items
+const parseListItems = (text: string | undefined): string[] => {
+  if (!text) return [];
+
+  // Split by newlines first
+  const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+
+  // If no newlines, try splitting by common delimiters
+  if (lines.length === 1) {
+    const singleLine = lines[0];
+    // Try semicolons
+    if (singleLine.includes(';')) {
+      return singleLine.split(';').map(s => s.trim()).filter(Boolean);
+    }
+    // Try periods followed by capital letters (step indicators)
+    const periodSplit = singleLine.split(/\.\s+(?=[A-Z])/);
+    if (periodSplit.length > 1) {
+      return periodSplit.map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  return lines;
+};
+
+// Check if text appears to be numbered steps
+const hasNumberedSteps = (items: string[]): boolean => {
+  if (items.length === 0) return false;
+
+  // Check if first few items start with numbers
+  const numberedCount = items.slice(0, Math.min(3, items.length)).filter(item =>
+    /^\d+[\.\)\:]/.test(item.trim())
+  ).length;
+
+  return numberedCount >= Math.min(2, items.length);
+};
+
+// Remove leading numbers/bullets from text
+const cleanListItem = (text: string): string => {
+  // Remove leading numbers with dots, parentheses, or colons (1. 2) 3:)
+  return text.replace(/^\d+[\.\)\:]\s*/, '').trim();
+};
+
 type Props = {
   route: { params: { recipe: Recipe } };
   navigation: any;
@@ -226,16 +268,39 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Ingredients */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
-            <Text style={styles.sectionText}>{recipe.ingredientsText}</Text>
-          </View>
+          {recipe.ingredientsText && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+              {parseListItems(recipe.ingredientsText).map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text style={styles.listItemText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Directions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Directions</Text>
-            <Text style={styles.sectionText}>{recipe.directionsText}</Text>
-          </View>
+          {recipe.directionsText && (() => {
+            const directionItems = parseListItems(recipe.directionsText);
+            const isNumbered = hasNumberedSteps(directionItems);
+
+            return (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Directions</Text>
+                {directionItems.map((item, index) => (
+                  <View key={index} style={styles.listItem}>
+                    <Text style={styles.bullet}>
+                      {isNumbered ? `${index + 1}.` : '•'}
+                    </Text>
+                    <Text style={styles.listItemText}>
+                      {cleanListItem(item)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })()}
         </View>
       </ScrollView>
 
@@ -411,6 +476,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     color: colors.text,
     lineHeight: 24,
+  },
+  listItem: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    alignItems: 'flex-start',
+  },
+  bullet: {
+    fontSize: typography.sizes.body,
+    color: colors.text,
+    marginRight: spacing.sm,
+    minWidth: 20,
+    fontWeight: typography.weights.bold,
+  },
+  listItemText: {
+    flex: 1,
+    fontSize: typography.sizes.body,
+    color: colors.text,
+    lineHeight: 22,
   },
   actionBar: {
     flexDirection: 'row',

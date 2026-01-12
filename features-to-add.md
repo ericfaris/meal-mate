@@ -1,4 +1,4 @@
-- improve the instructions to use bullets or numbers for formatting
+- improve the  recip instructions to use bullets or numbers for formatting
 - fix encoding for apostophes and other characters in recipe fields when importing
 - remove the complexity tags from newly imported recipes
 - bullet the ingredients on the recipe details

@@ -88,14 +88,60 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
       }
     }
 
-    // Map scraped data to our Recipe model
+    // Helper function to decode HTML entities
+    const decodeHtmlEntities = (text: string): string => {
+      if (!text) return text;
+
+      const entities: Record<string, string> = {
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#34;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&#x27;': "'",
+        '&rsquo;': '\u2019',
+        '&lsquo;': '\u2018',
+        '&rdquo;': '\u201D',
+        '&ldquo;': '\u201C',
+        '&ndash;': '\u2013',
+        '&mdash;': '\u2014',
+        '&hellip;': '\u2026',
+        '&nbsp;': ' ',
+        '&#8217;': '\u2019',
+        '&#8216;': '\u2018',
+        '&#8220;': '\u201C',
+        '&#8221;': '\u201D',
+        '&#8211;': '\u2013',
+        '&#8212;': '\u2014',
+        '&#8230;': '\u2026',
+      };
+
+      let decoded = text;
+      for (const [entity, char] of Object.entries(entities)) {
+        decoded = decoded.replace(new RegExp(entity, 'g'), char);
+      }
+
+      decoded = decoded.replace(/&#(\d+);/g, (_match, dec) => {
+        return String.fromCharCode(parseInt(dec, 10));
+      });
+
+      decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (_match, hex) => {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
+
+      return decoded;
+    };
+
+    // Map scraped data to our Recipe model with HTML entity decoding
     const ingredientsText = Array.isArray(scrapedData.ingredients)
-      ? scrapedData.ingredients.join('\n')
-      : scrapedData.ingredients || '';
+      ? scrapedData.ingredients.map((i: string) => decodeHtmlEntities(i)).join('\n')
+      : decodeHtmlEntities(scrapedData.ingredients || '');
 
     const directionsText = Array.isArray(scrapedData.instructions)
-      ? scrapedData.instructions.join('\n')
-      : scrapedData.instructions || '';
+      ? scrapedData.instructions.map((i: string) => decodeHtmlEntities(i)).join('\n')
+      : decodeHtmlEntities(scrapedData.instructions || '');
 
     // Extract time values (convert to numbers if possible)
     const prepTime = scrapedData.time?.prep ? parseInt(scrapedData.time.prep) : undefined;
@@ -104,31 +150,19 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
     // Extract servings (convert to number if possible)
     const servings = scrapedData.servings ? parseInt(scrapedData.servings) : undefined;
 
-    // Determine complexity based on ingredient count and cook time
-    let complexity: 'simple' | 'medium' | 'complex' | undefined = undefined;
-    const ingredientCount = Array.isArray(scrapedData.ingredients)
-      ? scrapedData.ingredients.length
-      : 0;
-
-    if (ingredientCount > 0) {
-      if (ingredientCount <= 5 && (!cookTime || cookTime <= 20)) {
-        complexity = 'simple';
-      } else if (ingredientCount <= 10 && (!cookTime || cookTime <= 45)) {
-        complexity = 'medium';
-      } else {
-        complexity = 'complex';
-      }
-    }
+    // Do NOT auto-assign complexity for newly imported recipes
+    // User can set this manually if desired
+    const complexity = undefined;
 
     // Create recipe
     const recipe = new Recipe({
       userId: req.userId,
-      title: scrapedData.name || scrapedData.title || 'Untitled Recipe',
+      title: decodeHtmlEntities(scrapedData.name || scrapedData.title || 'Untitled Recipe'),
       imageUrl: scrapedData.image || '',
       sourceUrl: url,
       ingredientsText,
       directionsText,
-      notes: scrapedData.description || '',
+      notes: decodeHtmlEntities(scrapedData.description || ''),
       tags: [], // User can add tags later
       complexity,
       isVegetarian: false, // User can update this later

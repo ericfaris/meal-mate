@@ -304,10 +304,21 @@ export default function MyScreen({ navigation, route }) {
 - Confirm plans functionality
 
 **RecipeDetailScreen**:
+
 - Full recipe view with image
-- Ingredients and directions
+- **Ingredients displayed as bulleted list** (one bullet per ingredient)
+- **Directions displayed as numbered or bulleted list**
+  - Auto-detects if steps are already numbered
+  - Cleans leading numbers from text if present
+  - Falls back to bullets if not numbered
 - Edit button → RecipeEntryScreen
 - Metadata display (cook time, complexity, tags)
+
+**List Parsing Logic**:
+
+- Splits text by newlines first
+- Falls back to semicolon or period delimiters if needed
+- Helper functions: `parseListItems()`, `hasNumberedSteps()`, `cleanListItem()`
 
 **RecipeEntryScreen**:
 - Create/Edit mode support

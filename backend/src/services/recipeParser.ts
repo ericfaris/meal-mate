@@ -13,6 +13,57 @@ export interface ParsedRecipe {
 }
 
 /**
+ * Decode HTML entities and fix common encoding issues
+ */
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+
+  // First pass: decode common HTML entities
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#34;': '"',
+    '&#39;': "'",
+    '&apos;': "'",
+    '&#x27;': "'",
+    '&rsquo;': '\u2019', // Right single quotation mark
+    '&lsquo;': '\u2018', // Left single quotation mark
+    '&rdquo;': '\u201D', // Right double quotation mark
+    '&ldquo;': '\u201C', // Left double quotation mark
+    '&ndash;': '\u2013', // En dash
+    '&mdash;': '\u2014', // Em dash
+    '&hellip;': '\u2026', // Horizontal ellipsis
+    '&nbsp;': ' ',
+    '&#8217;': '\u2019',
+    '&#8216;': '\u2018',
+    '&#8220;': '\u201C',
+    '&#8221;': '\u201D',
+    '&#8211;': '\u2013',
+    '&#8212;': '\u2014',
+    '&#8230;': '\u2026',
+  };
+
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+
+  // Second pass: decode numeric entities (&#NNN; format)
+  decoded = decoded.replace(/&#(\d+);/g, (_match, dec) => {
+    return String.fromCharCode(parseInt(dec, 10));
+  });
+
+  // Third pass: decode hex entities (&#xNN; format)
+  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (_match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+
+  return decoded;
+}
+
+/**
  * Attempts to parse a recipe from a URL using multiple strategies:
  * 1. JSON-LD structured data (Schema.org Recipe)
  * 2. Microdata (itemtype Recipe)
@@ -136,7 +187,7 @@ function tryParseMicrodata($: any): ParsedRecipe | null {
 
   const getItemProp = (prop: string): string => {
     const el = recipeElement.find(`[itemprop="${prop}"]`);
-    return el.attr('content') || el.text().trim();
+    return decodeHtmlEntities(el.attr('content') || el.text().trim());
   };
 
   const getItemPropAll = (prop: string): string[] => {
@@ -144,7 +195,7 @@ function tryParseMicrodata($: any): ParsedRecipe | null {
     const results: string[] = [];
     elements.each((_: any, el: any) => {
       const text = $(el).attr('content') || $(el).text().trim();
-      if (text) results.push(text);
+      if (text) results.push(decodeHtmlEntities(text));
     });
     return results;
   };
@@ -189,7 +240,7 @@ function tryParseHtmlPatterns($: any): ParsedRecipe | null {
   for (const selector of titleSelectors) {
     const el = $(selector).first();
     if (el.length && el.text().trim()) {
-      title = el.text().trim();
+      title = decodeHtmlEntities(el.text().trim());
       break;
     }
   }
@@ -212,7 +263,7 @@ function tryParseHtmlPatterns($: any): ParsedRecipe | null {
     if (elements.length > 0) {
       elements.each((_: any, el: any) => {
         const text = $(el).text().trim();
-        if (text) ingredients.push(text);
+        if (text) ingredients.push(decodeHtmlEntities(text));
       });
       break;
     }
@@ -235,7 +286,7 @@ function tryParseHtmlPatterns($: any): ParsedRecipe | null {
     if (elements.length > 0) {
       elements.each((_: any, el: any) => {
         const text = $(el).text().trim();
-        if (text) instructions.push(text);
+        if (text) instructions.push(decodeHtmlEntities(text));
       });
       break;
     }
@@ -255,7 +306,7 @@ function tryParseHtmlPatterns($: any): ParsedRecipe | null {
       if (container.length) {
         container.find('p').each((_: any, el: any) => {
           const text = $(el).text().trim();
-          if (text) instructions.push(text);
+          if (text) instructions.push(decodeHtmlEntities(text));
         });
         if (instructions.length > 0) break;
       }
@@ -294,7 +345,7 @@ function tryParseHtmlPatterns($: any): ParsedRecipe | null {
  */
 function extractRecipeFromSchema(data: any): ParsedRecipe {
   // Get title
-  const title = data.name || 'Untitled Recipe';
+  const title = decodeHtmlEntities(data.name || 'Untitled Recipe');
 
   // Get image (can be string, array, or object)
   let imageUrl: string | undefined;
@@ -312,22 +363,22 @@ function extractRecipeFromSchema(data: any): ParsedRecipe {
   let ingredients: string[] = [];
   if (data.recipeIngredient) {
     ingredients = Array.isArray(data.recipeIngredient)
-      ? data.recipeIngredient
-      : [data.recipeIngredient];
+      ? data.recipeIngredient.map((i: string) => decodeHtmlEntities(i))
+      : [decodeHtmlEntities(data.recipeIngredient)];
   }
 
   // Get instructions (can be string, array of strings, or array of HowToStep objects)
   let instructions: string[] = [];
   if (data.recipeInstructions) {
     if (typeof data.recipeInstructions === 'string') {
-      instructions = [data.recipeInstructions];
+      instructions = [decodeHtmlEntities(data.recipeInstructions)];
     } else if (Array.isArray(data.recipeInstructions)) {
       instructions = data.recipeInstructions.map((step: any) => {
-        if (typeof step === 'string') return step;
-        if (step.text) return step.text;
+        if (typeof step === 'string') return decodeHtmlEntities(step);
+        if (step.text) return decodeHtmlEntities(step.text);
         if (step.itemListElement) {
           // HowToSection with nested steps
-          return step.itemListElement.map((s: any) => s.text || s).join('\n');
+          return step.itemListElement.map((s: any) => decodeHtmlEntities(s.text || s)).join('\n');
         }
         return '';
       }).filter(Boolean);
@@ -339,7 +390,7 @@ function extractRecipeFromSchema(data: any): ParsedRecipe {
     imageUrl,
     ingredientsText: ingredients.join('\n'),
     directionsText: instructions.join('\n'),
-    description: data.description || undefined,
+    description: data.description ? decodeHtmlEntities(data.description) : undefined,
     prepTime: parseDuration(data.prepTime),
     cookTime: parseDuration(data.cookTime),
     servings: parseServings(data.recipeYield),

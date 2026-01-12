@@ -289,17 +289,19 @@ export const markRecipeAsUsed = async (recipeId: string, date: string) => {
 **Strategy**:
 1. Try `recipe-scraper` library (primary method)
 2. Fall back to custom Cheerio parser
-3. Auto-detect complexity based on ingredients/cook time
+3. **HTML entity decoding** for all text fields (titles, ingredients, directions, notes)
 4. Validate and sanitize all data
+5. **No auto-assigned complexity** - user sets manually if desired
 
-**Complexity Auto-Detection**:
-```typescript
-function detectComplexity(ingredientCount: number, cookTime: number): Complexity {
-  if (ingredientCount <= 5 && cookTime <= 20) return 'simple';
-  if (ingredientCount > 10 || cookTime > 60) return 'complex';
-  return 'medium';
-}
-```
+**HTML Entity Decoding**:
+
+All imported recipe text fields are decoded to handle special characters:
+
+- Common entities: `&#39;` → `'`, `&quot;` → `"`, `&amp;` → `&`
+- Smart quotes: `&#8217;` → `'`, `&ldquo;` → `"`
+- Special chars: `&ndash;` → `–`, `&hellip;` → `…`
+
+This ensures recipes display correctly regardless of source encoding.
 
 ## Database Queries
 
