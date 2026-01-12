@@ -1,4 +1,5 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
 import { setToken, setUser, StoredUser } from '../storage';
@@ -75,9 +76,36 @@ export async function authenticateWithGoogle(
 }
 
 /**
- * Handle the full Google Sign-In flow using the new library
+ * Handle Google Sign-In on web using Google Identity Services
+ * This function is called from the GoogleSignInButton component after the user
+ * selects their account via the Google One Tap UI or button
  */
-export async function handleGoogleSignIn(): Promise<GoogleAuthResponse> {
+async function handleWebGoogleSignIn(credential: string): Promise<GoogleAuthResponse> {
+  try {
+    console.log('[Google Web] Received credential from Google, authenticating with backend...');
+    return await authenticateWithGoogle(credential);
+  } catch (error: any) {
+    console.error('[Google Web] Sign-In error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle the full Google Sign-In flow (platform-specific)
+ *
+ * For web: This should be called with the credential from @react-oauth/google
+ * For native: This triggers the native Google Sign-In flow
+ */
+export async function handleGoogleSignIn(credentialOrConfig?: string | GoogleConfig): Promise<GoogleAuthResponse> {
+  // Web platform: credential is passed directly from @react-oauth/google
+  if (Platform.OS === 'web') {
+    if (typeof credentialOrConfig === 'string') {
+      return await handleWebGoogleSignIn(credentialOrConfig);
+    }
+    throw new Error('Web platform requires credential from Google');
+  }
+
+  // Native platforms (Android/iOS): Use @react-native-google-signin/google-signin
   try {
     console.log('[Google] Checking Play Services...');
     // Check if Google Play Services are available (Android)
@@ -126,7 +154,10 @@ export async function handleGoogleSignIn(): Promise<GoogleAuthResponse> {
  */
 export async function signOutFromGoogle(): Promise<void> {
   try {
-    await GoogleSignin.signOut();
+    // Only sign out on native platforms (GoogleSignin not available on web)
+    if (Platform.OS !== 'web') {
+      await GoogleSignin.signOut();
+    }
   } catch (error) {
     console.error('Google sign-out error:', error);
   }

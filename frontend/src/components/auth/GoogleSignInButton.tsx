@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   View,
   Alert,
+  Platform,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
@@ -16,6 +17,15 @@ import {
   handleGoogleSignIn,
   GoogleAuthResponse,
 } from '../../services/auth/google';
+
+// Web-only imports
+let GoogleOAuthProvider: any;
+let GoogleLogin: any;
+if (Platform.OS === 'web') {
+  const googleOAuth = require('@react-oauth/google');
+  GoogleOAuthProvider = googleOAuth.GoogleOAuthProvider;
+  GoogleLogin = googleOAuth.GoogleLogin;
+}
 
 interface GoogleSignInButtonProps {
   onSuccess: (response: GoogleAuthResponse) => void;
@@ -50,22 +60,46 @@ export default function GoogleSignInButton({
     setConfigLoading(false);
   };
 
-  const handlePress = async () => {
+  // Native platform handler
+  const handlePressNative = async () => {
     setIsLoading(true);
     try {
-      const result = await handleGoogleSignIn();
+      const result = await handleGoogleSignIn(config || undefined);
       onSuccess(result);
     } catch (error: any) {
       console.error('Google Sign-In error:', error);
       onError?.(error);
 
-      // Don't show alert for user cancellation
       if (error.message !== 'Sign-in was cancelled') {
         Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
       }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Web platform handler
+  const handleWebSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
+    try {
+      const credential = credentialResponse.credential;
+      if (!credential) {
+        throw new Error('No credential received from Google');
+      }
+      const result = await handleGoogleSignIn(credential);
+      onSuccess(result);
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error);
+      onError?.(error);
+      Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWebError = () => {
+    console.error('Google Sign-In failed');
+    onError?.(new Error('Google Sign-In failed'));
   };
 
   if (configLoading) {
@@ -81,12 +115,32 @@ export default function GoogleSignInButton({
     return null;
   }
 
+  // Web platform: Use @react-oauth/google
+  if (Platform.OS === 'web' && GoogleOAuthProvider && GoogleLogin) {
+    return (
+      <GoogleOAuthProvider clientId={config.webClientId}>
+        <View style={styles.webContainer}>
+          <GoogleLogin
+            onSuccess={handleWebSuccess}
+            onError={handleWebError}
+            useOneTap
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+          />
+        </View>
+      </GoogleOAuthProvider>
+    );
+  }
+
+  // Native platforms: Use TouchableOpacity button
   const isDisabled = disabled || isLoading;
 
   return (
     <TouchableOpacity
       style={[styles.button, isDisabled && styles.buttonDisabled]}
-      onPress={handlePress}
+      onPress={handlePressNative}
       disabled={isDisabled}
       activeOpacity={0.8}
     >
@@ -124,6 +178,10 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  webContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     marginRight: spacing.sm,
