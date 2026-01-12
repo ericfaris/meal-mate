@@ -298,6 +298,19 @@ useFocusEffect(useCallback(() => {
 useEffect(() => { loadData(); }, []);
 ```
 
+### Android HTTP Cleartext Traffic
+**Enable HTTP for local development builds**
+```json
+{
+  "plugins": [
+    ["expo-build-properties", {
+      "android": { "usesCleartextTraffic": true }
+    }]
+  ]
+}
+```
+**Why**: Android 9+ blocks HTTP by default. Required for APK builds connecting to local dev server.
+
 ---
 
 ## 🎯 Recent Development
@@ -305,6 +318,9 @@ useEffect(() => { loadData(); }, []);
 Current branch: `eas-build`
 
 Recent changes:
+- **Android APK build configuration** - HTTP cleartext traffic enabled for local development
+- **Enhanced error logging** - Detailed network error messages in auth service
+- **EAS Build setup** - Production build pipeline with expo-build-properties plugin
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation

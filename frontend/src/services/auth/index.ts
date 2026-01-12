@@ -24,7 +24,9 @@ export interface SignupCredentials {
  */
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   try {
+    console.log('[Auth] Attempting login to:', `${API_ENDPOINTS.auth}/login`);
     const response = await axios.post(`${API_ENDPOINTS.auth}/login`, credentials);
+    console.log('[Auth] Login successful');
     const { token, user } = response.data;
 
     // Store token and user
@@ -33,7 +35,23 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.error || 'Login failed');
+    console.error('[Auth] Login error:', error);
+    console.error('[Auth] Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      code: error.code,
+    });
+
+    // Provide more specific error messages
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      throw new Error('Connection timeout - please check your network connection');
+    }
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      throw new Error('Network error - cannot reach server at ' + API_ENDPOINTS.auth);
+    }
+
+    throw new Error(error.response?.data?.error || error.message || 'Login failed');
   }
 };
 

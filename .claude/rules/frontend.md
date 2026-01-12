@@ -145,8 +145,44 @@ const fetchData = async () => {
 ### Error Handling
 - Always wrap API calls in try-catch
 - Show user-friendly error messages via ErrorModal or Alert
-- Log errors to console for debugging
+- Log errors to console for debugging (see example below)
 - Display loading states with ActivityIndicator
+- Provide specific error messages for common network issues
+
+#### Example Error Handling Pattern:
+
+```typescript
+try {
+  console.log('[Auth] Attempting login to:', `${API_ENDPOINTS.auth}/login`);
+  const response = await axios.post(`${API_ENDPOINTS.auth}/login`, credentials);
+  console.log('[Auth] Login successful');
+  return response.data;
+} catch (error: any) {
+  console.error('[Auth] Login error:', error);
+  console.error('[Auth] Error details:', {
+    message: error.message,
+    response: error.response?.data,
+    status: error.response?.status,
+    code: error.code,
+  });
+
+  // Provide specific error messages
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    throw new Error('Connection timeout - please check your network connection');
+  }
+  if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+    throw new Error('Network error - cannot reach server at ' + API_ENDPOINTS.auth);
+  }
+
+  throw new Error(error.response?.data?.error || error.message || 'Login failed');
+}
+```
+
+**Why detailed error logging is important:**
+- Helps diagnose network connectivity issues in production builds
+- Console logs visible via USB debugging (`adb logcat`)
+- Error codes (ECONNABORTED, ERR_NETWORK) indicate specific problems
+- User sees helpful error messages instead of generic "Login failed"
 
 ### Pull-to-Refresh
 Implement on main screens (Home, Recipes, Planner):
@@ -571,11 +607,63 @@ Key settings in [app.json](../frontend/app.json):
 - `expo.android.package`: Android package name
 - `expo.ios.bundleIdentifier`: iOS bundle identifier
 
+### Android HTTP Cleartext Traffic (Local Development)
+
+**Problem**: Android 9+ blocks HTTP traffic by default, which prevents APK builds from connecting to local development servers (e.g., `http://192.168.0.111:3001`).
+
+**Solution**: Use the `expo-build-properties` plugin to enable cleartext traffic.
+
+#### Configuration in app.json:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "android": {
+      "permissions": [
+        "INTERNET"
+      ]
+    }
+  }
+}
+```
+
+#### Installation:
+
+```bash
+npm install expo-build-properties
+npx expo install react-native-worklets  # Required peer dependency
+```
+
+**Important Notes:**
+- This allows HTTP traffic for local development testing
+- For production builds connecting to production servers, use HTTPS instead
+- Browser access working but app failing = cleartext traffic issue
+- This setting only affects standalone APK builds, not Expo Go
+
 ### Troubleshooting
 
 **Build fails with dependency errors:**
+- Run `npx expo install --fix` to fix version mismatches
 - Ensure all dependencies are compatible with Expo SDK version
 - Check for native module compatibility
+- Common fix: `npx expo install expo@~54.0.31 expo-constants@~18.0.13`
+
+**App can't connect to local backend:**
+- Verify cleartext traffic is enabled (see above)
+- Check Windows Firewall - add Node.js inbound rule
+- Confirm device and computer are on same WiFi network
+- Test backend accessibility in phone's browser first
+- Verify correct IP address in `frontend/src/config/api.ts`
 
 **Credentials issues:**
 - EAS manages Android keystore automatically
@@ -584,3 +672,8 @@ Key settings in [app.json](../frontend/app.json):
 **Build takes too long:**
 - Build queue times vary based on Expo server load
 - Average build time: 15-20 minutes for Android, 20-30 for iOS
+
+**Package version warnings:**
+- Run `npx expo install --check` to see mismatches
+- Use `npx expo install <package>@~<version>` to fix specific packages
+- Add packages to `expo.install.exclude` in package.json to ignore warnings
