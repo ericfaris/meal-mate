@@ -15,9 +15,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface AvatarMenuProps {
   onSettingsPress: () => void;
+  onHouseholdPress?: () => void;
 }
 
-export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
+export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress, onHouseholdPress }) => {
   const { user, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -72,6 +73,14 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
     // Small delay to let animation finish
     setTimeout(() => {
       onSettingsPress();
+    }, 100);
+  };
+
+  const handleHouseholdPress = () => {
+    hideMenu();
+    // Small delay to let animation finish
+    setTimeout(() => {
+      onHouseholdPress?.();
     }, 100);
   };
 
@@ -147,6 +156,16 @@ export const AvatarMenu: React.FC<AvatarMenuProps> = ({ onSettingsPress }) => {
               >
                 <Ionicons name="settings-outline" size={20} color={colors.text} />
                 <Text style={styles.menuItemText}>Settings</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={handleHouseholdPress}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="home-outline" size={20} color={colors.text} />
+                <Text style={styles.menuItemText}>Household</Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
 

@@ -14,7 +14,6 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
 import { useAuth } from '../contexts/AuthContext';
-import HouseholdSection from '../components/HouseholdSection';
 
 type SettingRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -175,11 +174,6 @@ export default function SettingsScreen() {
     Alert.alert('Coming Soon', 'Recipe export will be available in a future update!');
   };
 
-  const handleHouseholdChange = () => {
-    // Refresh user data when household changes
-    // The HouseholdSection component handles its own refresh
-  };
-
   const handleSendFeedback = () => {
     Linking.openURL('mailto:feedback@mealmate.app?subject=Meal%20Mate%20Feedback');
   };
@@ -224,9 +218,6 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
-
-      {/* Household Section */}
-      <HouseholdSection onHouseholdChange={handleHouseholdChange} />
 
       {/* Planning Defaults Section */}
       <View style={styles.section}>

@@ -411,46 +411,6 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
                   </View>
                   {inviting && <ActivityIndicator size="small" color={colors.secondary} />}
                 </TouchableOpacity>
-
-                {hasPendingSubmissions && (
-                  <>
-                    <View style={styles.divider} />
-                    <View style={styles.submissionsHeader}>
-                      <Text style={styles.submissionsTitle}>Pending Recipe Submissions</Text>
-                      <View style={styles.submissionBadge}>
-                        <Text style={styles.submissionBadgeText}>{submissions.length}</Text>
-                      </View>
-                    </View>
-                    {submissions.map((submission) => (
-                      <View key={submission._id} style={styles.submissionRow}>
-                        <View style={styles.submissionContent}>
-                          <TouchableOpacity onPress={() => handleOpenUrl(submission.recipeUrl)}>
-                            <Text style={styles.submissionUrl} numberOfLines={1}>
-                              {submission.recipeUrl}
-                            </Text>
-                          </TouchableOpacity>
-                          <Text style={styles.submissionBy}>
-                            Submitted by {submission.submittedBy.name}
-                          </Text>
-                        </View>
-                        <View style={styles.submissionActions}>
-                          <TouchableOpacity
-                            style={[styles.actionButton, styles.approveButton]}
-                            onPress={() => handleReviewSubmission(submission, true)}
-                          >
-                            <Ionicons name="checkmark" size={16} color={colors.white} />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.actionButton, styles.denyButton]}
-                            onPress={() => handleReviewSubmission(submission, false)}
-                          >
-                            <Ionicons name="close" size={16} color={colors.white} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ))}
-                  </>
-                )}
               </>
             )}
 
@@ -478,6 +438,46 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
               </View>
               {leaving && <ActivityIndicator size="small" color={colors.error} />}
             </TouchableOpacity>
+
+            {hasPendingSubmissions && (
+              <>
+                <View style={styles.divider} />
+                <View style={[styles.submissionsHeader, { paddingTop: spacing.lg }]}>
+                  <Text style={styles.submissionsTitle}>Pending Recipe Submissions</Text>
+                  <View style={styles.submissionBadge}>
+                    <Text style={styles.submissionBadgeText}>{submissions.length}</Text>
+                  </View>
+                </View>
+                {submissions.map((submission) => (
+                  <View key={submission._id} style={styles.submissionRow}>
+                    <View style={styles.submissionContent}>
+                      <TouchableOpacity onPress={() => handleOpenUrl(submission.recipeUrl)}>
+                        <Text style={styles.submissionUrl} numberOfLines={1}>
+                          {submission.recipeUrl}
+                        </Text>
+                      </TouchableOpacity>
+                      <Text style={styles.submissionBy}>
+                        Submitted by {submission.submittedBy.name}
+                      </Text>
+                    </View>
+                    <View style={styles.submissionActions}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.approveButton]}
+                        onPress={() => handleReviewSubmission(submission, true)}
+                      >
+                        <Ionicons name="checkmark" size={16} color={colors.white} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.denyButton]}
+                        onPress={() => handleReviewSubmission(submission, false)}
+                      >
+                        <Ionicons name="close" size={16} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
           </>
         )}
       </View>

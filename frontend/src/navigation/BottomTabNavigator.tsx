@@ -13,6 +13,7 @@ import RecipeDetailScreen from '../screens/RecipeDetailScreen';
 import RecipeEntryScreen from '../screens/RecipeEntryScreen';
 import PlannerScreen from '../screens/PlannerScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import HouseholdScreen from '../screens/HouseholdScreen';
 
 // Planning Flow Screens
 import ConstraintsScreen from '../screens/planning/ConstraintsScreen';
@@ -55,6 +56,7 @@ export type RootTabParamList = {
 export type RootStackParamList = {
   MainTabs: undefined;
   Settings: undefined;
+  Household: undefined;
 };
 
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
@@ -69,6 +71,7 @@ function HeaderRight() {
   return (
     <AvatarMenu
       onSettingsPress={() => navigation.navigate('Settings')}
+      onHouseholdPress={() => navigation.navigate('Household')}
     />
   );
 }
@@ -245,6 +248,22 @@ export default function RootNavigator() {
         options={{
           headerShown: true,
           title: 'Settings',
+          headerStyle: {
+            backgroundColor: colors.primary,
+          },
+          headerTintColor: colors.textOnPrimary,
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          presentation: 'card',
+        }}
+      />
+      <RootStack.Screen
+        name="Household"
+        component={HouseholdScreen}
+        options={{
+          headerShown: true,
+          title: 'Household',
           headerStyle: {
             backgroundColor: colors.primary,
           },

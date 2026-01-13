@@ -15,6 +15,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe, Plan } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { planApi } from '../services/api/plans';
+import { submissionApi } from '../services/api/submissions';
 import { getTodayString, formatDateString } from '../utils/dateUtils';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
@@ -33,6 +34,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
+  const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
 
   const isAdmin = user?.role === 'admin';
 
@@ -62,6 +64,17 @@ export default function HomeScreen({ navigation }: Props) {
       // Get all recipes for count and spotlight
       const recipes = await recipeApi.getAll();
       setRecipeCount(recipes.length);
+
+      // Check for pending submissions if user is admin
+      if (isAdmin) {
+        try {
+          const submissions = await submissionApi.getPendingSubmissions();
+          setPendingSubmissionsCount(submissions.length);
+        } catch (error) {
+          console.error('Error loading pending submissions:', error);
+          setPendingSubmissionsCount(0);
+        }
+      }
 
       // Pick a random recipe for spotlight (different from today's plan if possible)
       if (recipes.length > 0) {
@@ -167,6 +180,30 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.greeting}>{greeting}!</Text>
           <Text style={styles.dateText}>{formatDate(getTodayDateString())}</Text>
         </View>
+
+        {/* Pending Submissions Notification */}
+        {isAdmin && pendingSubmissionsCount > 0 && (
+          <TouchableOpacity
+            style={styles.notificationCard}
+            onPress={() => navigation.navigate('Household')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.notificationContent}>
+              <View style={styles.notificationIcon}>
+                <Ionicons name="document-text-outline" size={24} color={colors.white} />
+              </View>
+              <View style={styles.notificationText}>
+                <Text style={styles.notificationTitle}>
+                  {pendingSubmissionsCount} Recipe{pendingSubmissionsCount > 1 ? 's' : ''} Awaiting Approval
+                </Text>
+                <Text style={styles.notificationSubtitle}>
+                  Review submissions from your household members
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Today's Dinner Card */}
         <View style={styles.section}>
@@ -705,5 +742,43 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.sm,
+  },
+  notificationCard: {
+    backgroundColor: colors.secondary,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
+    marginHorizontal: spacing.md,
+    ...shadows.sm,
+  },
+  notificationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  notificationIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.secondaryDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationText: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+  notificationTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.white,
+    marginBottom: 2,
+  },
+  notificationSubtitle: {
+    fontSize: typography.sizes.small,
+    color: colors.white,
+    opacity: 0.9,
   },
 });
