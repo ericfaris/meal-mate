@@ -63,8 +63,6 @@ export default function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
   const route = useRoute<SettingsRouteProp>();
   const [defaultAvoidRepeats, setDefaultAvoidRepeats] = useState(true);
-  const [defaultPreferSimple, setDefaultPreferSimple] = useState(false);
-  const [clearing, setClearing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   // Handle invitation token from deep link
@@ -130,39 +128,6 @@ export default function SettingsScreen() {
               Alert.alert('Error', 'Failed to log out. Please try again.');
             } finally {
               setLoggingOut(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleClearPlans = () => {
-    Alert.alert(
-      'Clear All Plans',
-      'This will remove all your meal plans. Your recipes will not be affected. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear Plans',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setClearing(true);
-              await planApi.deleteAll();
-              Alert.alert(
-                'Plans Cleared',
-                'All your meal plans have been successfully removed.',
-                [{ text: 'OK' }]
-              );
-            } catch (error) {
-              console.error('Error clearing plans:', error);
-              Alert.alert(
-                'Error',
-                'Failed to clear plans. Please try again.'
-              );
-            } finally {
-              setClearing(false);
             }
           },
         },
@@ -236,22 +201,6 @@ export default function SettingsScreen() {
             </View>
             {renderToggle(defaultAvoidRepeats)}
           </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={styles.settingRow}
-            onPress={() => setDefaultPreferSimple(!defaultPreferSimple)}
-          >
-            <View style={[styles.settingIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="flash-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Prefer Simple Recipes</Text>
-              <Text style={styles.settingSubtitle}>Prioritize quick & easy meals</Text>
-            </View>
-            {renderToggle(defaultPreferSimple)}
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -265,15 +214,6 @@ export default function SettingsScreen() {
             title="Export Recipes"
             subtitle="Download your recipes as a file"
             onPress={handleExportRecipes}
-          />
-          <View style={styles.divider} />
-          <SettingRow
-            icon="trash-outline"
-            iconColor={colors.error}
-            title="Clear All Plans"
-            subtitle="Remove all scheduled meals"
-            onPress={handleClearPlans}
-            destructive
           />
         </View>
       </View>

@@ -214,7 +214,6 @@ export default function PlannerScreen() {
         [],
         {
           avoidRepeats: false,
-          preferSimple: false,
           vegetarianOnly: false,
         }
       );

@@ -90,7 +90,6 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
         startDate: formatStartDate(),
         daysToSkip: getDaysToSkip(),
         avoidRepeats,
-        preferSimple: false,
         vegetarianOnly: false,
       };
 

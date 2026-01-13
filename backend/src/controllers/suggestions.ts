@@ -26,7 +26,6 @@ export const generateSuggestions = async (req: Request, res: Response): Promise<
       startDate,
       daysToSkip = [],
       avoidRepeats = true,
-      preferSimple = false,
       vegetarianOnly = false,
     } = req.body;
 
@@ -40,7 +39,6 @@ export const generateSuggestions = async (req: Request, res: Response): Promise<
       startDate,
       daysToSkip,
       avoidRepeats,
-      preferSimple,
       vegetarianOnly,
     };
 
@@ -71,7 +69,6 @@ export const getAlternative = async (req: Request, res: Response): Promise<void>
       date,
       excludeRecipeIds = [],
       avoidRepeats = true,
-      preferSimple = false,
       vegetarianOnly = false,
     } = req.body;
 
@@ -83,7 +80,6 @@ export const getAlternative = async (req: Request, res: Response): Promise<void>
 
     const recipe = await getAlternativeSuggestion(date, excludeRecipeIds, {
       avoidRepeats,
-      preferSimple,
       vegetarianOnly,
     }, userId);
 

@@ -6,7 +6,6 @@ export interface SuggestionConstraints {
   startDate: string; // YYYY-MM-DD
   daysToSkip: number[]; // [0=Mon, 1=Tue, ..., 6=Sun] - indices of days to skip
   avoidRepeats: boolean;
-  preferSimple: boolean;
   vegetarianOnly: boolean;
 }
 
@@ -27,7 +26,7 @@ export const generateWeekSuggestions = async (
   constraints: SuggestionConstraints,
   userId: string
 ): Promise<DaySuggestion[]> => {
-  const { startDate, daysToSkip, avoidRepeats, preferSimple, vegetarianOnly } = constraints;
+  const { startDate, daysToSkip, avoidRepeats, vegetarianOnly } = constraints;
 
   // Build the 7-day date range
   const suggestions: DaySuggestion[] = [];
@@ -98,7 +97,7 @@ export const getAlternativeSuggestion = async (
   constraints: Omit<SuggestionConstraints, 'startDate' | 'daysToSkip'>,
   userId: string
 ): Promise<IRecipe | null> => {
-  const { avoidRepeats, preferSimple, vegetarianOnly } = constraints;
+  const { avoidRepeats, vegetarianOnly } = constraints;
 
   // Build query - filter by userId
   const query: any = { userId };
@@ -126,10 +125,6 @@ export const getAlternativeSuggestion = async (
 
   // Build sort
   const sort: any = {};
-  if (preferSimple) {
-    // Sort by complexity: simple first, then medium, then complex
-    sort.complexity = 1;
-  }
   // Add some randomness by sorting by updatedAt as secondary
   sort.updatedAt = -1;
 
@@ -151,7 +146,7 @@ async function getEligibleRecipes(
   constraints: SuggestionConstraints,
   userId: string
 ): Promise<IRecipe[]> {
-  const { avoidRepeats, preferSimple, vegetarianOnly } = constraints;
+  const { avoidRepeats, vegetarianOnly } = constraints;
 
   // Build query - filter by userId
   const query: any = { userId };
@@ -174,25 +169,9 @@ async function getEligibleRecipes(
 
   // Build sort
   const sort: any = {};
-  if (preferSimple) {
-    // Sort by complexity: simple=1, medium=2, complex=3
-    // MongoDB string sort: 'complex' < 'medium' < 'simple' alphabetically...
-    // We need a different approach - use aggregation or manual sort
-    sort.complexity = 1; // This won't work perfectly, we'll handle in memory
-  }
   sort.lastUsedDate = 1; // Prefer least recently used
 
   let recipes = await Recipe.find(query).sort(sort);
-
-  // If preferSimple, sort in memory to get correct order
-  if (preferSimple) {
-    const complexityOrder = { simple: 0, medium: 1, complex: 2, undefined: 3 };
-    recipes = recipes.sort((a, b) => {
-      const aOrder = complexityOrder[a.complexity as keyof typeof complexityOrder] ?? 3;
-      const bOrder = complexityOrder[b.complexity as keyof typeof complexityOrder] ?? 3;
-      return aOrder - bOrder;
-    });
-  }
 
   return recipes;
 }
