@@ -1,7 +1,3 @@
-- improve the  recip instructions to use bullets or numbers for formatting
-- fix encoding for apostophes and other characters in recipe fields when importing
-- remove the complexity tags from newly imported recipes
-- bullet the ingredients on the recipe details
 - add the ability to create a household
     - give me suggestions on how that would work.
 - give ability for household members to offer recipes to the household manager for consideration.
