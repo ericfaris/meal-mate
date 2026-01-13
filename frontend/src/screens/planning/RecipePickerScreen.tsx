@@ -188,13 +188,6 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
                 <Ionicons name="leaf" size={12} color={colors.secondary} />
               </View>
             )}
-            {item.complexity && (
-              <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
-                <Text style={styles.badgeText}>
-                  {item.complexity.charAt(0).toUpperCase() + item.complexity.slice(1)}
-                </Text>
-              </View>
-            )}
             {item.cookTime && (
               <View style={styles.timeInfo}>
                 <Ionicons name="time-outline" size={12} color={colors.textMuted} />

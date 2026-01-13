@@ -27,6 +27,8 @@ interface Props {
   onViewRecipe: () => void;
   onAddAnother: () => void;
   onClose: () => void;
+  simple?: boolean; // For edits - no confetti, simpler messaging
+  notification?: boolean; // For ephemeral notifications - auto-dismiss, no interaction
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -52,6 +54,8 @@ export default function RecipeSavedModal({
   onViewRecipe,
   onAddAnother,
   onClose,
+  simple = false,
+  notification = false,
 }: Props) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -91,12 +95,21 @@ export default function RecipeSavedModal({
         }),
       ]).start();
 
-      // Trigger confetti after a short delay
-      setTimeout(() => {
-        confettiRef.current?.start();
-      }, 200);
+      // Trigger confetti after a short delay (only for non-simple, non-notification mode)
+      if (!simple && !notification) {
+        setTimeout(() => {
+          confettiRef.current?.start();
+        }, 200);
+      }
+
+      // Auto-dismiss notification after 3 seconds
+      if (notification) {
+        setTimeout(() => {
+          onClose();
+        }, 3000);
+      }
     }
-  }, [visible]);
+  }, [visible, notification, onClose]);
 
   if (!recipe) return null;
 
@@ -105,11 +118,11 @@ export default function RecipeSavedModal({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={notification ? undefined : onClose}
     >
-      <View style={styles.overlay}>
-        {/* Confetti */}
-        {ConfettiCannon && (
+      <View style={[styles.overlay, notification && styles.notificationOverlay]}>
+        {/* Confetti - only for non-simple mode */}
+        {!simple && ConfettiCannon && (
           <ConfettiCannon
             ref={confettiRef}
             count={80}
@@ -124,103 +137,121 @@ export default function RecipeSavedModal({
         <Animated.View
           style={[
             styles.modalContainer,
+            notification && styles.notificationContainer,
             {
               opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
+              transform: notification ? [] : [{ scale: scaleAnim }],
             },
           ]}
         >
-          {/* Success Icon */}
-          <View style={styles.successIconContainer}>
-            <View style={styles.successIcon}>
-              <Ionicons name="checkmark" size={40} color={colors.white} />
-            </View>
-            <Text style={styles.emojiFloat}>{randomEmoji}</Text>
-          </View>
-
-          {/* Main Content */}
-          <Animated.View
-            style={[
-              styles.content,
-              {
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <Text style={styles.title}>Recipe Saved!</Text>
-            <Text style={styles.celebrationText}>{celebrationMessage}</Text>
-
-            {/* Recipe Preview Card */}
-            <View style={styles.recipeCard}>
-              {recipe.imageUrl ? (
-                <Image source={{ uri: recipe.imageUrl }} style={styles.recipeImage} />
-              ) : (
-                <View style={styles.recipeImagePlaceholder}>
-                  <Text style={styles.placeholderEmoji}>{randomEmoji}</Text>
+          {notification ? (
+            // Notification layout - simple and compact
+            <View style={styles.notificationContent}>
+              <View style={styles.notificationHeader}>
+                <View style={styles.notificationIcon}>
+                  <Ionicons name="checkmark" size={20} color={colors.success} />
                 </View>
-              )}
-              <View style={styles.recipeInfo}>
-                <Text style={styles.recipeName} numberOfLines={2}>
-                  {recipe.title}
-                </Text>
-                <View style={styles.recipeMeta}>
-                  {recipe.complexity && (
-                    <View style={[styles.badge, styles.complexityBadge]}>
-                      <Ionicons
-                        name={recipe.complexity === 'simple' ? 'flash' : recipe.complexity === 'medium' ? 'time' : 'restaurant'}
-                        size={12}
-                        color={colors.primary}
-                      />
-                      <Text style={styles.badgeText}>
-                        {recipe.complexity.charAt(0).toUpperCase() + recipe.complexity.slice(1)}
-                      </Text>
-                    </View>
-                  )}
-                  {recipe.isVegetarian && (
-                    <View style={[styles.badge, styles.vegBadge]}>
-                      <Ionicons name="leaf" size={12} color={colors.secondary} />
-                      <Text style={[styles.badgeText, { color: colors.secondary }]}>Veggie</Text>
-                    </View>
-                  )}
-                </View>
-                {recipe.cookTime && (
-                  <View style={styles.timeRow}>
-                    <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                    <Text style={styles.timeText}>{recipe.cookTime} min cook time</Text>
-                  </View>
-                )}
+                <Text style={styles.notificationTitle}>Recipe Updated!</Text>
               </View>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={onViewRecipe}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="eye-outline" size={20} color={colors.textOnPrimary} />
-                <Text style={styles.primaryButtonText}>View Recipe</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={onAddAnother}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-                <Text style={styles.secondaryButtonText}>Add Another</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Tip */}
-            <View style={styles.tipContainer}>
-              <Ionicons name="bulb-outline" size={16} color={colors.textMuted} />
-              <Text style={styles.tipText}>
-                This recipe is now ready to use in your weekly meal planning!
+              <Text style={styles.notificationMessage} numberOfLines={1}>
+                {recipe.title}
               </Text>
             </View>
-          </Animated.View>
+          ) : (
+            // Full modal layout
+            <>
+              {/* Success Icon */}
+              <View style={styles.successIconContainer}>
+                <View style={styles.successIcon}>
+                  <Ionicons name="checkmark" size={40} color={colors.white} />
+                </View>
+                {!simple && (
+                  <Text style={styles.emojiFloat}>{randomEmoji}</Text>
+                )}
+              </View>
+
+              {/* Main Content */}
+              <Animated.View
+                style={[
+                  styles.content,
+                  {
+                    transform: [{ translateY: slideAnim }],
+                  },
+                ]}
+              >
+                <Text style={styles.title}>
+                  {simple ? 'Recipe Updated!' : 'Recipe Saved!'}
+                </Text>
+                {!simple && (
+                  <Text style={styles.celebrationText}>{celebrationMessage}</Text>
+                )}
+
+                {/* Recipe Preview Card */}
+                <View style={styles.recipeCard}>
+                  {recipe.imageUrl ? (
+                    <Image source={{ uri: recipe.imageUrl }} style={styles.recipeImage} />
+                  ) : (
+                    <View style={styles.recipeImagePlaceholder}>
+                      <Text style={styles.placeholderEmoji}>{randomEmoji}</Text>
+                    </View>
+                  )}
+                  <View style={styles.recipeInfo}>
+                    <Text style={styles.recipeName} numberOfLines={2}>
+                      {recipe.title}
+                    </Text>
+                    <View style={styles.recipeMeta}>
+                      {recipe.isVegetarian && (
+                        <View style={[styles.badge, styles.vegBadge]}>
+                          <Ionicons name="leaf" size={12} color={colors.secondary} />
+                          <Text style={[styles.badgeText, { color: colors.secondary }]}>Veggie</Text>
+                        </View>
+                      )}
+                    </View>
+                    {recipe.cookTime && (
+                      <View style={styles.timeRow}>
+                        <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                        <Text style={styles.timeText}>{recipe.cookTime} min cook time</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={onViewRecipe}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="eye-outline" size={20} color={colors.textOnPrimary} />
+                    <Text style={styles.primaryButtonText}>View Recipe</Text>
+                  </TouchableOpacity>
+
+                  {!simple && (
+                    <TouchableOpacity
+                      style={styles.secondaryButton}
+                      onPress={onAddAnother}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                      <Text style={styles.secondaryButtonText}>Add Another</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Tip */}
+                <View style={styles.tipContainer}>
+                  <Ionicons name="bulb-outline" size={16} color={colors.textMuted} />
+                  <Text style={styles.tipText}>
+                    {simple
+                      ? 'Your recipe changes have been saved!'
+                      : 'This recipe is now ready to use in your weekly meal planning!'
+                    }
+                  </Text>
+                </View>
+              </Animated.View>
+            </>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -327,9 +358,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
   },
-  complexityBadge: {
-    backgroundColor: colors.primaryLight,
-  },
   vegBadge: {
     backgroundColor: colors.secondaryLight,
   },
@@ -396,5 +424,47 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     flex: 1,
+  },
+  // Notification styles
+  notificationOverlay: {
+    justifyContent: 'flex-start',
+    paddingTop: spacing.xl * 2,
+    backgroundColor: 'transparent',
+  },
+  notificationContainer: {
+    width: '90%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.background,
+    ...shadows.floating,
+  },
+  notificationContent: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  notificationIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.successLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationTitle: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.success,
+  },
+  notificationMessage: {
+    fontSize: typography.sizes.body,
+    color: colors.text,
+    textAlign: 'center',
   },
 });

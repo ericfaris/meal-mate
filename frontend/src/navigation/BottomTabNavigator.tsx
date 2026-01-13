@@ -98,10 +98,9 @@ function RecipesStackNavigator() {
       <RecipesStack.Screen
         name="RecipeDetail"
         component={RecipeDetailScreen}
-        options={({ route }) => ({
-          title: route.params.recipe.title,
+        options={{
           headerBackVisible: true,
-        })}
+        }}
       />
       <RecipesStack.Screen
         name="RecipeEntry"

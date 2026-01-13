@@ -160,10 +160,6 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
     // Extract servings (convert to number if possible)
     const servings = scrapedData.servings ? parseInt(scrapedData.servings) : undefined;
 
-    // Do NOT auto-assign complexity for newly imported recipes
-    // User can set this manually if desired
-    const complexity = undefined;
-
     // Create recipe
     const recipe = new Recipe({
       userId: req.userId,
@@ -174,7 +170,6 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
       directionsText,
       notes: decodeHtmlEntities(scrapedData.description || ''),
       tags: [], // User can add tags later
-      complexity,
       isVegetarian: false, // User can update this later
       prepTime,
       cookTime,

@@ -8,7 +8,6 @@ export interface Recipe {
   notes?: string;
   tags: string[];
   lastUsedDate?: string;
-  complexity?: 'simple' | 'medium' | 'complex';
   isVegetarian?: boolean;
   prepTime?: number;
   cookTime?: number;

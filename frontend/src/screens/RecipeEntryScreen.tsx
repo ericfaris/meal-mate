@@ -31,7 +31,6 @@ type Props = {
 };
 
 type Tab = 'import' | 'browse' | 'manual';
-type Complexity = 'simple' | 'medium' | 'complex' | undefined;
 
 const DEFAULT_RECIPE_SITES = [
   { name: 'AllRecipes', url: 'https://www.allrecipes.com' },
@@ -69,13 +68,12 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   const [imageUrl, setImageUrl] = useState(existingRecipe?.imageUrl || '');
   const [sourceUrl, setSourceUrl] = useState(existingRecipe?.sourceUrl || '');
   const [tags, setTags] = useState(existingRecipe?.tags?.join(', ') || '');
-  const [complexity, setComplexity] = useState<Complexity>(existingRecipe?.complexity);
-  const [isVegetarian, setIsVegetarian] = useState(existingRecipe?.isVegetarian || false);
   const [prepTime, setPrepTime] = useState(existingRecipe?.prepTime?.toString() || '');
   const [cookTime, setCookTime] = useState(existingRecipe?.cookTime?.toString() || '');
   const [servings, setServings] = useState(existingRecipe?.servings?.toString() || '');
 
   const [saving, setSaving] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
 
   // Success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -158,8 +156,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         imageUrl: imageUrl.trim() || undefined,
         sourceUrl: sourceUrl.trim() || undefined,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        complexity,
-        isVegetarian,
         prepTime: prepTime ? parseInt(prepTime) : undefined,
         cookTime: cookTime ? parseInt(cookTime) : undefined,
         servings: servings ? parseInt(servings) : undefined,
@@ -168,9 +164,13 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       let newSavedRecipe: Recipe;
       if (isEditMode && existingRecipe) {
         newSavedRecipe = await recipeApi.update(existingRecipe._id, recipeData);
-        // For edits, show success modal and navigate back on close
+        // For edits, show saved animation on button and navigate back after delay
         setSavedRecipe(newSavedRecipe);
-        setShowSuccessModal(true);
+        setShowSaved(true);
+        setTimeout(() => {
+          setShowSaved(false);
+          navigation.goBack();
+        }, 1500);
       } else {
         // For new recipes, show the celebration modal!
         newSavedRecipe = await recipeApi.create(recipeData);
@@ -184,8 +184,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         setImageUrl('');
         setSourceUrl('');
         setTags('');
-        setComplexity(undefined);
-        setIsVegetarian(false);
         setPrepTime('');
         setCookTime('');
         setServings('');
@@ -515,46 +513,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         </View>
       </View>
 
-      {/* Complexity */}
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Complexity</Text>
-        <View style={styles.chipRow}>
-          {(['simple', 'medium', 'complex'] as Complexity[]).map((level) => (
-            <TouchableOpacity
-              key={level}
-              style={[
-                styles.chip,
-                complexity === level && styles.chipActive,
-              ]}
-              onPress={() => setComplexity(complexity === level ? undefined : level)}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  complexity === level && styles.chipTextActive,
-                ]}
-              >
-                {level ? level.charAt(0).toUpperCase() + level.slice(1) : ''}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Vegetarian Toggle */}
-      <TouchableOpacity
-        style={styles.toggleRow}
-        onPress={() => setIsVegetarian(!isVegetarian)}
-      >
-        <View style={styles.toggleInfo}>
-          <Ionicons name="leaf-outline" size={24} color={colors.secondary} />
-          <Text style={styles.toggleLabel}>Vegetarian</Text>
-        </View>
-        <View style={[styles.toggle, isVegetarian && styles.toggleActive]}>
-          <View style={[styles.toggleKnob, isVegetarian && styles.toggleKnobActive]} />
-        </View>
-      </TouchableOpacity>
-
       {/* Tags */}
       <View style={styles.formGroup}>
         <Text style={styles.label}>Tags</Text>
@@ -599,12 +557,23 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
 
       {/* Save Button */}
       <TouchableOpacity
-        style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+        style={[
+          styles.saveButton,
+          saving && styles.saveButtonDisabled,
+          showSaved && styles.saveButtonSaved
+        ]}
         onPress={handleSave}
-        disabled={saving}
+        disabled={saving || showSaved}
       >
         {saving ? (
           <ActivityIndicator size="small" color={colors.textOnPrimary} />
+        ) : showSaved ? (
+          <>
+            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+            <Text style={[styles.saveButtonText, styles.saveButtonTextSaved]}>
+              Changes Saved!
+            </Text>
+          </>
         ) : (
           <>
             <Ionicons name="checkmark" size={20} color={colors.textOnPrimary} />
@@ -670,13 +639,14 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       {!isEditMode && renderTabs()}
       {renderContent()}
 
-      {/* Success celebration modal */}
+      {/* Success celebration modal - only for new recipes */}
       <RecipeSavedModal
-        visible={showSuccessModal}
+        visible={showSuccessModal && !isEditMode}
         recipe={savedRecipe}
         onViewRecipe={handleViewRecipe}
         onAddAnother={handleAddAnother}
         onClose={handleCloseModal}
+        notification={false}
       />
 
       {/* Error modal */}
@@ -986,30 +956,6 @@ const styles = StyleSheet.create({
   textAreaSmall: {
     minHeight: 80,
   },
-  chipRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipText: {
-    fontSize: typography.sizes.small,
-    color: colors.textLight,
-  },
-  chipTextActive: {
-    color: colors.textOnPrimary,
-    fontWeight: typography.weights.medium,
-  },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1066,9 +1012,15 @@ const styles = StyleSheet.create({
   saveButtonDisabled: {
     backgroundColor: colors.textMuted,
   },
+  saveButtonSaved: {
+    backgroundColor: colors.success,
+  },
   saveButtonText: {
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.semibold,
     color: colors.textOnPrimary,
+  },
+  saveButtonTextSaved: {
+    color: colors.white,
   },
 });

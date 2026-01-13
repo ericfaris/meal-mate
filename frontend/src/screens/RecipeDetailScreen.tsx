@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
@@ -40,18 +41,6 @@ const parseListItems = (text: string | undefined): string[] => {
   return lines;
 };
 
-// Check if text appears to be numbered steps
-const hasNumberedSteps = (items: string[]): boolean => {
-  if (items.length === 0) return false;
-
-  // Check if first few items start with numbers
-  const numberedCount = items.slice(0, Math.min(3, items.length)).filter(item =>
-    /^\d+[\.\)\:]/.test(item.trim())
-  ).length;
-
-  return numberedCount >= Math.min(2, items.length);
-};
-
 // Remove leading numbers/bullets from text
 const cleanListItem = (text: string): string => {
   // Remove leading numbers with dots, parentheses, or colons (1. 2) 3:)
@@ -69,6 +58,39 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [updatingImage, setUpdatingImage] = useState(false);
+
+  // Update recipe state when route params change (e.g., after editing)
+  useEffect(() => {
+    if (route.params.recipe) {
+      setRecipe(route.params.recipe);
+    }
+  }, [route.params.recipe]);
+
+  // Refresh recipe data when screen comes into focus (e.g., after editing)
+  useFocusEffect(
+    React.useCallback(() => {
+      const refreshRecipe = async () => {
+        if (recipe._id) {
+          try {
+            const updatedRecipe = await recipeApi.getById(recipe._id);
+            setRecipe(updatedRecipe);
+          } catch (error) {
+            console.error('Error refreshing recipe:', error);
+            // Keep the current recipe data if refresh fails
+          }
+        }
+      };
+
+      refreshRecipe();
+    }, [recipe._id])
+  );
+
+  // Update header title when recipe changes
+  useEffect(() => {
+    navigation.setOptions({
+      title: recipe.title,
+    });
+  }, [recipe.title, navigation]);
 
   const handleEdit = () => {
     navigation.navigate('RecipeEntry', { recipe, mode: 'edit' });
@@ -116,32 +138,6 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
       Alert.alert('Error', 'Failed to add image. Please try again.');
     } finally {
       setUpdatingImage(false);
-    }
-  };
-
-  const getComplexityColor = (complexity?: string) => {
-    switch (complexity) {
-      case 'simple':
-        return colors.tagSimple;
-      case 'medium':
-        return colors.tagMedium;
-      case 'complex':
-        return colors.tagComplex;
-      default:
-        return colors.border;
-    }
-  };
-
-  const getComplexityLabel = (complexity?: string) => {
-    switch (complexity) {
-      case 'simple':
-        return 'Simple';
-      case 'medium':
-        return 'Medium';
-      case 'complex':
-        return 'Complex';
-      default:
-        return null;
     }
   };
 
@@ -203,11 +199,6 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
             {recipe.isVegetarian && (
               <View style={[styles.badge, { backgroundColor: colors.secondary }]}>
                 <Text style={styles.badgeText}>Vegetarian</Text>
-              </View>
-            )}
-            {recipe.complexity && (
-              <View style={[styles.badge, { backgroundColor: getComplexityColor(recipe.complexity) }]}>
-                <Text style={styles.badgeText}>{getComplexityLabel(recipe.complexity)}</Text>
               </View>
             )}
             {recipe.planCount !== undefined && recipe.planCount > 0 && (
@@ -283,7 +274,6 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           {/* Directions */}
           {recipe.directionsText && (() => {
             const directionItems = parseListItems(recipe.directionsText);
-            const isNumbered = hasNumberedSteps(directionItems);
 
             return (
               <View style={styles.section}>
@@ -291,7 +281,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
                 {directionItems.map((item, index) => (
                   <View key={index} style={styles.listItem}>
                     <Text style={styles.bullet}>
-                      {isNumbered ? `${index + 1}.` : '•'}
+                      {index + 1}.
                     </Text>
                     <Text style={styles.listItemText}>
                       {cleanListItem(item)}

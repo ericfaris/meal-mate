@@ -9,13 +9,11 @@ const recipes = [
     title: "Pork Tenderloin",
     ingredientsText: "Boxed rice\nFrozen peas",
     directionsText: "Cook as desired.",
-    complexity: "simple" as const,
   },
   {
     title: "Nana's Spaghetti",
     ingredientsText: "Ground beef\nTomato sauce\nSpaghetti noodles\nParmesan cheese\nGarlic bread",
     directionsText: "Cook as desired.",
-    complexity: "simple" as const,
   },
   {
     title: "Beef Tacos",

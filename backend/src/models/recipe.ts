@@ -10,7 +10,6 @@ export interface IRecipe extends Document {
   notes?: string;
   tags: string[];
   lastUsedDate?: Date;
-  complexity?: 'simple' | 'medium' | 'complex';
   isVegetarian: boolean;
   prepTime?: number;
   cookTime?: number;
@@ -57,10 +56,6 @@ const recipeSchema = new Schema<IRecipe>(
     },
     lastUsedDate: {
       type: Date,
-    },
-    complexity: {
-      type: String,
-      enum: ['simple', 'medium', 'complex'],
     },
     isVegetarian: {
       type: Boolean,

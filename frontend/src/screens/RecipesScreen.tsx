@@ -19,7 +19,7 @@ import { colors, typography, spacing, borderRadius, shadows, heights } from '../
 import { useAuth } from '../contexts/AuthContext';
 import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
 
-type FilterType = 'all' | 'vegetarian' | 'simple';
+type FilterType = 'all' | 'vegetarian';
 
 type RecipeSection = {
   title: string;
@@ -81,9 +81,6 @@ export default function RecipesScreen({ navigation }: Props) {
       case 'vegetarian':
         filtered = filtered.filter((recipe) => recipe.isVegetarian);
         break;
-      case 'simple':
-        filtered = filtered.filter((recipe) => recipe.complexity === 'simple');
-        break;
     }
 
     // Sort by title ascending
@@ -136,19 +133,6 @@ export default function RecipesScreen({ navigation }: Props) {
     // Optionally show a success message or refresh data
   };
 
-  const getComplexityColor = (complexity?: string) => {
-    switch (complexity) {
-      case 'simple':
-        return colors.tagSimple;
-      case 'medium':
-        return colors.tagMedium;
-      case 'complex':
-        return colors.tagComplex;
-      default:
-        return colors.border;
-    }
-  };
-
   const renderFilterChip = (filter: FilterType, label: string) => (
     <TouchableOpacity
       style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
@@ -189,13 +173,6 @@ export default function RecipesScreen({ navigation }: Props) {
             {item.isVegetarian && (
               <View style={[styles.badge, { backgroundColor: colors.secondary + '40' }]}>
                 <Ionicons name="leaf" size={12} color={colors.secondary} />
-              </View>
-            )}
-            {item.complexity && (
-              <View style={[styles.badge, { backgroundColor: getComplexityColor(item.complexity) }]}>
-                <Text style={styles.badgeText}>
-                  {item.complexity.charAt(0).toUpperCase() + item.complexity.slice(1)}
-                </Text>
               </View>
             )}
             {item.cookTime && (
