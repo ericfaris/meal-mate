@@ -22,26 +22,40 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Find the household admin (target user whose plans to show)
+    // Find the user
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    const targetUserId = user.householdId ? user.role === 'admin' ? userId : user.householdId : userId;
-
-    // Calculate end date
+    // Calculate date range
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + numDays - 1);
 
     const startStr = startDate.toISOString().split('T')[0];
     const endStr = endDate.toISOString().split('T')[0];
 
-    const plans = await Plan.find({
-      userId: targetUserId,
-      date: { $gte: startStr, $lte: endStr },
-    })
+    let planQuery;
+
+    if (user.householdId) {
+      // User is in a household - show plans from all household members
+      const householdMembers = await User.find({ householdId: user.householdId }).select('_id');
+      const memberIds = householdMembers.map(member => member._id);
+
+      planQuery = {
+        userId: { $in: memberIds },
+        date: { $gte: startStr, $lte: endStr },
+      };
+    } else {
+      // User is not in a household - show only their own plans
+      planQuery = {
+        userId: userId,
+        date: { $gte: startStr, $lte: endStr },
+      };
+    }
+
+    const plans = await Plan.find(planQuery)
       .populate('recipeId')
       .sort({ date: 1 });
 
@@ -56,17 +70,35 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
 export const getPlanByDate = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+    const { date } = req.params;
 
-    // Find the household admin (target user whose plans to show)
+    // Find the user
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    const targetUserId = user.householdId ? user.role === 'admin' ? userId : user.householdId : userId;
+    let planQuery;
 
-    const plan = await Plan.findOne({ userId: targetUserId, date: req.params.date }).populate('recipeId');
+    if (user.householdId) {
+      // User is in a household - check if any household member has a plan for this date
+      const householdMembers = await User.find({ householdId: user.householdId }).select('_id');
+      const memberIds = householdMembers.map(member => member._id);
+
+      planQuery = {
+        userId: { $in: memberIds },
+        date: date,
+      };
+    } else {
+      // User is not in a household - check only their own plans
+      planQuery = {
+        userId: userId,
+        date: date,
+      };
+    }
+
+    const plan = await Plan.findOne(planQuery).populate('recipeId');
 
     if (!plan) {
       res.status(404).json({ error: 'Plan not found for this date' });
@@ -90,7 +122,7 @@ export const updatePlanByDate = async (req: Request, res: Response): Promise<voi
     // Check if user is admin in their household
     const user = await User.findById(userId);
     if (!user || user.role !== 'admin') {
-      res.status(403).json({ error: 'Only household admins can update plans' });
+      res.status(403).json({ error: 'Only household admins can create or update plans' });
       return;
     }
 

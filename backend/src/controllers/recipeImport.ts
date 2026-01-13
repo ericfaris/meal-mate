@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Recipe from '../models/recipe';
+import User from '../models/user';
 import { parseRecipeFromUrl } from '../services/recipeParser';
 
 // Try to use recipe-scraper first, fall back to our custom parser
@@ -13,6 +14,15 @@ try {
 // POST /api/recipes/import - Import recipe from URL
 export const importRecipeFromUrl = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can import recipes' });
+      return;
+    }
+
     const { url } = req.body;
 
     // Validation

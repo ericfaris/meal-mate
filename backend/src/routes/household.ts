@@ -22,6 +22,9 @@ router.post('/join', householdController.joinHousehold);
 // Leave household
 router.post('/leave', householdController.leaveHousehold);
 
+// Remove a member (admin only)
+router.delete('/members/:memberId', householdController.removeMember);
+
 // Delete household (admin only)
 router.delete('/', householdController.deleteHousehold);
 

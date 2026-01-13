@@ -32,6 +32,12 @@ export const householdApi = {
     return response.data;
   },
 
+  // Remove a member (admin only)
+  removeMember: async (memberId: string): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`${API_ENDPOINTS.households}/members/${memberId}`);
+    return response.data;
+  },
+
   // Delete household (admin only)
   deleteHousehold: async (): Promise<{ message: string }> => {
     const response = await apiClient.delete(API_ENDPOINTS.households);

@@ -22,6 +22,7 @@ import { PlannerStackParamList } from '../navigation/BottomTabNavigator';
 import { dateToString, addDays, getNextMonday, parseDate, getTodayString, formatDateString, getMondayOfWeek } from '../utils/dateUtils';
 import PlannerTutorial from '../components/PlannerTutorial';
 import { hasPlannerTutorialCompleted } from '../utils/tutorialStorage';
+import { useAuth } from '../contexts/AuthContext';
 
 type PlannerScreenNavigationProp = NativeStackNavigationProp<PlannerStackParamList, 'PlannerHome'>;
 type PlannerScreenRouteProp = RouteProp<PlannerStackParamList, 'PlannerHome'>;
@@ -29,6 +30,7 @@ type PlannerScreenRouteProp = RouteProp<PlannerStackParamList, 'PlannerHome'>;
 export default function PlannerScreen() {
   const navigation = useNavigation<PlannerScreenNavigationProp>();
   const route = useRoute<PlannerScreenRouteProp>();
+  const { user } = useAuth();
 
   // Calculate initial week offset based on route params
   const getInitialWeekOffset = (): number => {
@@ -53,6 +55,8 @@ export default function PlannerScreen() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [recipeCount, setRecipeCount] = useState(0);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   // Reset week offset when route params change
   useEffect(() => {
@@ -310,20 +314,24 @@ export default function PlannerScreen() {
               </View>
             </View>
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                onPress={() => handleSuggestMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                onPress={() => handlePickMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-              </TouchableOpacity>
+              {isAdmin && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
+                    onPress={() => handleSuggestMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
+                    onPress={() => handlePickMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         ) : item.label ? (
@@ -343,40 +351,48 @@ export default function PlannerScreen() {
               ]}>{item.label}</Text>
             </View>
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                onPress={() => handleSuggestMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                onPress={() => handlePickMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-              </TouchableOpacity>
+              {isAdmin && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
+                    onPress={() => handleSuggestMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
+                    onPress={() => handlePickMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         ) : (
           <View style={styles.emptyMealContainer}>
             <Text style={styles.emptyText}>No meal planned</Text>
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                onPress={() => handleSuggestMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                onPress={() => handlePickMeal(item.date)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-              </TouchableOpacity>
+              {isAdmin && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
+                    onPress={() => handleSuggestMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
+                    onPress={() => handlePickMeal(item.date)}
+                    disabled={recipeCount === 0 || past}
+                  >
+                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         )}
@@ -491,7 +507,7 @@ export default function PlannerScreen() {
       </View>
 
       {/* Plan Week Button */}
-      {!allDaysPlanned && (
+      {!allDaysPlanned && isAdmin && (
         <View style={styles.headerActions}>
           {recipeCount === 0 ? (
             <View style={styles.noRecipesContainer}>
@@ -570,12 +586,14 @@ export default function PlannerScreen() {
             <Text style={styles.modalTitle}>Plan This Week</Text>
             <Text style={styles.modalMessage}>How would you like to plan?</Text>
 
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={handleGetSuggestions}
-            >
-              <Text style={styles.modalButtonText}>Get Suggestions</Text>
-            </TouchableOpacity>
+            {isAdmin && (
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleGetSuggestions}
+              >
+                <Text style={styles.modalButtonText}>Get Suggestions</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[styles.modalButton, styles.secondaryModalButton]}

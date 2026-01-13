@@ -6,6 +6,7 @@ import {
   SuggestionConstraints,
 } from '../services/suggestionService';
 import Plan from '../models/plan';
+import User from '../models/user';
 
 /**
  * POST /api/suggestions/generate
@@ -14,6 +15,13 @@ import Plan from '../models/plan';
 export const generateSuggestions = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can generate meal suggestions' });
+      return;
+    }
     const {
       startDate,
       daysToSkip = [],
@@ -51,6 +59,14 @@ export const generateSuggestions = async (req: Request, res: Response): Promise<
 export const getAlternative = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can get alternative suggestions' });
+      return;
+    }
+
     const {
       date,
       excludeRecipeIds = [],
@@ -90,6 +106,14 @@ export const getAlternative = async (req: Request, res: Response): Promise<void>
 export const approveSuggestions = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can approve suggestions' });
+      return;
+    }
+
     const { suggestions } = req.body;
 
     if (!Array.isArray(suggestions) || suggestions.length === 0) {

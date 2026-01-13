@@ -52,6 +52,11 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
     }
   }, [isInHousehold]);
 
+  useEffect(() => {
+    // Refresh user data on mount to ensure we have latest household status
+    refreshUser();
+  }, []);
+
   const loadHouseholdData = async () => {
     try {
       setLoading(true);
@@ -59,10 +64,12 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
         householdApi.getHousehold(),
         isAdmin ? submissionApi.getPendingSubmissions() : Promise.resolve([]),
       ]);
+      console.log('Household data loaded:', householdData);
       setHousehold(householdData);
       setSubmissions(submissionsData);
     } catch (error) {
       console.error('Error loading household data:', error);
+      // Don't show error alert for household loading, just log it
     } finally {
       setLoading(false);
     }
@@ -167,6 +174,30 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       console.error('Error copying invite:', error);
       Alert.alert('Error', 'Failed to copy invitation link');
     }
+  };
+
+  const handleRemoveMember = async (member: HouseholdMember) => {
+    Alert.alert(
+      'Remove Member',
+      `Are you sure you want to remove ${member.name} from the household? They will lose access to shared recipes and plans.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await householdApi.removeMember(member._id);
+              await loadHouseholdData(); // Refresh the household data
+              Alert.alert('Success', `${member.name} has been removed from the household.`);
+            } catch (error: any) {
+              console.error('Error removing member:', error);
+              Alert.alert('Error', error.response?.data?.message || 'Failed to remove member');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleLeaveHousehold = () => {
@@ -322,13 +353,21 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
                     <Text style={styles.memberName}>{member.name}</Text>
                     <Text style={styles.memberEmail}>{member.email}</Text>
                   </View>
-                  <View style={styles.memberRole}>
+                  <View style={styles.memberRoleAndActions}>
                     <Text style={[
                       styles.roleText,
                       member.role === 'admin' && styles.adminRoleText
                     ]}>
                       {member.role}
                     </Text>
+                    {isAdmin && member._id !== user?.id && (
+                      <TouchableOpacity
+                        style={styles.removeMemberButton}
+                        onPress={() => handleRemoveMember(member)}
+                      >
+                        <Ionicons name="person-remove-outline" size={16} color={colors.error} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               ))}
@@ -768,6 +807,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
+  },
+  memberRoleAndActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  removeMemberButton: {
+    padding: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.error + '20',
   },
   adminRoleText: {
     color: colors.primary,

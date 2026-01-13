@@ -10,7 +10,7 @@ export const submissionApi = {
 
   // Get pending submissions (admin only)
   getPendingSubmissions: async (): Promise<RecipeSubmission[]> => {
-    const response = await apiClient.get(API_ENDPOINTS.submissions);
+    const response = await apiClient.get(`${API_ENDPOINTS.submissions}/pending`);
     return response.data.submissions;
   },
 

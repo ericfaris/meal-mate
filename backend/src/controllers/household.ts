@@ -213,3 +213,57 @@ export const deleteHousehold = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to delete household' });
   }
 };
+
+// Remove a member from household (admin only)
+export const removeMember = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { memberId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user?.householdId || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only household admins can remove members' });
+    }
+
+    // Cannot remove yourself
+    if (memberId === userId) {
+      return res.status(400).json({ message: 'You cannot remove yourself from the household' });
+    }
+
+    const memberToRemove = await User.findById(memberId);
+    if (!memberToRemove || !memberToRemove.householdId || !memberToRemove.householdId.equals(user.householdId)) {
+      return res.status(404).json({ message: 'Member not found in this household' });
+    }
+
+    const household = await Household.findById(user.householdId);
+    if (!household) {
+      return res.status(404).json({ message: 'Household not found' });
+    }
+
+    // Check if this would leave the household without any admins
+    const adminCount = await User.countDocuments({
+      householdId: user.householdId,
+      role: 'admin',
+      _id: { $ne: memberId } // Exclude the member being removed
+    });
+
+    if (adminCount === 0) {
+      return res.status(400).json({ message: 'Cannot remove the last admin from the household' });
+    }
+
+    // Remove member from household
+    household.members = household.members.filter(id => !id.equals(memberId));
+    await household.save();
+
+    // Remove household from member
+    await User.findByIdAndUpdate(memberId, {
+      householdId: null,
+      role: 'member', // Reset to default
+    });
+
+    res.json({ message: 'Member removed successfully' });
+  } catch (error: any) {
+    console.error('Error removing member:', error);
+    res.status(500).json({ message: 'Failed to remove member' });
+  }
+};
