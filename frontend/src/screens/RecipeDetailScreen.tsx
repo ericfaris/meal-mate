@@ -211,19 +211,19 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
 
           {/* Meta Info */}
           <View style={styles.metaRow}>
-            {recipe.prepTime !== undefined && (
+            {recipe.prepTime !== undefined && recipe.prepTime > 0 && (
               <View style={styles.metaItem}>
                 <Ionicons name="time-outline" size={18} color={colors.textLight} />
                 <Text style={styles.metaText}>Prep: {recipe.prepTime} min</Text>
               </View>
             )}
-            {recipe.cookTime !== undefined && (
+            {recipe.cookTime !== undefined && recipe.cookTime > 0 && (
               <View style={styles.metaItem}>
                 <Ionicons name="flame-outline" size={18} color={colors.textLight} />
                 <Text style={styles.metaText}>Cook: {recipe.cookTime} min</Text>
               </View>
             )}
-            {recipe.servings !== undefined && (
+            {recipe.servings !== undefined && recipe.servings > 0 && (
               <View style={styles.metaItem}>
                 <Ionicons name="people-outline" size={18} color={colors.textLight} />
                 <Text style={styles.metaText}>{recipe.servings} servings</Text>

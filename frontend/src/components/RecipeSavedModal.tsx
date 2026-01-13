@@ -207,7 +207,7 @@ export default function RecipeSavedModal({
                         </View>
                       )}
                     </View>
-                    {recipe.cookTime && (
+                    {recipe.cookTime && recipe.cookTime > 0 && (
                       <View style={styles.timeRow}>
                         <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                         <Text style={styles.timeText}>{recipe.cookTime} min cook time</Text>

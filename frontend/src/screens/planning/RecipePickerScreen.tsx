@@ -188,7 +188,7 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
                 <Ionicons name="leaf" size={12} color={colors.secondary} />
               </View>
             )}
-            {item.cookTime && (
+            {item.cookTime && item.cookTime > 0 && (
               <View style={styles.timeInfo}>
                 <Ionicons name="time-outline" size={12} color={colors.textMuted} />
                 <Text style={styles.timeText}>{item.cookTime} min</Text>
