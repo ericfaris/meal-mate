@@ -10,6 +10,7 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Clipboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -38,6 +39,8 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
   const [reviewSubmission, setReviewSubmission] = useState<RecipeSubmission | null>(null);
   const [reviewApproved, setReviewApproved] = useState(false);
   const [reviewNotes, setReviewNotes] = useState('');
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [currentInviteUrl, setCurrentInviteUrl] = useState<string>('');
 
   const isInHousehold = !!user?.householdId;
   const isAdmin = user?.role === 'admin';
@@ -77,6 +80,15 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
     }
 
     try {
+      // Refresh user state first to ensure we have latest household status
+      await refreshUser();
+
+      // Check again if user is already in a household after refresh
+      if (user?.householdId) {
+        Alert.alert('Error', 'You are already in a household. Please leave your current household first.');
+        return;
+      }
+
       setCreating(true);
       setCreateModalVisible(false);
       await householdApi.createHousehold({ name: householdName.trim() });
@@ -124,16 +136,36 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
     try {
       setInviting(true);
       const { inviteUrl } = await householdApi.generateInvite();
-
-      await Share.share({
-        message: `Join my household on Meal Mate! ${inviteUrl}`,
-        url: inviteUrl,
-      });
+      setCurrentInviteUrl(inviteUrl);
+      setInviteModalVisible(true);
     } catch (error: any) {
       console.error('Error generating invite:', error);
       Alert.alert('Error', error.response?.data?.message || 'Failed to generate invitation');
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleShareInvite = async () => {
+    try {
+      await Share.share({
+        message: `Join my household on Meal Mate! ${currentInviteUrl}`,
+      });
+      setInviteModalVisible(false);
+    } catch (error: any) {
+      console.error('Error sharing invite:', error);
+      Alert.alert('Error', 'Failed to share invitation');
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    try {
+      await Clipboard.setString(currentInviteUrl);
+      Alert.alert('Copied!', 'Invitation link copied to clipboard');
+      setInviteModalVisible(false);
+    } catch (error: any) {
+      console.error('Error copying invite:', error);
+      Alert.alert('Error', 'Failed to copy invitation link');
     }
   };
 
@@ -562,6 +594,63 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
           </View>
         </View>
       </Modal>
+
+      {/* Invite Members Modal */}
+      <Modal
+        visible={inviteModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setInviteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Invite Members</Text>
+              <TouchableOpacity
+                onPress={() => setInviteModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              Share this invitation link with potential household members:
+            </Text>
+
+            <View style={styles.inviteLinkContainer}>
+              <Text style={styles.inviteLink} selectable={true}>
+                {currentInviteUrl}
+              </Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setInviteModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.secondaryButton]}
+                onPress={handleCopyInvite}
+              >
+                <Ionicons name="copy-outline" size={16} color={colors.secondary} />
+                <Text style={styles.secondaryButtonText}>Copy Link</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.createButton]}
+                onPress={handleShareInvite}
+              >
+                <Ionicons name="share-outline" size={16} color={colors.white} />
+                <Text style={styles.createButtonText}>Share Link</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -823,7 +912,34 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.medium as any,
   },
+  denyButton: {
+    backgroundColor: colors.error,
+  },
   buttonDisabled: {
     opacity: 0.5,
+  },
+  inviteLinkContainer: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  inviteLink: {
+    fontSize: typography.sizes.small,
+    color: colors.primary,
+    fontFamily: 'monospace',
+    lineHeight: 20,
+  },
+  secondaryButton: {
+    backgroundColor: colors.secondary + '20',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  secondaryButtonText: {
+    color: colors.secondary,
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.medium as any,
   },
 });

@@ -89,7 +89,7 @@ export const generateInviteLink = async (req: Request, res: Response) => {
     }
 
     const token = generateInvitationToken(user.householdId.toString());
-    const inviteUrl = `${process.env.FRONTEND_URL || 'exp://localhost:8081'}--/join/${token}`;
+    const inviteUrl = `mealmate://join/${token}`;
 
     res.json({ inviteUrl });
   } catch (error: any) {
