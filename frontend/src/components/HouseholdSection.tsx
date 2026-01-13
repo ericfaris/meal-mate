@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   Clipboard,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -262,6 +263,20 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
     }
   };
 
+  const handleOpenUrl = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open this URL');
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      Alert.alert('Error', 'Failed to open URL');
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.section}>
@@ -409,9 +424,11 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
                     {submissions.map((submission) => (
                       <View key={submission._id} style={styles.submissionRow}>
                         <View style={styles.submissionContent}>
-                          <Text style={styles.submissionUrl} numberOfLines={1}>
-                            {submission.recipeUrl}
-                          </Text>
+                          <TouchableOpacity onPress={() => handleOpenUrl(submission.recipeUrl)}>
+                            <Text style={styles.submissionUrl} numberOfLines={1}>
+                              {submission.recipeUrl}
+                            </Text>
+                          </TouchableOpacity>
                           <Text style={styles.submissionBy}>
                             Submitted by {submission.submittedBy.name}
                           </Text>

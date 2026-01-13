@@ -93,7 +93,8 @@ export const getPendingSubmissions = async (req: Request, res: Response) => {
 // Review a submission (approve/deny) and optionally import if approved
 export const reviewSubmission = async (req: Request, res: Response) => {
   try {
-    const { submissionId, action, reviewNotes } = req.body;
+    const { submissionId } = req.params;
+    const { action, reviewNotes } = req.body;
     const userId = req.userId;
 
     if (!['approve', 'deny'].includes(action)) {

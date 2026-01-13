@@ -16,6 +16,8 @@ import { Recipe, Plan } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { planApi } from '../services/api/plans';
 import { getTodayString, formatDateString } from '../utils/dateUtils';
+import { useAuth } from '../contexts/AuthContext';
+import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,11 +26,15 @@ type Props = {
 };
 
 export default function HomeScreen({ navigation }: Props) {
+  const { user } = useAuth();
   const [todayPlan, setTodayPlan] = useState<Plan | null>(null);
   const [spotlightRecipe, setSpotlightRecipe] = useState<Recipe | null>(null);
   const [recipeCount, setRecipeCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [greeting, setGreeting] = useState('');
+  const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -122,10 +128,16 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const navigateToAddRecipe = () => {
-    navigation.navigate('RecipesTab', {
-      screen: 'RecipeEntry',
-      params: { mode: 'create' },
-    });
+    if (isAdmin) {
+      // Admins can create recipes directly
+      navigation.navigate('RecipesTab', {
+        screen: 'RecipeEntry',
+        params: { mode: 'create' },
+      });
+    } else {
+      // Members see the submission modal directly
+      setSubmissionModalVisible(true);
+    }
   };
 
   const navigateToPlanWeek = () => {
@@ -136,240 +148,253 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={colors.primary}
-          colors={[colors.primary]}
-        />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header Greeting */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>{greeting}!</Text>
-        <Text style={styles.dateText}>{formatDate(getTodayDateString())}</Text>
-      </View>
-
-      {/* Today's Dinner Card */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tonight's Dinner</Text>
-        {todayPlan ? (
-          <TouchableOpacity
-            style={styles.todayCard}
-            onPress={() => {
-              if (todayPlan.recipeId && typeof todayPlan.recipeId !== 'string') {
-                navigateToRecipe(todayPlan.recipeId as Recipe);
-              } else if (!todayPlan.recipeId && !todayPlan.label) {
-                navigateToPlanWeek();
-              }
-            }}
-            activeOpacity={0.9}
-          >
-            {todayPlan.recipeId && typeof todayPlan.recipeId !== 'string' ? (
-              <View style={{flex: 1, width: '100%', height: '100%'}}>
-                {(todayPlan.recipeId as Recipe).imageUrl ? (
-                  <Image
-                    source={{ uri: (todayPlan.recipeId as Recipe).imageUrl }}
-                    style={styles.todayImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.todayImagePlaceholder}>
-                    <Text style={styles.placeholderEmoji}>🍽️</Text>
-                  </View>
-                )}
-                <View style={styles.todayOverlay}>
-                  <Text style={styles.todayTitle}>{(todayPlan.recipeId as Recipe).title}</Text>
-                  <View style={styles.todayMeta}>
-                    {(todayPlan.recipeId as Recipe).cookTime && (
-                      <View style={styles.metaItem}>
-                        <Ionicons name="time-outline" size={16} color={colors.white} />
-                        <Text style={styles.metaText}>
-                          {(todayPlan.recipeId as Recipe).cookTime} min
-                        </Text>
-                      </View>
-                    )}
-                    {(todayPlan.recipeId as Recipe).complexity && (
-                      <View style={styles.metaItem}>
-                        <Ionicons name="speedometer-outline" size={16} color={colors.white} />
-                        <Text style={styles.metaText}>
-                          {(todayPlan.recipeId as Recipe).complexity}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={styles.startCookingButton}
-                    onPress={() => navigateToRecipe(todayPlan.recipeId as Recipe)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.startCookingText}>Start Cooking</Text>
-                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : todayPlan.label ? (
-              <View style={[
-                styles.labelCard,
-                todayPlan.label === 'Eating Out' && styles.eatingOutCard,
-                todayPlan.label === 'TBD' && styles.tbdCard
-              ]}>
-                <Text style={styles.labelCardEmoji}>
-                  {todayPlan.label === 'Eating Out' ? '🍽️' : '❓'}
-                </Text>
-                <Text style={[
-                  styles.labelCardText,
-                  todayPlan.label === 'Eating Out' && styles.eatingOutText,
-                  todayPlan.label === 'TBD' && styles.tbdText
-                ]}>{todayPlan.label}</Text>
-                <Text style={styles.labelCardSubtext}>
-                  {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : 'Decision pending'}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.labelCard}>
-                <Text style={styles.labelCardEmoji}>🤔</Text>
-                <Text style={styles.labelCardText}>Plan Incomplete</Text>
-                <Text style={styles.labelCardSubtext}>
-                  Tap to update tonight's plan
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.noPlanCard}
-            onPress={recipeCount > 0 ? navigateToPlanWeek : navigateToAddRecipe}
-            activeOpacity={0.8}
-          >
-            <View style={styles.noPlanContent}>
-              <Text style={styles.noPlanEmoji}>{recipeCount > 0 ? '🤔' : '📝'}</Text>
-              <Text style={styles.noPlanTitle}>
-                {recipeCount > 0 ? 'No dinner planned yet' : 'No recipes yet'}
-              </Text>
-              <Text style={styles.noPlanSubtext}>
-                {recipeCount > 0
-                  ? 'Tap here to plan your week\'s meals'
-                  : 'Add some recipes to start planning'}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={navigateToPlanWeek}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="calendar" size={24} color={colors.primary} />
-            </View>
-            <Text style={styles.actionLabel}>Plan Week</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={navigateToAddRecipe}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: colors.secondaryLight }]}>
-              <Ionicons name="add-circle" size={24} color={colors.secondary} />
-            </View>
-            <Text style={styles.actionLabel}>Add Recipe</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={navigateToRecipes}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
-              <Ionicons name="book" size={24} color="#FF9800" />
-            </View>
-            <Text style={styles.actionLabel}>Browse</Text>
-          </TouchableOpacity>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Greeting */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>{greeting}!</Text>
+          <Text style={styles.dateText}>{formatDate(getTodayDateString())}</Text>
         </View>
-      </View>
 
-      {/* Recipe Spotlight */}
-      {spotlightRecipe && (
+        {/* Today's Dinner Card */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recipe Inspiration</Text>
-            <TouchableOpacity onPress={navigateToRecipes}>
-              <Text style={styles.seeAllLink}>See all</Text>
+          <Text style={styles.sectionTitle}>Tonight's Dinner</Text>
+          {todayPlan ? (
+            <TouchableOpacity
+              style={styles.todayCard}
+              onPress={() => {
+                if (todayPlan.recipeId && typeof todayPlan.recipeId !== 'string') {
+                  navigateToRecipe(todayPlan.recipeId as Recipe);
+                } else if (!todayPlan.recipeId && !todayPlan.label && isAdmin) {
+                  navigateToPlanWeek();
+                }
+              }}
+              activeOpacity={0.9}
+            >
+              {todayPlan.recipeId && typeof todayPlan.recipeId !== 'string' ? (
+                <View style={{flex: 1, width: '100%', height: '100%'}}>
+                  {(todayPlan.recipeId as Recipe).imageUrl ? (
+                    <Image
+                      source={{ uri: (todayPlan.recipeId as Recipe).imageUrl }}
+                      style={styles.todayImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.todayImagePlaceholder}>
+                      <Text style={styles.placeholderEmoji}>🍽️</Text>
+                    </View>
+                  )}
+                  <View style={styles.todayOverlay}>
+                    <Text style={styles.todayTitle}>{(todayPlan.recipeId as Recipe).title}</Text>
+                    <View style={styles.todayMeta}>
+                      {(todayPlan.recipeId as Recipe).cookTime && (
+                        <View style={styles.metaItem}>
+                          <Ionicons name="time-outline" size={16} color={colors.white} />
+                          <Text style={styles.metaText}>
+                            {(todayPlan.recipeId as Recipe).cookTime} min
+                          </Text>
+                        </View>
+                      )}
+                      {(todayPlan.recipeId as Recipe).complexity && (
+                        <View style={styles.metaItem}>
+                          <Ionicons name="speedometer-outline" size={16} color={colors.white} />
+                          <Text style={styles.metaText}>
+                            {(todayPlan.recipeId as Recipe).complexity}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.startCookingButton}
+                      onPress={() => navigateToRecipe(todayPlan.recipeId as Recipe)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.startCookingText}>Start Cooking</Text>
+                      <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : todayPlan.label ? (
+                <View style={[
+                  styles.labelCard,
+                  todayPlan.label === 'Eating Out' && styles.eatingOutCard,
+                  todayPlan.label === 'TBD' && styles.tbdCard
+                ]}>
+                  <Text style={styles.labelCardEmoji}>
+                    {todayPlan.label === 'Eating Out' ? '🍽️' : '❓'}
+                  </Text>
+                  <Text style={[
+                    styles.labelCardText,
+                    todayPlan.label === 'Eating Out' && styles.eatingOutText,
+                    todayPlan.label === 'TBD' && styles.tbdText
+                  ]}>{todayPlan.label}</Text>
+                  <Text style={styles.labelCardSubtext}>
+                    {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : 'Decision pending'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.labelCard}>
+                  <Text style={styles.labelCardEmoji}>🤔</Text>
+                  <Text style={styles.labelCardText}>Plan Incomplete</Text>
+                  <Text style={styles.labelCardSubtext}>
+                    Tap to update tonight's plan
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.noPlanCard}
+              onPress={recipeCount > 0 && isAdmin ? navigateToPlanWeek : navigateToAddRecipe}
+              activeOpacity={0.8}
+            >
+              <View style={styles.noPlanContent}>
+                <Text style={styles.noPlanEmoji}>{recipeCount > 0 && isAdmin ? '🤔' : '📝'}</Text>
+                <Text style={styles.noPlanTitle}>
+                  {recipeCount > 0 && isAdmin ? 'No dinner planned yet' : isAdmin ? 'No recipes yet' : 'No recipes yet'}
+                </Text>
+                <Text style={styles.noPlanSubtext}>
+                  {recipeCount > 0 && isAdmin
+                    ? 'Tap here to plan your week\'s meals'
+                    : isAdmin
+                      ? 'Add some recipes to start planning'
+                      : 'Submit recipe suggestions to get started'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsRow}>
+            {isAdmin && (
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={navigateToPlanWeek}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="calendar" size={24} color={colors.primary} />
+                </View>
+                <Text style={styles.actionLabel}>Plan Week</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={navigateToAddRecipe}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: isAdmin ? colors.secondaryLight : '#E8F5E8' }]}>
+                <Ionicons name={isAdmin ? "add-circle" : "paper-plane"} size={24} color={isAdmin ? colors.secondary : '#4CAF50'} />
+              </View>
+              <Text style={styles.actionLabel}>{isAdmin ? 'Add Recipe' : 'Submit Recipe'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={navigateToRecipes}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
+                <Ionicons name="book" size={24} color="#FF9800" />
+              </View>
+              <Text style={styles.actionLabel}>Browse</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.spotlightCard}
-            onPress={() => navigateToRecipe(spotlightRecipe)}
-            activeOpacity={0.9}
-          >
-            {spotlightRecipe.imageUrl ? (
-              <Image
-                source={{ uri: spotlightRecipe.imageUrl }}
-                style={styles.spotlightImage}
-              />
-            ) : (
-              <View style={styles.spotlightImagePlaceholder}>
-                <Text style={styles.spotlightPlaceholderEmoji}>🍳</Text>
-              </View>
-            )}
-            <View style={styles.spotlightContent}>
-              <Text style={styles.spotlightTitle} numberOfLines={2}>
-                {spotlightRecipe.title}
-              </Text>
-              <View style={styles.spotlightMeta}>
-                {spotlightRecipe.cookTime && (
-                  <View style={styles.spotlightMetaItem}>
-                    <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                    <Text style={styles.spotlightMetaText}>
-                      {spotlightRecipe.cookTime} min
-                    </Text>
-                  </View>
-                )}
-                {spotlightRecipe.isVegetarian && (
-                  <View style={styles.vegBadge}>
-                    <Ionicons name="leaf" size={12} color={colors.secondary} />
-                    <Text style={styles.vegBadgeText}>Veggie</Text>
-                  </View>
-                )}
-              </View>
+        </View>
+
+        {/* Recipe Spotlight */}
+        {spotlightRecipe && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recipe Inspiration</Text>
+              <TouchableOpacity onPress={navigateToRecipes}>
+                <Text style={styles.seeAllLink}>See all</Text>
+              </TouchableOpacity>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
-      )}
+            <TouchableOpacity
+              style={styles.spotlightCard}
+              onPress={() => navigateToRecipe(spotlightRecipe)}
+              activeOpacity={0.9}
+            >
+              {spotlightRecipe.imageUrl ? (
+                <Image
+                  source={{ uri: spotlightRecipe.imageUrl }}
+                  style={styles.spotlightImage}
+                />
+              ) : (
+                <View style={styles.spotlightImagePlaceholder}>
+                  <Text style={styles.spotlightPlaceholderEmoji}>🍳</Text>
+                </View>
+              )}
+              <View style={styles.spotlightContent}>
+                <Text style={styles.spotlightTitle} numberOfLines={2}>
+                  {spotlightRecipe.title}
+                </Text>
+                <View style={styles.spotlightMeta}>
+                  {spotlightRecipe.cookTime && (
+                    <View style={styles.spotlightMetaItem}>
+                      <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                      <Text style={styles.spotlightMetaText}>
+                        {spotlightRecipe.cookTime} min
+                      </Text>
+                    </View>
+                  )}
+                  {spotlightRecipe.isVegetarian && (
+                    <View style={styles.vegBadge}>
+                      <Ionicons name="leaf" size={12} color={colors.secondary} />
+                      <Text style={styles.vegBadgeText}>Veggie</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {/* Stats Summary */}
-      <View style={styles.section}>
-        <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statCard} onPress={navigateToRecipes}>
-            <Text style={styles.statNumber}>{recipeCount}</Text>
-            <Text style={styles.statLabel}>Recipes</Text>
-          </TouchableOpacity>
-          <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statCard} onPress={navigateToPlanner}>
-            <Ionicons name="calendar-outline" size={28} color={colors.primary} />
-            <Text style={styles.statLabel}>View Planner</Text>
-          </TouchableOpacity>
+        {/* Stats Summary */}
+        <View style={styles.section}>
+          <View style={styles.statsRow}>
+            <TouchableOpacity style={styles.statCard} onPress={navigateToRecipes}>
+              <Text style={styles.statNumber}>{recipeCount}</Text>
+              <Text style={styles.statLabel}>Recipes</Text>
+            </TouchableOpacity>
+            <View style={styles.statDivider} />
+            <TouchableOpacity style={styles.statCard} onPress={navigateToPlanner}>
+              <Ionicons name="calendar-outline" size={28} color={colors.primary} />
+              <Text style={styles.statLabel}>View Planner</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Bottom padding */}
-      <View style={{ height: spacing.xl }} />
-    </ScrollView>
+        {/* Bottom padding */}
+        <View style={{ height: spacing.xl }} />
+      </ScrollView>
+
+      {/* Recipe Submission Modal for Members */}
+      <RecipeSubmissionModal
+        visible={submissionModalVisible}
+        onClose={() => setSubmissionModalVisible(false)}
+        onSubmit={() => setSubmissionModalVisible(false)}
+      />
+    </View>
   );
 }
 
