@@ -11,8 +11,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
+import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
 
 type SettingRowProps = {
@@ -23,6 +26,7 @@ type SettingRowProps = {
   onPress?: () => void;
   rightElement?: React.ReactNode;
   destructive?: boolean;
+  loading?: boolean;
 };
 
 function SettingRow({
@@ -33,16 +37,21 @@ function SettingRow({
   onPress,
   rightElement,
   destructive,
+  loading,
 }: SettingRowProps) {
   return (
     <TouchableOpacity
       style={styles.settingRow}
       onPress={onPress}
-      disabled={!onPress}
-      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress || loading}
+      activeOpacity={onPress && !loading ? 0.7 : 1}
     >
       <View style={[styles.settingIcon, { backgroundColor: iconColor + '20' }]}>
-        <Ionicons name={icon} size={20} color={iconColor} />
+        {loading ? (
+          <ActivityIndicator size="small" color={iconColor} />
+        ) : (
+          <Ionicons name={icon} size={20} color={iconColor} />
+        )}
       </View>
       <View style={styles.settingContent}>
         <Text style={[styles.settingTitle, destructive && styles.settingTitleDestructive]}>
@@ -50,7 +59,7 @@ function SettingRow({
         </Text>
         {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
       </View>
-      {rightElement || (onPress && (
+      {rightElement || (onPress && !loading && (
         <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
       ))}
     </TouchableOpacity>
@@ -63,6 +72,7 @@ export default function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
   const route = useRoute<SettingsRouteProp>();
   const [defaultAvoidRepeats, setDefaultAvoidRepeats] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   // Handle invitation token from deep link
@@ -135,8 +145,63 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleExportRecipes = () => {
-    Alert.alert('Coming Soon', 'Recipe export will be available in a future update!');
+  const handleExportRecipes = async () => {
+    try {
+      setExporting(true); // Show loading state
+
+      // Fetch all recipes
+      const recipes = await recipeApi.getAll();
+
+      if (recipes.length === 0) {
+        Alert.alert('No Recipes', 'You don\'t have any recipes to export.');
+        return;
+      }
+
+      // Create export data with metadata
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        totalRecipes: recipes.length,
+        appVersion: '1.0.0',
+        recipes: recipes,
+      };
+
+      // Convert to JSON string
+      const jsonString = JSON.stringify(exportData, null, 2);
+
+      // Create filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const filename = `meal-mate-recipes-${timestamp}.json`;
+
+      // Get the document directory
+      const fileUri = FileSystem.documentDirectory + filename;
+
+      // Write the file
+      await FileSystem.writeAsStringAsync(fileUri, jsonString, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share the file
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: 'Export Recipes',
+        });
+      } else {
+        Alert.alert(
+          'Export Complete',
+          `Your recipes have been saved as ${filename}. Check your device's download folder.`
+        );
+      }
+    } catch (error) {
+      console.error('Error exporting recipes:', error);
+      Alert.alert(
+        'Export Failed',
+        'Failed to export recipes. Please try again.'
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleSendFeedback = () => {
@@ -214,6 +279,7 @@ export default function SettingsScreen() {
             title="Export Recipes"
             subtitle="Download your recipes as a file"
             onPress={handleExportRecipes}
+            loading={exporting}
           />
         </View>
       </View>
