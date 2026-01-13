@@ -2,14 +2,35 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Recipe from '../models/recipe';
 import Plan from '../models/plan';
+import User from '../models/user';
 
 // GET /api/recipes - List all recipes with optional search and tag filters
 export const getRecipes = async (req: Request, res: Response): Promise<void> => {
   try {
     const { search, tags } = req.query;
     const userId = req.userId;
+    const user = await mongoose.model('User').findById(userId);
 
-    let query: any = { userId };
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    // If user is in a household, get recipes from the household admin
+    // Otherwise, get their own recipes
+    let targetUserId = userId;
+    if (user.householdId) {
+      // Find the admin of this household
+      const adminUser = await mongoose.model('User').findOne({
+        householdId: user.householdId,
+        role: 'admin'
+      });
+      if (adminUser) {
+        targetUserId = adminUser._id;
+      }
+    }
+
+    let query: any = { userId: targetUserId };
 
     // Text search on title
     if (search && typeof search === 'string') {
@@ -24,12 +45,12 @@ export const getRecipes = async (req: Request, res: Response): Promise<void> => 
 
     const recipes = await Recipe.find(query).sort({ updatedAt: -1 }).lean();
 
-    // Get plan counts for each recipe
+    // Get plan counts for each recipe (from the admin's plans)
     const recipeIds = recipes.map(r => r._id);
     const planCounts = await Plan.aggregate([
       {
         $match: {
-          userId: new mongoose.Types.ObjectId(userId),
+          userId: new mongoose.Types.ObjectId(targetUserId),
           recipeId: { $in: recipeIds }
         }
       },
@@ -56,7 +77,26 @@ export const getRecipes = async (req: Request, res: Response): Promise<void> => 
 export const getRecipeById = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
-    const recipe = await Recipe.findOne({ _id: req.params.id, userId });
+    const user = await mongoose.model('User').findById(userId);
+
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    // If user is in a household, get recipes from the household admin
+    let targetUserId = userId;
+    if (user.householdId) {
+      const adminUser = await mongoose.model('User').findOne({
+        householdId: user.householdId,
+        role: 'admin'
+      });
+      if (adminUser) {
+        targetUserId = adminUser._id;
+      }
+    }
+
+    const recipe = await Recipe.findOne({ _id: req.params.id, userId: targetUserId });
 
     if (!recipe) {
       res.status(404).json({ error: 'Recipe not found' });
@@ -74,6 +114,14 @@ export const getRecipeById = async (req: Request, res: Response): Promise<void> 
 export const createRecipe = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can create recipes' });
+      return;
+    }
+
     const {
       title,
       imageUrl,
@@ -125,6 +173,14 @@ export const createRecipe = async (req: Request, res: Response): Promise<void> =
 export const updateRecipe = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can update recipes' });
+      return;
+    }
+
     const {
       title,
       imageUrl,
@@ -177,6 +233,14 @@ export const updateRecipe = async (req: Request, res: Response): Promise<void> =
 export const deleteRecipe = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can delete recipes' });
+      return;
+    }
+
     const recipe = await Recipe.findOneAndDelete({ _id: req.params.id, userId });
 
     if (!recipe) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
 import { useAuth } from '../contexts/AuthContext';
+import HouseholdSection from '../components/HouseholdSection';
 
 type SettingRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -56,12 +58,60 @@ function SettingRow({
   );
 }
 
+type SettingsRouteProp = RouteProp<{ Settings: { token?: string } }, 'Settings'>;
+
 export default function SettingsScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const route = useRoute<SettingsRouteProp>();
   const [defaultAvoidRepeats, setDefaultAvoidRepeats] = useState(true);
   const [defaultPreferSimple, setDefaultPreferSimple] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // Handle invitation token from deep link
+  useEffect(() => {
+    const token = route.params?.token;
+    if (token && user) {
+      // Small delay to ensure the component is fully mounted
+      setTimeout(() => {
+        handleJoinHouseholdFromLink(token);
+      }, 500);
+    }
+  }, [route.params?.token, user]);
+
+  const handleJoinHouseholdFromLink = (token: string) => {
+    if (user?.householdId) {
+      Alert.alert(
+        'Already in Household',
+        'You are already a member of a household. You must leave your current household before joining another one.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Join Household',
+      'You\'ve been invited to join a household. Would you like to join?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Join',
+          onPress: async () => {
+            try {
+              // Import householdApi here to avoid circular dependency
+              const { householdApi } = await import('../services/api');
+              await householdApi.joinHousehold({ token });
+              await refreshUser(); // Refresh user data
+              Alert.alert('Success', 'Successfully joined household!');
+            } catch (error: any) {
+              console.error('Error joining household:', error);
+              Alert.alert('Error', error.response?.data?.message || 'Failed to join household');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -125,6 +175,11 @@ export default function SettingsScreen() {
     Alert.alert('Coming Soon', 'Recipe export will be available in a future update!');
   };
 
+  const handleHouseholdChange = () => {
+    // Refresh user data when household changes
+    // The HouseholdSection component handles its own refresh
+  };
+
   const handleSendFeedback = () => {
     Linking.openURL('mailto:feedback@mealmate.app?subject=Meal%20Mate%20Feedback');
   };
@@ -169,6 +224,9 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
+
+      {/* Household Section */}
+      <HouseholdSection onHouseholdChange={handleHouseholdChange} />
 
       {/* Planning Defaults Section */}
       <View style={styles.section}>

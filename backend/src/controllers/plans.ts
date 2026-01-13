@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Plan from '../models/plan';
+import User from '../models/user';
 import { markRecipeAsUsed } from '../services/suggestionService';
 
 // GET /api/plans?start=YYYY-MM-DD&days=7 - Get plans for date range
@@ -21,6 +22,15 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Find the household admin (target user whose plans to show)
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const targetUserId = user.householdId ? user.role === 'admin' ? userId : user.householdId : userId;
+
     // Calculate end date
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + numDays - 1);
@@ -29,7 +39,7 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
     const endStr = endDate.toISOString().split('T')[0];
 
     const plans = await Plan.find({
-      userId,
+      userId: targetUserId,
       date: { $gte: startStr, $lte: endStr },
     })
       .populate('recipeId')
@@ -46,7 +56,17 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
 export const getPlanByDate = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
-    const plan = await Plan.findOne({ userId, date: req.params.date }).populate('recipeId');
+
+    // Find the household admin (target user whose plans to show)
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const targetUserId = user.householdId ? user.role === 'admin' ? userId : user.householdId : userId;
+
+    const plan = await Plan.findOne({ userId: targetUserId, date: req.params.date }).populate('recipeId');
 
     if (!plan) {
       res.status(404).json({ error: 'Plan not found for this date' });
@@ -66,6 +86,13 @@ export const updatePlanByDate = async (req: Request, res: Response): Promise<voi
     const userId = req.userId;
     const { date } = req.params;
     const { recipeId, label, isConfirmed } = req.body;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can update plans' });
+      return;
+    }
 
     // Validate date format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -115,6 +142,14 @@ export const updatePlanByDate = async (req: Request, res: Response): Promise<voi
 export const deleteAllPlans = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can delete all plans' });
+      return;
+    }
+
     const result = await Plan.deleteMany({ userId });
 
     res.json({
@@ -131,6 +166,14 @@ export const deleteAllPlans = async (req: Request, res: Response): Promise<void>
 export const deletePlanByDate = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
+
+    // Check if user is admin in their household
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ error: 'Only household admins can delete plans' });
+      return;
+    }
+
     const plan = await Plan.findOneAndDelete({ userId, date: req.params.date });
 
     if (!plan) {

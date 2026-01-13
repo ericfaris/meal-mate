@@ -1,19 +1,21 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-11*
+*Last Updated: 2026-01-12*
 
 ---
 
 ## 🎯 What is Meal Mate?
 
-**Meal Mate** is a React Native mobile application for intelligent weekly meal planning. It helps users create, manage, and organize recipes while providing AI-powered meal suggestions based on preferences and constraints.
+**Meal Mate** is a React Native mobile application for intelligent weekly meal planning with household collaboration. It helps users create, manage, and organize recipes while providing AI-powered meal suggestions based on preferences and constraints. Users can create households to share recipes and meal plans with family members.
 
 ### Core Features
 - 🍽️ Recipe management with URL import
 - 🤖 Smart weekly meal suggestions
 - 📅 Flexible meal planning (past, present, future)
+- 👥 **Household collaboration** - Share recipes and plans with family
 - 🔐 Secure authentication (Email/Password + Google OAuth)
 - 📱 Native mobile app (iOS/Android via Expo)
+- 🔗 Deep linking for household invitations
 
 ---
 
@@ -82,22 +84,36 @@ meal-mate/
 
 ## 🗄️ Core Data Models
 
+### User
+- Email/password or OAuth (Google, Apple)
+- JWT token-based authentication
+- Household membership with role-based permissions (admin/member)
+
+### Household
+- Named groups for shared cooking communities
+- Member management with admin controls
+- Invitation system with JWT tokens
+- Shared access to recipes and meal plans
+
 ### Recipe
 - User-owned recipes with ingredients, directions, images
 - Tags, complexity (simple/medium/complex), dietary flags
 - Tracks `lastUsedDate` for suggestion algorithm
 - `planCount` computed via aggregation
+- Household sharing (admins can view all household recipes)
+
+### RecipeSubmission
+- Member-submitted recipe URLs for admin approval
+- Status tracking (pending/approved/denied)
+- Admin review notes and feedback
+- Automatic recipe import upon approval
 
 ### Plan
 - One plan per user per date (unique index)
 - Date stored as YYYY-MM-DD string (not Date object)
 - Can reference a Recipe OR have a text label ("Eating Out")
 - Confirmed plans update recipe's `lastUsedDate`
-
-### User
-- Email/password or OAuth (Google, Apple)
-- JWT token-based authentication
-- Household support (future multi-user feature)
+- Household plans visible to all members
 
 ---
 
@@ -127,6 +143,22 @@ PUT    /api/plans/:date          # Create/update
 DELETE /api/plans/:date          # Delete
 ```
 
+### Household Management
+```
+GET    /api/households           # Get current household details
+POST   /api/households           # Create new household
+POST   /api/households/join      # Join household via token
+POST   /api/households/invite    # Generate invitation token
+DELETE /api/households/leave     # Leave current household
+```
+
+### Recipe Submissions
+```
+GET    /api/submissions           # Get pending submissions (admin)
+POST   /api/submissions           # Submit recipe URL for approval
+PUT    /api/submissions/:id       # Review submission (approve/deny)
+```
+
 ### Suggestions
 ```
 POST   /api/suggestions/generate    # Week of suggestions
@@ -140,6 +172,25 @@ See @.claude/rules/api-design.md for full API documentation.
 
 ## 🧠 Key Business Logic
 
+### Household Permissions
+**Location**: `backend/src/middleware/auth.ts`, `backend/src/controllers/household.ts`
+
+Role-based access control:
+- **Admin**: Can invite members, review submissions, view all household recipes/plans
+- **Member**: Can submit recipe URLs, view approved recipes, create personal plans
+- **User Isolation**: All queries scoped by `userId` OR household membership
+- **Invitation System**: JWT tokens with 7-day expiry for secure invites
+
+### Recipe Submission Workflow
+**Location**: `backend/src/controllers/recipeSubmission.ts`
+
+Member approval process:
+1. Members submit recipe URLs via mobile app
+2. Admins receive notifications of pending submissions
+3. Admins can approve/deny with optional review notes
+4. Approved recipes are automatically imported and become household-shared
+5. Denied submissions include feedback for members
+
 ### Suggestion Algorithm
 **Location**: `backend/src/services/suggestionService.ts`
 
@@ -149,6 +200,7 @@ Generates intelligent meal suggestions with constraints:
 - Prefer simple recipes (sort by complexity)
 - Skip specific days (eating out, etc.)
 - Shuffle for variety
+- Household-aware: considers all household recipes for suggestions
 
 ### Recipe Import
 **Location**: `backend/src/controllers/recipeImport.ts`
@@ -242,7 +294,9 @@ Claude Code automatically loads these files when working on relevant code paths.
 ## 🔒 Security Principles
 
 ✅ **User Isolation**: Every query scoped by `userId`
+✅ **Household Security**: Role-based access control (admin/member permissions)
 ✅ **JWT Authentication**: Tokens with 7-day expiry
+✅ **Invitation Tokens**: Secure JWT-based household invites with expiration
 ✅ **Password Hashing**: bcrypt with 10 rounds
 ✅ **Input Validation**: All endpoints validate input
 ✅ **Secure Storage**: Expo Secure Store for tokens on device
@@ -298,6 +352,23 @@ useFocusEffect(useCallback(() => {
 useEffect(() => { loadData(); }, []);
 ```
 
+### Household Permissions
+**ALWAYS check user role for household operations**
+```typescript
+// ✅ CORRECT - Check admin role for sensitive operations
+if (user.role !== 'admin') {
+  return res.status(403).json({ message: 'Admin access required' });
+}
+
+// ✅ CORRECT - Scope queries by household membership
+const recipes = await Recipe.find({
+  $or: [
+    { userId: req.userId },           // User's own recipes
+    { householdId: user.householdId } // Household-shared recipes
+  ]
+});
+```
+
 ### Android HTTP Cleartext Traffic
 **Enable HTTP for local development builds**
 ```json
@@ -315,9 +386,23 @@ useEffect(() => { loadData(); }, []);
 
 ## 🎯 Recent Development
 
-Current branch: `google-oauth`
+Current branch: `main`
 
 Recent changes:
+- **🏠 Household Collaboration System** - Complete multi-user household functionality
+  - Household creation, member invitations, and role-based permissions
+  - Recipe submission workflow for member approval
+  - Shared recipe and meal plan access within households
+  - Deep linking support for invitation URLs
+- **📱 Cross-Platform Modal Implementation** - Replaced iOS-only Alert.prompt with custom modals
+  - Household creation, joining, and submission review modals
+  - Full compatibility across Android, iOS, and web platforms
+- **🔗 Deep Linking Integration** - Expo linking for household invitations
+  - URL-based invitation tokens (exp://localhost:8081/join/{token})
+  - Automatic token extraction from full URLs
+- **👑 Role-Based UI** - Dynamic interface based on household permissions
+  - Admin controls for member management and submissions
+  - Member interface for recipe submissions and shared access
 - **Google OAuth Migration** - Migrated from deprecated `expo-auth-session` to `@react-native-google-signin/google-signin`
 - **Android OAuth Fix** - Resolved "invalid_request" error by using native Google Sign-In SDK
 - **SHA-1 Configuration** - Properly configured Android OAuth client with SHA-1 certificate fingerprint
@@ -332,12 +417,14 @@ Recent changes:
 
 ## 📋 Future Roadmap
 
-- [ ] Household/multi-user support
 - [ ] AI-powered suggestions (Anthropic Claude API)
-- [ ] Grocery list generation
-- [ ] Push notifications
-- [ ] Apple OAuth refinement
-- [ ] EAS Build for App Store
+- [ ] Grocery list generation from meal plans
+- [ ] Push notifications for meal reminders
+- [ ] Apple OAuth refinement and testing
+- [ ] EAS Build for App Store submission
+- [ ] Household analytics and insights
+- [ ] Recipe sharing beyond households
+- [ ] Meal plan templates and presets
 
 ---
 
@@ -350,6 +437,13 @@ Recent changes:
 2. Create controller in `backend/src/controllers/`
 3. Add service method in `frontend/src/services/api/`
 4. See @.claude/rules/api-design.md for conventions
+
+**Add household functionality:**
+1. Update models in `backend/src/models/` (User, Household, RecipeSubmission)
+2. Add role checks in controllers and middleware
+3. Create household-aware queries with `$or: [{userId}, {householdId}]`
+4. Update frontend components with role-based UI
+5. Add invitation token handling with deep linking
 
 **Add a new screen:**
 1. Create in `frontend/src/screens/`

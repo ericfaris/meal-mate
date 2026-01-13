@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
   plans: `${API_BASE_URL}/api/plans`,
   suggestions: `${API_BASE_URL}/api/suggestions`,
   auth: `${API_BASE_URL}/api/auth`,
+  households: `${API_BASE_URL}/api/households`,
+  submissions: `${API_BASE_URL}/api/submissions`,
   health: `${API_BASE_URL}/health`,
 };
 

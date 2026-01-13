@@ -6,6 +6,8 @@ import recipeImportRoutes from './routes/recipeImport';
 import planRoutes from './routes/plans';
 import suggestionRoutes from './routes/suggestions';
 import imageSearchRoutes from './routes/imageSearch';
+import householdRoutes from './routes/household';
+import recipeSubmissionRoutes from './routes/recipeSubmission';
 import { authenticate } from './middleware/auth';
 
 export const createApp = (): Express => {
@@ -36,6 +38,8 @@ export const createApp = (): Express => {
   app.use('/api/plans', authenticate, planRoutes);
   app.use('/api/suggestions', authenticate, suggestionRoutes);
   app.use('/api/images', authenticate, imageSearchRoutes);
+  app.use('/api/household', authenticate, householdRoutes);
+  app.use('/api/submissions', authenticate, recipeSubmissionRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

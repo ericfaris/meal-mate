@@ -41,3 +41,48 @@ export interface SuggestionConstraints {
   preferSimple: boolean;
   vegetarianOnly: boolean;
 }
+
+export interface Household {
+  _id: string;
+  name: string;
+  members: HouseholdMember[];
+  createdAt: string;
+}
+
+export interface HouseholdMember {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'member';
+  profilePicture?: string;
+}
+
+export interface RecipeSubmission {
+  _id: string;
+  householdId: string;
+  submittedBy: HouseholdMember;
+  recipeUrl: string;
+  status: 'pending' | 'approved' | 'denied';
+  reviewedBy?: HouseholdMember;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateHouseholdRequest {
+  name: string;
+}
+
+export interface JoinHouseholdRequest {
+  token: string;
+}
+
+export interface SubmitRecipeRequest {
+  recipeUrl: string;
+}
+
+export interface ReviewSubmissionRequest {
+  action: 'approve' | 'deny';
+  reviewNotes?: string;
+}

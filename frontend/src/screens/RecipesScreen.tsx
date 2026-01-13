@@ -16,6 +16,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { recipeApi } from '../services/api';
 import { Recipe } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, heights } from '../theme';
+import { useAuth } from '../contexts/AuthContext';
+import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
 
 type FilterType = 'all' | 'vegetarian' | 'simple';
 
@@ -29,11 +31,13 @@ type Props = {
 };
 
 export default function RecipesScreen({ navigation }: Props) {
+  const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeSections, setRecipeSections] = useState<RecipeSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
 
   // Reload recipes when screen comes into focus
   useFocusEffect(
@@ -115,7 +119,21 @@ export default function RecipesScreen({ navigation }: Props) {
   };
 
   const handleAddRecipe = () => {
-    navigation.navigate('RecipeEntry', { mode: 'create' });
+    const isInHousehold = !!user?.householdId;
+    const isAdmin = user?.role === 'admin';
+
+    if (isInHousehold && !isAdmin) {
+      // Household member - show submission modal
+      setSubmissionModalVisible(true);
+    } else {
+      // Admin or solo user - go to recipe creation
+      navigation.navigate('RecipeEntry', { mode: 'create' });
+    }
+  };
+
+  const handleSubmissionComplete = () => {
+    setSubmissionModalVisible(false);
+    // Optionally show a success message or refresh data
   };
 
   const getComplexityColor = (complexity?: string) => {
@@ -276,6 +294,13 @@ export default function RecipesScreen({ navigation }: Props) {
       <TouchableOpacity style={styles.fab} onPress={handleAddRecipe}>
         <Ionicons name="add" size={28} color={colors.textOnPrimary} />
       </TouchableOpacity>
+
+      {/* Recipe Submission Modal for household members */}
+      <RecipeSubmissionModal
+        visible={submissionModalVisible}
+        onClose={() => setSubmissionModalVisible(false)}
+        onSubmit={handleSubmissionComplete}
+      />
     </View>
   );
 }
