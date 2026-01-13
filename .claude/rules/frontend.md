@@ -59,7 +59,8 @@ RootStack
 │       ├── Suggestions
 │       ├── RecipePicker
 │       └── Success
-└── Settings (Modal)
+├── Settings (Modal)
+└── Household (Modal)
 ```
 
 ## Core TypeScript Interfaces
@@ -284,6 +285,7 @@ export default function MyScreen({ navigation, route }) {
 
 **HomeScreen**:
 - Time-aware greeting based on hour
+- **Admin notification banner** for pending recipe submissions (if admin + pending > 0)
 - Display "Tonight's Dinner" (today's plan)
 - Quick action buttons (Plan, Add Recipe, Browse)
 - Recipe spotlight/inspiration

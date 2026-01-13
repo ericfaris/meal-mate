@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-12*
+*Last Updated: 2026-01-13*
 
 ---
 
@@ -409,6 +409,16 @@ Recent changes:
 - **Logout Enhancement** - Added Google sign-out to logout flow
 - **Android APK build configuration** - HTTP cleartext traffic enabled for local development
 - **Enhanced error logging** - Detailed network error messages in auth service
+- **🏡 Household Screen Redesign** - Moved household section from Settings to dedicated screen
+  - Household management now accessible as peer to Settings screen
+  - Improved navigation with dedicated Household tab in avatar menu
+  - Reordered sections: Pending submissions now appear below Leave/Delete Household
+  - Added proper padding and visual spacing throughout
+- **🔔 Admin Notifications** - Home screen alerts for pending recipe approvals
+  - Fun, eye-catching notification for household admins with pending submissions
+  - One-tap navigation to Household screen for review
+  - Dynamic text showing submission count with proper pluralization
+  - Positioned prominently after greeting for high visibility
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation
