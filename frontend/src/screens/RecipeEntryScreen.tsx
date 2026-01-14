@@ -24,6 +24,8 @@ import { recipeApi } from '../services/api/recipes';
 import { recipeImportApi } from '../services/api/recipeImport';
 import RecipeSavedModal from '../components/RecipeSavedModal';
 import ErrorModal from '../components/ErrorModal';
+import { useAuth } from '../contexts/AuthContext';
+import { alertManager } from '../utils/alertUtils';
 
 type Props = {
   route: { params?: { recipe?: Recipe; mode?: 'create' | 'edit' } };
@@ -43,6 +45,20 @@ const DEFAULT_RECIPE_SITES = [
 export default function RecipeEntryScreen({ route, navigation }: Props) {
   const existingRecipe = route.params?.recipe;
   const isEditMode = route.params?.mode === 'edit';
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  // Check permissions for edit mode
+  useEffect(() => {
+    if (isEditMode && !isAdmin) {
+      alertManager.showError({
+        title: 'Access Denied',
+        message: 'Only household admins can edit recipes.',
+      });
+      navigation.goBack();
+      return;
+    }
+  }, [isEditMode, isAdmin, navigation]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<Tab>(isEditMode ? 'manual' : 'import');

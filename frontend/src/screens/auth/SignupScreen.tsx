@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import { alertManager } from '../../utils/alertUtils';
 
 interface SignupScreenProps {
   onNavigateToLogin: () => void;
@@ -29,17 +29,26 @@ export default function SignupScreen({ onNavigateToLogin }: SignupScreenProps) {
 
   const handleSignup = async () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Please fill in all fields',
+      });
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Password must be at least 8 characters',
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Passwords do not match',
+      });
       return;
     }
 
@@ -47,7 +56,10 @@ export default function SignupScreen({ onNavigateToLogin }: SignupScreenProps) {
     try {
       await signup(email, password, name);
     } catch (error: any) {
-      Alert.alert('Signup Failed', error.message || 'Please try again');
+      alertManager.showError({
+        title: 'Signup Failed',
+        message: error.message || 'Please try again',
+      });
     } finally {
       setIsLoading(false);
     }

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   View,
-  Alert,
   Platform,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import {
   handleGoogleSignIn,
   GoogleAuthResponse,
 } from '../../services/auth/google';
+import { alertManager } from '../../utils/alertUtils';
 
 // Web-only imports
 let GoogleOAuthProvider: any;
@@ -71,7 +71,10 @@ export default function GoogleSignInButton({
       onError?.(error);
 
       if (error.message !== 'Sign-in was cancelled') {
-        Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
+        alertManager.showError({
+          title: 'Sign-In Failed',
+          message: error.message || 'Could not sign in with Google',
+        });
       }
     } finally {
       setIsLoading(false);
@@ -91,7 +94,10 @@ export default function GoogleSignInButton({
     } catch (error: any) {
       console.error('Google Sign-In error:', error);
       onError?.(error);
-      Alert.alert('Sign-In Failed', error.message || 'Could not sign in with Google');
+      alertManager.showError({
+        title: 'Sign-In Failed',
+        message: error.message || 'Could not sign in with Google',
+      });
     } finally {
       setIsLoading(false);
     }

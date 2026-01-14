@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +17,7 @@ import { recipeApi } from '../../services/api/recipes';
 import { planApi } from '../../services/api/plans';
 import { Recipe } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
+import { alertManager } from '../../utils/alertUtils';
 
 type RecipePickerScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -118,7 +118,10 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       console.error('Error selecting recipe:', error);
-      Alert.alert('Error', 'Failed to select recipe. Please try again.');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to select recipe. Please try again.',
+      });
     }
   };
 
@@ -136,7 +139,10 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       console.error('Error marking as eating out:', error);
-      Alert.alert('Error', 'Failed to mark as eating out. Please try again.');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to mark as eating out. Please try again.',
+      });
     }
   };
 
@@ -154,7 +160,10 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       console.error('Error marking as TBD:', error);
-      Alert.alert('Error', 'Failed to mark as TBD. Please try again.');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to mark as TBD. Please try again.',
+      });
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -7,11 +7,21 @@ import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
+import ErrorModal, { ErrorModalRef } from './src/components/ErrorModal';
+import SuccessModal, { SuccessModalRef } from './src/components/SuccessModal';
+import { alertManager } from './src/utils/alertUtils';
 import { colors } from './src/theme';
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
   const [showLogin, setShowLogin] = useState(true);
+  const errorModalRef = useRef<ErrorModalRef>(null);
+  const successModalRef = useRef<SuccessModalRef>(null);
+
+  useEffect(() => {
+    alertManager.setErrorModal(errorModalRef.current);
+    alertManager.setSuccessModal(successModalRef.current);
+  }, []);
 
   if (isLoading) {
     return (
@@ -55,6 +65,10 @@ function AppContent() {
     >
       <StatusBar style="light" />
       <BottomTabNavigator />
+      
+      {/* Global Alert Modals */}
+      <ErrorModal ref={errorModalRef} />
+      <SuccessModal ref={successModalRef} />
     </NavigationContainer>
   );
 }

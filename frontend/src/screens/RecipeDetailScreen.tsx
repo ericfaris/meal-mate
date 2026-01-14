@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,6 +15,8 @@ import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import ImagePickerModal from '../components/ImagePickerModal';
+import { alertManager } from '../utils/alertUtils';
+import { useAuth } from '../contexts/AuthContext';
 
 // Helper function to parse text into list items
 const parseListItems = (text: string | undefined): string[] => {
@@ -58,6 +59,8 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [updatingImage, setUpdatingImage] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // Update recipe state when route params change (e.g., after editing)
   useEffect(() => {
@@ -93,10 +96,25 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   }, [recipe.title, navigation]);
 
   const handleEdit = () => {
+    if (!isAdmin) {
+      alertManager.showError({
+        title: 'Access Denied',
+        message: 'Only household admins can edit recipes.',
+      });
+      return;
+    }
     navigation.navigate('RecipeEntry', { recipe, mode: 'edit' });
   };
 
   const handleDelete = async () => {
+    if (!isAdmin) {
+      alertManager.showError({
+        title: 'Access Denied',
+        message: 'Only household admins can delete recipes.',
+      });
+      return;
+    }
+    
     // Removed confirmation dialog - just delete directly
     if (!recipe._id) {
       console.error('Error: Recipe ID is missing. Cannot delete.');
@@ -122,7 +140,10 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
 
   const handleSelectImage = async (imageUrl: string) => {
     if (!recipe._id) {
-      Alert.alert('Error', 'Cannot update recipe image');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Cannot update recipe image',
+      });
       return;
     }
 
@@ -132,10 +153,16 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         imageUrl,
       });
       setRecipe(updatedRecipe);
-      Alert.alert('Success', 'Image added successfully!');
+      alertManager.showSuccess({
+        title: 'Success',
+        message: 'Image added successfully!',
+      });
     } catch (error) {
       console.error('Error updating recipe image:', error);
-      Alert.alert('Error', 'Failed to add image. Please try again.');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to add image. Please try again.',
+      });
     } finally {
       setUpdatingImage(false);
     }
@@ -294,16 +321,18 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Action Buttons */}
-      <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-          <Ionicons name="pencil" size={20} color={colors.textOnPrimary} />
-          <Text style={styles.editButtonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={20} color={colors.error} />
-        </TouchableOpacity>
-      </View>
+      {/* Action Buttons - Only show for admins */}
+      {isAdmin && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+            <Ionicons name="pencil" size={20} color={colors.textOnPrimary} />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={20} color={colors.error} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Image Picker Modal */}
       <ImagePickerModal

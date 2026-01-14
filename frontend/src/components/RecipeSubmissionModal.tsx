@@ -6,12 +6,12 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { submissionApi } from '../services/api';
+import { alertManager } from '../utils/alertUtils';
 
 interface RecipeSubmissionModalProps {
   visible: boolean;
@@ -29,7 +29,10 @@ export default function RecipeSubmissionModal({
 
   const handleSubmit = async () => {
     if (!recipeUrl.trim()) {
-      Alert.alert('Error', 'Please enter a recipe URL');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Please enter a recipe URL',
+      });
       return;
     }
 
@@ -37,22 +40,28 @@ export default function RecipeSubmissionModal({
     try {
       new URL(recipeUrl.trim());
     } catch {
-      Alert.alert('Error', 'Please enter a valid URL');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Please enter a valid URL',
+      });
       return;
     }
 
     try {
       setSubmitting(true);
       await submissionApi.submitRecipe({ recipeUrl: recipeUrl.trim() });
-      Alert.alert(
-        'Success',
-        'Recipe submitted for approval! The household admin will review it.',
-        [{ text: 'OK', onPress: handleClose }]
-      );
+      alertManager.showSuccess({
+        title: 'Success',
+        message: 'Recipe submitted for approval! The household admin will review it.',
+        onClose: handleClose,
+      });
       onSubmit?.();
     } catch (error: any) {
       console.error('Error submitting recipe:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to submit recipe');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to submit recipe',
+      });
     } finally {
       setSubmitting(false);
     }

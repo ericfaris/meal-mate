@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   TextInput,
   Image,
 } from 'react-native';
@@ -18,6 +17,7 @@ import { Recipe } from '../types';
 import { colors, typography, spacing, borderRadius, shadows, heights } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
+import { alertManager } from '../utils/alertUtils';
 
 type FilterType = 'all' | 'vegetarian';
 
@@ -57,7 +57,10 @@ export default function RecipesScreen({ navigation }: Props) {
       setRecipes(data);
     } catch (error) {
       console.error('Error loading recipes:', error);
-      Alert.alert('Error', 'Failed to load recipes. Check your connection.');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to load recipes. Check your connection.',
+      });
     } finally {
       setLoading(false);
     }

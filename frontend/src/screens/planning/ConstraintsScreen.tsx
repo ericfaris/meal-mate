@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { SuggestionConstraints } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { PlanningLoader } from '../../components/PlanningLoader';
 import { parseDate, getNextMonday, dateToString, addDays, formatDateString } from '../../utils/dateUtils';
+import { alertManager } from '../../utils/alertUtils';
 
 type ConstraintsScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -100,10 +100,10 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
     } catch (error) {
       console.error('Error generating suggestions:', error);
       setShowLoader(false);
-      Alert.alert(
-        'Oops!',
-        'Something went wrong generating your meal plan. Please try again.'
-      );
+      alertManager.showError({
+        title: 'Oops!',
+        message: 'Something went wrong generating your meal plan. Please try again.',
+      });
     }
   };
 

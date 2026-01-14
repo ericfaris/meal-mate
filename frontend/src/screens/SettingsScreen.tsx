@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Linking,
   ActivityIndicator,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
 import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
+import { alertManager } from '../utils/alertUtils';
 
 type SettingRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -109,10 +109,16 @@ export default function SettingsScreen() {
               const { householdApi } = await import('../services/api');
               await householdApi.joinHousehold({ token });
               await refreshUser(); // Refresh user data
-              Alert.alert('Success', 'Successfully joined household!');
+              alertManager.showSuccess({
+                title: 'Success',
+                message: 'Successfully joined household!',
+              });
             } catch (error: any) {
               console.error('Error joining household:', error);
-              Alert.alert('Error', error.response?.data?.message || 'Failed to join household');
+              alertManager.showError({
+                title: 'Error',
+                message: error.response?.data?.message || 'Failed to join household',
+              });
             }
           },
         },
@@ -135,7 +141,10 @@ export default function SettingsScreen() {
               await logout();
             } catch (error) {
               console.error('Error logging out:', error);
-              Alert.alert('Error', 'Failed to log out. Please try again.');
+              alertManager.showError({
+                title: 'Error',
+                message: 'Failed to log out. Please try again.',
+              });
             } finally {
               setLoggingOut(false);
             }
@@ -153,7 +162,10 @@ export default function SettingsScreen() {
       const recipes = await recipeApi.getAll();
 
       if (recipes.length === 0) {
-        Alert.alert('No Recipes', 'You don\'t have any recipes to export.');
+        alertManager.showError({
+          title: 'No Recipes',
+          message: 'You don\'t have any recipes to export.',
+        });
         return;
       }
 
@@ -188,17 +200,17 @@ export default function SettingsScreen() {
           dialogTitle: 'Export Recipes',
         });
       } else {
-        Alert.alert(
-          'Export Complete',
-          `Your recipes have been saved as ${filename}. Check your device's download folder.`
-        );
+        alertManager.showSuccess({
+          title: 'Export Complete',
+          message: `Your recipes have been saved as ${filename}. Check your device's download folder.`,
+        });
       }
     } catch (error) {
       console.error('Error exporting recipes:', error);
-      Alert.alert(
-        'Export Failed',
-        'Failed to export recipes. Please try again.'
-      );
+      alertManager.showError({
+        title: 'Export Failed',
+        message: 'Failed to export recipes. Please try again.',
+      });
     } finally {
       setExporting(false);
     }

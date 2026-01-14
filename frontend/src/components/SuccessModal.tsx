@@ -18,11 +18,11 @@ interface Props {
   confirmText?: string;
 }
 
-export interface ErrorModalRef {
+export interface SuccessModalRef {
   show: (title: string, message: string, onClose?: () => void) => void;
 }
 
-const ErrorModal = forwardRef<ErrorModalRef, Props>(({
+const SuccessModal = forwardRef<SuccessModalRef, Props>(({
   visible: propVisible = false,
   title: propTitle = '',
   message: propMessage = '',
@@ -36,7 +36,7 @@ const ErrorModal = forwardRef<ErrorModalRef, Props>(({
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useImperativeHandle(ref, () => ({
     show: (newTitle: string, newMessage: string, newOnClose?: () => void) => {
@@ -57,7 +57,7 @@ const ErrorModal = forwardRef<ErrorModalRef, Props>(({
       // Reset animations
       scaleAnim.setValue(0);
       fadeAnim.setValue(0);
-      shakeAnim.setValue(0);
+      bounceAnim.setValue(0);
 
       // Start entrance animations
       Animated.parallel([
@@ -74,26 +74,16 @@ const ErrorModal = forwardRef<ErrorModalRef, Props>(({
         }),
       ]).start();
 
-      // Add a subtle shake animation
+      // Add a subtle bounce animation
       Animated.sequence([
-        Animated.timing(shakeAnim, {
-          toValue: 10,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shakeAnim, {
+        Animated.timing(bounceAnim, {
           toValue: -10,
-          duration: 50,
+          duration: 100,
           useNativeDriver: true,
         }),
-        Animated.timing(shakeAnim, {
-          toValue: 10,
-          duration: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shakeAnim, {
+        Animated.timing(bounceAnim, {
           toValue: 0,
-          duration: 50,
+          duration: 100,
           useNativeDriver: true,
         }),
       ]).start();
@@ -122,15 +112,15 @@ const ErrorModal = forwardRef<ErrorModalRef, Props>(({
               opacity: fadeAnim,
               transform: [
                 { scale: scaleAnim },
-                { translateX: shakeAnim },
+                { translateY: bounceAnim },
               ],
             },
           ]}
         >
-          {/* Error Icon */}
-          <View style={styles.errorIconContainer}>
-            <View style={styles.errorIcon}>
-              <Ionicons name="alert-circle" size={40} color={colors.white} />
+          {/* Success Icon */}
+          <View style={styles.successIconContainer}>
+            <View style={styles.successIcon}>
+              <Ionicons name="checkmark-circle" size={40} color={colors.white} />
             </View>
           </View>
 
@@ -170,15 +160,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadows.floating,
   },
-  errorIconContainer: {
+  successIconContainer: {
     alignItems: 'center',
     paddingTop: spacing.xl,
   },
-  errorIcon: {
+  successIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: colors.error,
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.button,
@@ -202,7 +192,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.sizes.body * 1.5,
   },
   closeButton: {
-    backgroundColor: colors.error,
+    backgroundColor: colors.success,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
@@ -215,4 +205,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ErrorModal;
+export default SuccessModal;

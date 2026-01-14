@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import { alertManager } from '../../utils/alertUtils';
 
 interface LoginScreenProps {
   onNavigateToSignup: () => void;
@@ -27,7 +27,10 @@ export default function LoginScreen({ onNavigateToSignup }: LoginScreenProps) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Please fill in all fields',
+      });
       return;
     }
 
@@ -35,7 +38,10 @@ export default function LoginScreen({ onNavigateToSignup }: LoginScreenProps) {
     try {
       await login(email, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Please check your credentials');
+      alertManager.showError({
+        title: 'Login Failed',
+        message: error.message || 'Please check your credentials',
+      });
     } finally {
       setIsLoading(false);
     }

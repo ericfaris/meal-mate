@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Share,
   ScrollView,
@@ -18,6 +17,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { householdApi, submissionApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Household, HouseholdMember, RecipeSubmission } from '../types';
+import { alertManager } from '../utils/alertUtils';
 
 interface HouseholdSectionProps {
   onHouseholdChange?: () => void;
@@ -83,7 +83,10 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
 
   const handleCreateHouseholdSubmit = async () => {
     if (!householdName.trim()) {
-      Alert.alert('Error', 'Please enter a household name');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Please enter a household name',
+      });
       return;
     }
 
@@ -93,7 +96,10 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
 
       // Check again if user is already in a household after refresh
       if (user?.householdId) {
-        Alert.alert('Error', 'You are already in a household. Please leave your current household first.');
+        alertManager.showError({
+          title: 'Error',
+          message: 'You are already in a household. Please leave your current household first.',
+        });
         return;
       }
 
@@ -102,10 +108,16 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       await householdApi.createHousehold({ name: householdName.trim() });
       await refreshUser();
       onHouseholdChange?.();
-      Alert.alert('Success', 'Household created successfully!');
+      alertManager.showSuccess({
+        title: 'Success',
+        message: 'Household created successfully!',
+      });
     } catch (error: any) {
       console.error('Error creating household:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to create household');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to create household',
+      });
     } finally {
       setCreating(false);
     }
@@ -129,12 +141,18 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       await householdApi.joinHousehold({ token });
       await refreshUser();
       onHouseholdChange?.();
-      Alert.alert('Success', 'Successfully joined household!');
+      alertManager.showSuccess({
+        title: 'Success',
+        message: 'Successfully joined household!',
+      });
       setJoinModalVisible(false);
       setInviteToken('');
     } catch (error: any) {
       console.error('Error joining household:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to join household');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to join household',
+      });
     } finally {
       setJoining(false);
     }
@@ -148,7 +166,10 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       setInviteModalVisible(true);
     } catch (error: any) {
       console.error('Error generating invite:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to generate invitation');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to generate invitation',
+      });
     } finally {
       setInviting(false);
     }
@@ -162,18 +183,27 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       setInviteModalVisible(false);
     } catch (error: any) {
       console.error('Error sharing invite:', error);
-      Alert.alert('Error', 'Failed to share invitation');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to share invitation',
+      });
     }
   };
 
   const handleCopyInvite = async () => {
     try {
       await Clipboard.setString(currentInviteUrl);
-      Alert.alert('Copied!', 'Invitation link copied to clipboard');
+      alertManager.showSuccess({
+        title: 'Copied!',
+        message: 'Invitation link copied to clipboard',
+      });
       setInviteModalVisible(false);
     } catch (error: any) {
       console.error('Error copying invite:', error);
-      Alert.alert('Error', 'Failed to copy invitation link');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to copy invitation link',
+      });
     }
   };
 
@@ -190,10 +220,16 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
             try {
               await householdApi.removeMember(member._id);
               await loadHouseholdData(); // Refresh the household data
-              Alert.alert('Success', `${member.name} has been removed from the household.`);
+              alertManager.showSuccess({
+                title: 'Success',
+                message: `${member.name} has been removed from the household.`,
+              });
             } catch (error: any) {
               console.error('Error removing member:', error);
-              Alert.alert('Error', error.response?.data?.message || 'Failed to remove member');
+              alertManager.showError({
+                title: 'Error',
+                message: error.response?.data?.message || 'Failed to remove member',
+              });
             }
           },
         },
@@ -224,10 +260,16 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
               }
               await refreshUser();
               onHouseholdChange?.();
-              Alert.alert('Success', 'Left household successfully');
+              alertManager.showSuccess({
+                title: 'Success',
+                message: 'Left household successfully',
+              });
             } catch (error: any) {
               console.error('Error leaving household:', error);
-              Alert.alert('Error', error.response?.data?.message || 'Failed to leave household');
+              alertManager.showError({
+                title: 'Error',
+                message: error.response?.data?.message || 'Failed to leave household',
+              });
             } finally {
               setLeaving(false);
             }
@@ -253,13 +295,19 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
         reviewNotes: reviewNotes.trim() || undefined,
       });
       await loadHouseholdData(); // Refresh submissions
-      Alert.alert('Success', `Recipe ${reviewApproved ? 'approved' : 'denied'} successfully`);
+      alertManager.showSuccess({
+        title: 'Success',
+        message: `Recipe ${reviewApproved ? 'approved' : 'denied'} successfully`,
+      });
       setReviewModalVisible(false);
       setReviewSubmission(null);
       setReviewNotes('');
     } catch (error: any) {
       console.error('Error reviewing submission:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to review submission');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to review submission',
+      });
     }
   };
 
@@ -269,11 +317,17 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('Error', 'Cannot open this URL');
+        alertManager.showError({
+          title: 'Error',
+          message: 'Cannot open this URL',
+        });
       }
     } catch (error) {
       console.error('Error opening URL:', error);
-      Alert.alert('Error', 'Failed to open URL');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to open URL',
+      });
     }
   };
 
