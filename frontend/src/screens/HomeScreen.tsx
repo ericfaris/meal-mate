@@ -160,6 +160,10 @@ export default function HomeScreen({ navigation }: Props) {
     });
   };
 
+  const navigateToRoulette = () => {
+    navigation.navigate('RouletteTab');
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -352,6 +356,17 @@ export default function HomeScreen({ navigation }: Props) {
                 <Ionicons name="book" size={24} color="#FF9800" />
               </View>
               <Text style={styles.actionLabel}>Browse</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={navigateToRoulette}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#2D1B4E' }]}>
+                <Ionicons name="dice" size={24} color="#9D4EDD" />
+              </View>
+              <Text style={styles.actionLabel}>Date Night</Text>
             </TouchableOpacity>
           </View>
         </View>

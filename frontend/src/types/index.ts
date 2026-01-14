@@ -84,3 +84,33 @@ export interface ReviewSubmissionRequest {
   action: 'approve' | 'deny';
   reviewNotes?: string;
 }
+
+export interface Restaurant {
+  _id: string;
+  userId: string;
+  householdId?: string;
+  name: string;
+  cuisine?: string;
+  priceRange?: 1 | 2 | 3 | 4;
+  notes?: string;
+  lastVisitedDate?: string;
+  visitCount: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RestaurantInput {
+  name: string;
+  cuisine?: string;
+  priceRange?: 1 | 2 | 3 | 4;
+  notes?: string;
+  isActive?: boolean;
+}
+
+export interface RestaurantStats {
+  totalRestaurants: number;
+  totalVisits: number;
+  mostVisited?: Restaurant;
+  leastRecent?: Restaurant;
+}

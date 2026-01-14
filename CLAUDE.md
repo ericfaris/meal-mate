@@ -12,6 +12,7 @@
 - 🍽️ Recipe management with URL import
 - 🤖 Smart weekly meal suggestions
 - 📅 Flexible meal planning (past, present, future)
+- 🎰 **Date Night Roulette** - Random restaurant picker with weighted selection
 - 👥 **Household collaboration** - Share recipes and plans with family
 - 🔐 Secure authentication (Email/Password + Google OAuth)
 - 📱 Native mobile app (iOS/Android via Expo)
@@ -115,6 +116,13 @@ meal-mate/
 - Confirmed plans update recipe's `lastUsedDate`
 - Household plans visible to all members
 
+### Restaurant
+- User/household-owned restaurant list
+- Tracks visit history for weighted selection
+- Shared across household members
+- Price range ($ to $$$$), cuisine, notes
+- Active/inactive status for temporary exclusion
+
 ---
 
 ## 🔌 API Endpoints
@@ -164,6 +172,17 @@ PUT    /api/submissions/:id       # Review submission (approve/deny)
 POST   /api/suggestions/generate    # Week of suggestions
 POST   /api/suggestions/alternative # Get alternative
 POST   /api/suggestions/approve     # Save as plans
+```
+
+### Restaurants
+```
+GET    /api/restaurants           # List all
+POST   /api/restaurants           # Create
+PUT    /api/restaurants/:id       # Update
+DELETE /api/restaurants/:id       # Delete
+POST   /api/restaurants/:id/visit # Record visit
+GET    /api/restaurants/stats     # Get aggregate stats
+POST   /api/restaurants/spin      # Get weighted random selection
 ```
 
 See @.claude/rules/api-design.md for full API documentation.

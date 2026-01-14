@@ -21,6 +21,11 @@ import SuggestionsScreen from '../screens/planning/SuggestionsScreen';
 import SuccessScreen from '../screens/planning/SuccessScreen';
 import RecipePickerScreen from '../screens/planning/RecipePickerScreen';
 
+// Roulette Screens
+import RouletteScreen from '../screens/roulette/RouletteScreen';
+import RestaurantsListScreen from '../screens/roulette/RestaurantsListScreen';
+import RestaurantEntryScreen from '../screens/roulette/RestaurantEntryScreen';
+
 // Components
 import { LogoIcon } from '../components/branding';
 import { AvatarMenu } from '../components/AvatarMenu';
@@ -29,7 +34,7 @@ import { AvatarMenu } from '../components/AvatarMenu';
 import { colors, spacing, typography } from '../theme';
 
 // Types
-import { Recipe, SuggestionConstraints, Plan } from '../types';
+import { Recipe, Restaurant, SuggestionConstraints, Plan } from '../types';
 import { DaySuggestion } from '../services/api/suggestions';
 
 export type RecipesStackParamList = {
@@ -47,10 +52,17 @@ export type PlannerStackParamList = {
   Success: { plans: Plan[] };
 };
 
+export type RouletteStackParamList = {
+  RouletteHome: undefined;
+  RestaurantsList: undefined;
+  RestaurantEntry: { restaurant?: Restaurant; mode?: 'create' | 'edit' };
+};
+
 export type RootTabParamList = {
   HomeTab: undefined;
   RecipesTab: undefined;
   PlannerTab: undefined;
+  RouletteTab: undefined;
 };
 
 export type RootStackParamList = {
@@ -61,6 +73,7 @@ export type RootStackParamList = {
 
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
 const PlannerStack = createNativeStackNavigator<PlannerStackParamList>();
+const RouletteStack = createNativeStackNavigator<RouletteStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -157,6 +170,39 @@ function PlannerStackNavigator() {
   );
 }
 
+function RouletteStackNavigator() {
+  return (
+    <RouletteStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTintColor: colors.textOnPrimary,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        headerBackTitleVisible: false,
+      }}
+    >
+      <RouletteStack.Screen
+        name="RouletteHome"
+        component={RouletteScreen}
+        options={{ title: 'Date Night' }}
+      />
+      <RouletteStack.Screen
+        name="RestaurantsList"
+        component={RestaurantsListScreen}
+        options={{ title: 'My Restaurants' }}
+      />
+      <RouletteStack.Screen
+        name="RestaurantEntry"
+        component={RestaurantEntryScreen}
+        options={{ title: 'Add Restaurant' }}
+      />
+    </RouletteStack.Navigator>
+  );
+}
+
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -170,6 +216,8 @@ function TabNavigator() {
             iconName = focused ? 'book' : 'book-outline';
           } else if (route.name === 'PlannerTab') {
             iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'RouletteTab') {
+            iconName = focused ? 'dice' : 'dice-outline';
           } else {
             iconName = 'help-outline';
           }
@@ -230,6 +278,14 @@ function TabNavigator() {
         component={PlannerStackNavigator}
         options={{
           title: 'Planner',
+          headerShown: false, // Stack has its own header
+        }}
+      />
+      <Tab.Screen
+        name="RouletteTab"
+        component={RouletteStackNavigator}
+        options={{
+          title: 'Date Night',
           headerShown: false, // Stack has its own header
         }}
       />
