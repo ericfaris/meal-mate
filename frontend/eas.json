@@ -13,6 +13,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://meal-mate-backend-production-f138.up.railway.app"
       }
