@@ -20,8 +20,8 @@ import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
 import { alertManager } from '../utils/alertUtils';
 
-// Get version info from app config
-const appVersion = Constants.expoConfig?.version || '1.0.0';
+// Get version info from app config (extra values come from version.json via app.config.js)
+const appVersion = Constants.expoConfig?.extra?.appVersion || Constants.expoConfig?.version || '1.0.0';
 const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
 
 type SettingRowProps = {

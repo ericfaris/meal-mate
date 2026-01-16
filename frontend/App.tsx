@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Linking } from 'react-native';
+import Constants from 'expo-constants';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -11,6 +12,14 @@ import ErrorModal, { ErrorModalRef } from './src/components/ErrorModal';
 import SuccessModal, { SuccessModalRef } from './src/components/SuccessModal';
 import { alertManager } from './src/utils/alertUtils';
 import { colors } from './src/theme';
+
+// Get version info from app config
+const appVersion = Constants.expoConfig?.extra?.appVersion || Constants.expoConfig?.version || '1.0.0';
+const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
+
+// Log version at startup
+console.log(`\n🍽️  Meal Mate v${appVersion} (build ${buildNumber})`);
+console.log('━'.repeat(50));
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
