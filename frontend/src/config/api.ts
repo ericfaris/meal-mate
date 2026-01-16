@@ -1,15 +1,25 @@
-// API base URL - auto-detect web vs mobile
-// Web: use localhost, Mobile: use WiFi IP (192.168.0.111)
+// API base URL configuration
+// Development: localhost (web) or WiFi IP (mobile)
+// Production: set EXPO_PUBLIC_API_URL in EAS secrets
 import { Platform } from 'react-native';
 import axios, { AxiosInstance } from 'axios';
 import { getToken, clearAuth } from '../services/storage';
 
+// Development URLs
+const DEV_WEB_URL = 'http://localhost:3001';
+const DEV_MOBILE_URL = 'http://192.168.0.111:3001';
+
 const getApiUrl = () => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:3001';
+  // Production: use EXPO_PUBLIC_API_URL environment variable
+  if (!__DEV__ && process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
   }
-  // For mobile devices (iOS/Android) on same WiFi network
-  return 'http://192.168.0.111:3001';
+
+  // Development: web uses localhost, mobile uses WiFi IP
+  if (Platform.OS === 'web') {
+    return DEV_WEB_URL;
+  }
+  return DEV_MOBILE_URL;
 };
 
 export const API_BASE_URL = getApiUrl();
