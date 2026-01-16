@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Only enforce version.json on main branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$BRANCH" != "main" ]; then
+  exit 0
+fi
+
+# Check if version.json is staged for commit
+if ! git diff --cached --name-only | grep -q "^version.json$"; then
+  echo ""
+  echo "========================================================"
+  echo "  ERROR: version.json is not included in this commit!"
+  echo "========================================================"
+  echo ""
+  echo "  To bump version before committing:"
+  echo "    node scripts/bump-version.js patch|minor|major"
+  echo "    git add version.json"
+  echo ""
+  echo "  Or use VS Code task: 'Bump Version'"
+  echo ""
+  echo "========================================================"
+  echo ""
+  exit 1
+fi
+
+exit 0
