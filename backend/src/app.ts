@@ -29,6 +29,15 @@ export const createApp = (): Express => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Version endpoint (public)
+  app.get('/api/version', (_req: Request, res: Response) => {
+    res.json({
+      version: process.env.APP_VERSION || '1.0.0',
+      buildNumber: parseInt(process.env.BUILD_NUMBER || '1', 10),
+      environment: process.env.NODE_ENV || 'development',
+    });
+  });
+
   // Auth routes (public)
   app.use('/api/auth', authRoutes);
 

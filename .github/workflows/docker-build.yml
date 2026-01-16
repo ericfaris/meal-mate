@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'version.json'
       - '.github/workflows/docker-build.yml'
 
 jobs:
@@ -12,6 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read version from version.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          BUILD_NUMBER=$(jq -r '.buildNumber' version.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION (build $BUILD_NUMBER)"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -29,8 +39,11 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-backend:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-backend:${{ github.sha }}
           build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            BUILD_NUMBER=${{ steps.version.outputs.build_number }}
             MONGODB_URI=${{ secrets.MONGODB_URI }}
             PORT=${{ secrets.PORT }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -41,5 +54,8 @@ jobs:
             UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }}
             GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
             GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -185,6 +185,46 @@
         "clear": false
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Bump Version",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/bump-version.js", "${input:versionBumpType}"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "versionBumpType",
+      "type": "pickString",
+      "description": "Select version bump type",
+      "options": [
+        {
+          "label": "patch (bug fixes: 0.9.25 → 0.9.26)",
+          "value": "patch"
+        },
+        {
+          "label": "minor (new features: 0.9.25 → 0.10.0)",
+          "value": "minor"
+        },
+        {
+          "label": "major (breaking changes: 0.9.25 → 1.0.0)",
+          "value": "major"
+        }
+      ],
+      "default": "patch"
     }
   ]
 }

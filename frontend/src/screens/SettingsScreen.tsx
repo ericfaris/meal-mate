@@ -7,16 +7,22 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import Constants from 'expo-constants';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
 import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
 import { alertManager } from '../utils/alertUtils';
+
+// Get version info from app config
+const appVersion = Constants.expoConfig?.version || '1.0.0';
+const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
 
 type SettingRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -173,7 +179,8 @@ export default function SettingsScreen() {
       const exportData = {
         exportDate: new Date().toISOString(),
         totalRecipes: recipes.length,
-        appVersion: '1.0.0',
+        appVersion: appVersion,
+        buildNumber: buildNumber,
         recipes: recipes,
       };
 
@@ -312,7 +319,7 @@ export default function SettingsScreen() {
             icon="information-circle-outline"
             iconColor={colors.textLight}
             title="Version"
-            rightElement={<Text style={styles.versionText}>1.0.0</Text>}
+            rightElement={<Text style={styles.versionText}>{appVersion} ({buildNumber})</Text>}
           />
         </View>
       </View>

@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-13*
+*Last Updated: 2026-01-16*
 
 ---
 
@@ -41,7 +41,12 @@ MongoDB Atlas (Cloud Database)
 
 ```
 meal-mate/
+├── version.json            # Single source of truth for app version
+├── scripts/
+│   └── bump-version.js    # Version bump automation script
 ├── frontend/               # React Native app
+│   ├── app.config.js      # Expo config (reads version.json)
+│   ├── eas.json           # EAS Build configuration
 │   └── src/
 │       ├── screens/       # Screen components
 │       ├── navigation/    # React Navigation setup
@@ -50,12 +55,16 @@ meal-mate/
 │       └── components/    # Reusable UI
 │
 ├── backend/               # Node.js API
+│   ├── Dockerfile         # Docker build with version labels
 │   └── src/
 │       ├── models/       # Mongoose schemas
 │       ├── controllers/  # Request handlers
 │       ├── routes/       # API endpoints
 │       ├── services/     # Business logic
 │       └── middleware/   # Auth, etc.
+│
+├── .github/workflows/
+│   └── docker-build.yml  # CI/CD with semantic versioning
 │
 └── .claude/
     ├── CLAUDE.md         # This file
@@ -211,6 +220,70 @@ Generates intelligent meal suggestions with constraints:
    - Simple: ≤5 ingredients AND ≤20 min cook
    - Complex: >10 ingredients OR >60 min cook
    - Medium: everything else
+
+---
+
+## 🔢 Versioning
+
+The project uses a **single source of truth** for versioning across all platforms.
+
+### Version File (`version.json`)
+```json
+{
+  "version": "1.0.0",
+  "buildNumber": 1
+}
+```
+
+### Version Flow
+
+```
+version.json (source of truth)
+    ├── GitHub Actions → Docker Image Tags (v1.0.0, latest)
+    │   └── Backend ENV: APP_VERSION, BUILD_NUMBER
+    │       └── GET /api/version endpoint
+    │
+    └── app.config.js → Expo/EAS Build
+        └── Android: version + versionCode
+        └── iOS: version + buildNumber
+        └── Settings Screen display
+```
+
+### Bumping Versions
+
+```bash
+# Bump patch version (1.0.0 → 1.0.1)
+node scripts/bump-version.js patch
+
+# Bump minor version (1.0.0 → 1.1.0)
+node scripts/bump-version.js minor
+
+# Bump major version (1.0.0 → 2.0.0)
+node scripts/bump-version.js major
+
+# Set specific version
+node scripts/bump-version.js --set 2.0.0
+```
+
+### Version Visibility
+
+| Platform | Where to Check |
+|----------|----------------|
+| **Backend API** | `GET /api/version` returns `{ version, buildNumber, environment }` |
+| **Docker Image** | Tagged as `user/meal-mate-backend:1.0.0` |
+| **Android App** | Settings screen shows "Version 1.0.0 (1)" |
+| **Railway** | Pulls versioned Docker image |
+
+### Release Workflow
+
+1. Make changes and test locally
+2. Run `node scripts/bump-version.js patch` (or minor/major)
+3. Commit changes including updated `version.json`
+4. Push to `main` branch
+5. GitHub Actions automatically:
+   - Builds Docker image with version tag
+   - Pushes to Docker Hub with semantic version
+6. For mobile: Run `npx eas-cli build --platform android --profile production`
 
 ---
 
@@ -389,6 +462,13 @@ const recipes = await Recipe.find({
 Current branch: `main`
 
 Recent changes:
+- **🔢 Auto-Versioning System** - Unified versioning across all platforms
+  - Single source of truth in `version.json`
+  - Version bump script (`scripts/bump-version.js`)
+  - GitHub Actions reads version and tags Docker images semantically
+  - Frontend `app.config.js` reads version for Expo/EAS builds
+  - Backend `/api/version` endpoint exposes version at runtime
+  - Settings screen displays app version dynamically
 - **🏠 Household Collaboration System** - Complete multi-user household functionality
   - Household creation, member invitations, and role-based permissions
   - Recipe submission workflow for member approval
