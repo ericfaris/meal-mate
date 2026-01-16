@@ -1,0 +1,64 @@
+name: EAS Android Production Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'version.json'
+      - '.github/workflows/eas-android-build.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from version.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          BUILD_NUMBER=$(jq -r '.buildNumber' version.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Building version $VERSION (build $BUILD_NUMBER)"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Android APK
+        working-directory: frontend
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          echo "Building with profile: $PROFILE"
+          eas build --platform android --profile $PROFILE --non-interactive
+
+      - name: Get build URL
+        working-directory: frontend
+        run: |
+          echo "Build submitted to EAS!"
+          echo "Check build status at: https://expo.dev/accounts/${{ secrets.EXPO_USERNAME }}/projects/meal-mate/builds"
