@@ -4,9 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'backend/**'
-      - 'version.json'
-      - '.github/workflows/docker-build.yml'
+      - "backend/**"
+      - "version.json"
+      - ".github/workflows/docker-build.yml"
 
 jobs:
   build:
@@ -49,7 +49,7 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-            GOOGLE_ANDROID_CLIENT=${{ secrets.GOOGLE_ANDROID_CLIENT }}
+            GOOGLE_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_ANDROID_CLIENT_ID }}
             ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
             UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }}
             GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
