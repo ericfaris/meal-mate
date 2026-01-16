@@ -1,0 +1,53 @@
+name: Build and Push Web Docker Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'version.json'
+      - '.github/workflows/web-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from version.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          BUILD_NUMBER=$(jq -r '.buildNumber' version.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.web
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-web:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/meal-mate-web:${{ github.sha }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            BUILD_NUMBER=${{ steps.version.outputs.build_number }}
+            EXPO_PUBLIC_API_URL=${{ secrets.EXPO_PUBLIC_API_URL }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
