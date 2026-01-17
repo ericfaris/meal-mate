@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useResponsive } from '../hooks/useResponsive';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -158,6 +159,32 @@ function PlannerStackNavigator() {
 }
 
 function TabNavigator() {
+  const { isDesktop, isWeb, width } = useResponsive();
+
+  // Calculate tab bar width for desktop - centered with max width
+  const getTabBarStyle = () => {
+    const baseStyle = {
+      backgroundColor: colors.white,
+      borderTopColor: colors.border,
+      borderTopWidth: 1,
+      paddingTop: spacing.xs,
+      paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
+      height: Platform.OS === 'ios' ? 85 : 60,
+    };
+
+    // On desktop/web with wide screens, center the tab bar content
+    if (isWeb && width > 768) {
+      return {
+        ...baseStyle,
+        paddingHorizontal: Math.max(0, (width - 600) / 2),
+        height: 64,
+        paddingBottom: spacing.sm,
+      };
+    }
+
+    return baseStyle;
+  };
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -174,22 +201,18 @@ function TabNavigator() {
             iconName = 'help-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={isWeb && width > 768 ? size + 2 : size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingTop: spacing.xs,
-          paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
-          height: Platform.OS === 'ios' ? 85 : 60,
-        },
+        tabBarStyle: getTabBarStyle(),
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: isWeb && width > 768 ? 13 : 12,
           fontWeight: '500',
         },
+        tabBarItemStyle: isWeb && width > 768 ? {
+          paddingVertical: spacing.xs,
+        } : undefined,
         headerStyle: {
           backgroundColor: colors.primary,
         },

@@ -18,6 +18,7 @@ import { planApi } from '../../services/api/plans';
 import { Recipe } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { alertManager } from '../../utils/alertUtils';
+import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 
 type RecipePickerScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -37,6 +38,12 @@ interface Props {
 }
 
 export default function RecipePickerScreen({ navigation, route }: Props) {
+  const { width } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+
   const { date } = route.params;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeSections, setRecipeSections] = useState<RecipeSection[]>([]);
@@ -219,7 +226,8 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
       {/* Special Action Buttons */}
       <View style={styles.specialActionsContainer}>
         <TouchableOpacity
@@ -295,6 +303,7 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
           stickySectionHeadersEnabled={true}
         />
       )}
+      </View>
     </View>
   );
 }
@@ -495,5 +504,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     lineHeight: 22,
     paddingHorizontal: spacing.md,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 });

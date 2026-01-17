@@ -23,6 +23,7 @@ import { dateToString, addDays, getNextMonday, parseDate, getTodayString, format
 import PlannerTutorial from '../components/PlannerTutorial';
 import { hasPlannerTutorialCompleted } from '../utils/tutorialStorage';
 import { useAuth } from '../contexts/AuthContext';
+import { useResponsive, maxContentWidth } from '../hooks/useResponsive';
 
 type PlannerScreenNavigationProp = NativeStackNavigationProp<PlannerStackParamList, 'PlannerHome'>;
 type PlannerScreenRouteProp = RouteProp<PlannerStackParamList, 'PlannerHome'>;
@@ -31,6 +32,11 @@ export default function PlannerScreen() {
   const navigation = useNavigation<PlannerScreenNavigationProp>();
   const route = useRoute<PlannerScreenRouteProp>();
   const { user } = useAuth();
+  const { width, isDesktop, isTablet } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
 
   // Calculate initial week offset based on route params
   const getInitialWeekOffset = (): number => {
@@ -481,7 +487,8 @@ export default function PlannerScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
       {/* Week Header with Navigation */}
       <View style={styles.weekHeaderContainer}>
         <TouchableOpacity
@@ -609,6 +616,7 @@ export default function PlannerScreen() {
         visible={showTutorial}
         onClose={() => setShowTutorial(false)}
       />
+      </View>
     </View>
   );
 }
@@ -1064,5 +1072,18 @@ const styles = StyleSheet.create({
   },
   pickButtonTextDisabled: {
     color: colors.textMuted,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 });

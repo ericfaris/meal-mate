@@ -16,6 +16,7 @@ import { SuggestionConstraints } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { planApi } from '../../services/api/plans';
 import { formatDateString } from '../../utils/dateUtils';
+import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 
 type SuggestionsScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -30,6 +31,12 @@ interface Props {
 }
 
 export default function SuggestionsScreen({ navigation, route }: Props) {
+  const { width } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+
   const { constraints, suggestions: initialSuggestions } = route.params;
   const [suggestions, setSuggestions] = useState<DaySuggestion[]>(initialSuggestions);
   const [loadingDay, setLoadingDay] = useState<string | null>(null);
@@ -229,7 +236,8 @@ export default function SuggestionsScreen({ navigation, route }: Props) {
   const mealCount = suggestions.filter((s) => !s.isSkipped && s.recipe).length;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.headerContainer}>
@@ -276,6 +284,7 @@ export default function SuggestionsScreen({ navigation, route }: Props) {
             <Text style={styles.approveButtonText}>Approve & Finalize</Text>
           )}
         </TouchableOpacity>
+      </View>
       </View>
     </View>
   );
@@ -495,5 +504,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     color: colors.textOnPrimary,
     fontWeight: typography.weights.bold as any,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 });

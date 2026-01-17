@@ -18,6 +18,7 @@ import { colors, typography, spacing, borderRadius, shadows, heights } from '../
 import { useAuth } from '../contexts/AuthContext';
 import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
 import { alertManager } from '../utils/alertUtils';
+import { useResponsive, maxContentWidth } from '../hooks/useResponsive';
 
 type FilterType = 'all' | 'vegetarian';
 
@@ -34,10 +35,18 @@ export default function RecipesScreen({ navigation }: Props) {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeSections, setRecipeSections] = useState<RecipeSection[]>([]);
+  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
+
+  const { width, isDesktop, isTablet, gridColumns } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.wide;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+  const useGridLayout = isDesktop || isTablet;
 
   // Reload recipes when screen comes into focus
   useFocusEffect(
@@ -112,6 +121,7 @@ export default function RecipesScreen({ navigation }: Props) {
       });
 
     setRecipeSections(sections);
+    setFilteredRecipes(filtered); // For grid layout on larger screens
   };
 
   const handleRecipePress = (recipe: Recipe) => {
@@ -216,71 +226,122 @@ export default function RecipesScreen({ navigation }: Props) {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={colors.textMuted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search recipes..."
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
+  // Render recipe card for grid layout
+  const renderGridRecipe = ({ item }: { item: Recipe }) => (
+    <TouchableOpacity
+      style={[styles.recipeCard, styles.gridRecipeCard]}
+      onPress={() => handleRecipePress(item)}
+    >
+      <View style={styles.gridRecipeContent}>
+        {item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.gridRecipeImage} />
+        ) : (
+          <View style={styles.gridRecipeImagePlaceholder}>
+            <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
+          </View>
+        )}
+        <View style={styles.gridRecipeInfo}>
+          <Text style={styles.recipeTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <View style={styles.recipeMeta}>
+            {item.isVegetarian && (
+              <View style={[styles.badge, { backgroundColor: colors.secondary + '40' }]}>
+                <Ionicons name="leaf" size={12} color={colors.secondary} />
+              </View>
+            )}
+            {item.cookTime && item.cookTime > 0 && (
+              <View style={styles.timeInfo}>
+                <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+                <Text style={styles.timeText}>{item.cookTime} min</Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
+    </TouchableOpacity>
+  );
 
-      {/* Recipe List */}
-      {recipeSections.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.emptyEmoji}>
-            {recipes.length === 0 ? '👩‍🍳' : '🔍'}
-          </Text>
-          <Text style={styles.emptyText}>
-            {recipes.length === 0 ? 'Start your recipe collection!' : 'No matching recipes'}
-          </Text>
-          <Text style={styles.emptySubtext}>
-            {recipes.length === 0
-              ? 'Import from your favorite cooking sites or add recipes manually. Your dinner planning starts here!'
-              : 'Try adjusting your search or filters to find what you\'re looking for.'}
-          </Text>
-          {recipes.length === 0 && (
-            <TouchableOpacity style={styles.emptyButton} onPress={handleAddRecipe}>
-              <Ionicons name="add" size={20} color={colors.textOnPrimary} />
-              <Text style={styles.emptyButtonText}>Add Your First Recipe</Text>
-            </TouchableOpacity>
-          )}
+  return (
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
+        {/* Search Bar */}
+        <View style={[styles.searchContainer, useGridLayout && styles.searchContainerDesktop]}>
+          <View style={[styles.searchInputContainer, useGridLayout && styles.searchInputContainerDesktop]}>
+            <Ionicons name="search-outline" size={20} color={colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search recipes..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      ) : (
-        <SectionList
-          sections={recipeSections}
-          renderItem={renderRecipe}
-          renderSectionHeader={renderSectionHeader}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          stickySectionHeadersEnabled={true}
+
+        {/* Recipe List */}
+        {recipeSections.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.emptyEmoji}>
+              {recipes.length === 0 ? '👩‍🍳' : '🔍'}
+            </Text>
+            <Text style={styles.emptyText}>
+              {recipes.length === 0 ? 'Start your recipe collection!' : 'No matching recipes'}
+            </Text>
+            <Text style={styles.emptySubtext}>
+              {recipes.length === 0
+                ? 'Import from your favorite cooking sites or add recipes manually. Your dinner planning starts here!'
+                : 'Try adjusting your search or filters to find what you\'re looking for.'}
+            </Text>
+            {recipes.length === 0 && (
+              <TouchableOpacity style={styles.emptyButton} onPress={handleAddRecipe}>
+                <Ionicons name="add" size={20} color={colors.textOnPrimary} />
+                <Text style={styles.emptyButtonText}>Add Your First Recipe</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : useGridLayout ? (
+          // Grid layout for tablet/desktop
+          <FlatList
+            data={filteredRecipes}
+            renderItem={renderGridRecipe}
+            keyExtractor={(item) => item._id}
+            numColumns={gridColumns}
+            key={`grid-${gridColumns}`}
+            contentContainerStyle={styles.gridList}
+            columnWrapperStyle={styles.gridRow}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          // Section list for mobile
+          <SectionList
+            sections={recipeSections}
+            renderItem={renderRecipe}
+            renderSectionHeader={renderSectionHeader}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={true}
+          />
+        )}
+
+        {/* Floating Add Button */}
+        <TouchableOpacity style={styles.fab} onPress={handleAddRecipe}>
+          <Ionicons name="add" size={28} color={colors.textOnPrimary} />
+        </TouchableOpacity>
+
+        {/* Recipe Submission Modal for household members */}
+        <RecipeSubmissionModal
+          visible={submissionModalVisible}
+          onClose={() => setSubmissionModalVisible(false)}
+          onSubmit={handleSubmissionComplete}
         />
-      )}
-
-      {/* Floating Add Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleAddRecipe}>
-        <Ionicons name="add" size={28} color={colors.textOnPrimary} />
-      </TouchableOpacity>
-
-      {/* Recipe Submission Modal for household members */}
-      <RecipeSubmissionModal
-        visible={submissionModalVisible}
-        onClose={() => setSubmissionModalVisible(false)}
-        onSubmit={handleSubmissionComplete}
-      />
+      </View>
     </View>
   );
 }
@@ -502,5 +563,61 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.floating,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
+  },
+  searchContainerDesktop: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  searchInputContainerDesktop: {
+    maxWidth: 400,
+  },
+  // Grid layout styles
+  gridList: {
+    padding: spacing.md,
+    paddingBottom: 100,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  gridRecipeCard: {
+    flex: 1,
+    maxWidth: '48%',
+    marginBottom: spacing.md,
+  },
+  gridRecipeContent: {
+    flexDirection: 'column',
+  },
+  gridRecipeImage: {
+    width: '100%',
+    height: 140,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    backgroundColor: colors.border,
+  },
+  gridRecipeImagePlaceholder: {
+    width: '100%',
+    height: 140,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    backgroundColor: colors.divider,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridRecipeInfo: {
+    padding: spacing.md,
   },
 });

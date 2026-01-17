@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -19,8 +18,7 @@ import { submissionApi } from '../services/api/submissions';
 import { getTodayString, formatDateString } from '../utils/dateUtils';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeSubmissionModal from '../components/RecipeSubmissionModal';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useResponsive, maxContentWidth } from '../hooks/useResponsive';
 
 type Props = {
   navigation: any;
@@ -37,6 +35,12 @@ export default function HomeScreen({ navigation }: Props) {
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
 
   const isAdmin = user?.role === 'admin';
+  const { width, isDesktop, isTablet } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+  const contentWidth = shouldConstrainWidth ? contentMaxWidth : '100%';
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -161,9 +165,9 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
       <ScrollView
-        style={styles.container}
+        style={[styles.container, shouldConstrainWidth && { width: contentWidth, alignSelf: 'center' }]}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
@@ -176,7 +180,7 @@ export default function HomeScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Greeting */}
-        <View style={styles.header}>
+        <View style={[styles.header, (isDesktop || isTablet) && styles.headerDesktop]}>
           <Text style={styles.greeting}>{greeting}!</Text>
           <Text style={styles.dateText}>{formatDate(getTodayDateString())}</Text>
         </View>
@@ -780,5 +784,16 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.small,
     color: colors.white,
     opacity: 0.9,
+  },
+  // Responsive desktop styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+  },
+  headerDesktop: {
+    paddingTop: spacing.xl + spacing.md,
   },
 });

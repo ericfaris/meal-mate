@@ -14,6 +14,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { Plan } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { formatDateString } from '../../utils/dateUtils';
+import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 
 // Conditionally import confetti if available
 let ConfettiCannon: any = null;
@@ -36,6 +37,12 @@ interface Props {
 }
 
 export default function SuccessScreen({ navigation, route }: Props) {
+  const { width } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+
   const { plans } = route.params;
   const confettiRef = useRef<any>(null);
 
@@ -101,7 +108,8 @@ export default function SuccessScreen({ navigation, route }: Props) {
   const skipCount = plans.filter((p) => p.label && !p.recipeId).length;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
       {/* Confetti */}
       {ConfettiCannon && (
         <ConfettiCannon
@@ -170,6 +178,7 @@ export default function SuccessScreen({ navigation, route }: Props) {
         <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
           <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
+      </View>
       </View>
     </View>
   );
@@ -318,5 +327,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     color: colors.textOnPrimary,
     fontWeight: typography.weights.bold as any,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 });

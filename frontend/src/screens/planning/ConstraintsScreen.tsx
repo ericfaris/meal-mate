@@ -15,6 +15,7 @@ import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { PlanningLoader } from '../../components/PlanningLoader';
 import { parseDate, getNextMonday, dateToString, addDays, formatDateString } from '../../utils/dateUtils';
 import { alertManager } from '../../utils/alertUtils';
+import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 
 type ConstraintsScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -29,6 +30,12 @@ interface Props {
 }
 
 export default function ConstraintsScreen({ navigation, route }: Props) {
+  const { width } = useResponsive();
+
+  // Calculate responsive content width
+  const contentMaxWidth = maxContentWidth.default;
+  const shouldConstrainWidth = width > contentMaxWidth + 96;
+
   // Get start date from route params or calculate next Monday
   const getStartDate = (): Date => {
     if (route?.params?.startDate) {
@@ -125,7 +132,8 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
+      <ScrollView style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]} contentContainerStyle={styles.content}>
       {/* Greeting */}
       <View style={styles.greetingContainer}>
         <Text style={styles.greeting}>Hey! Ready to plan this week's dinners?</Text>
@@ -227,7 +235,8 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
       >
         <Text style={styles.generateButtonText}>Generate Plan</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -413,5 +422,18 @@ const styles = StyleSheet.create({
     color: colors.textOnPrimary,
     fontSize: typography.sizes.h3,
     fontWeight: typography.weights.bold as any,
+  },
+  // Responsive desktop/tablet styles
+  outerContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  desktopOuter: {
+    backgroundColor: colors.divider,
+    alignItems: 'center',
+  },
+  desktopContent: {
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 });
