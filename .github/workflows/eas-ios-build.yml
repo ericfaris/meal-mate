@@ -1,4 +1,4 @@
-name: EAS iOS Production Build
+name: EAS iOS Simulator Build
 
 on:
   push:
@@ -10,14 +10,12 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Build profile'
+        description: 'Build profile (only development works without Apple Developer account)'
         required: true
-        default: 'preview'
+        default: 'development'
         type: choice
         options:
           - development
-          - preview
-          - production
 
 jobs:
   build:
@@ -51,15 +49,16 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Build iOS App
+      - name: Build iOS Simulator App
         working-directory: frontend
         run: |
-          PROFILE="${{ github.event.inputs.profile || 'preview' }}"
-          echo "Building iOS with profile: $PROFILE"
+          PROFILE="${{ github.event.inputs.profile || 'development' }}"
+          echo "Building iOS Simulator with profile: $PROFILE"
           eas build --platform ios --profile $PROFILE --non-interactive
 
       - name: Get build URL
         working-directory: frontend
         run: |
-          echo "iOS Build submitted to EAS!"
+          echo "iOS Simulator build submitted to EAS!"
+          echo "Note: This build is for macOS iOS Simulator only (no Apple Developer account)"
           echo "Check build status at: https://expo.dev/accounts/${{ secrets.EXPO_USERNAME }}/projects/meal-mate/builds"
