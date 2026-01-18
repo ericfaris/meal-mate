@@ -64,7 +64,9 @@ meal-mate/
 │       └── middleware/   # Auth, etc.
 │
 ├── .github/workflows/
-│   └── docker-build.yml  # CI/CD with semantic versioning
+│   ├── docker-build.yml      # Backend Docker CI/CD
+│   ├── eas-android-build.yml # Android EAS build pipeline
+│   └── eas-ios-build.yml     # iOS EAS build pipeline
 │
 └── .claude/
     ├── CLAUDE.md         # This file
@@ -283,7 +285,28 @@ node scripts/bump-version.js --set 2.0.0
 5. GitHub Actions automatically:
    - Builds Docker image with version tag
    - Pushes to Docker Hub with semantic version
-6. For mobile: Run `npx eas-cli build --platform android --profile production`
+   - Triggers EAS Android build (on frontend changes)
+   - Triggers EAS iOS build (on frontend changes)
+6. For manual mobile builds: Run `npx eas-cli build --platform android --profile production`
+
+### CI/CD Pipelines
+
+| Workflow                 | Trigger                    | Description                             |
+|--------------------------|----------------------------|-----------------------------------------|
+| `docker-build.yml`       | Push to main (backend/**)  | Builds and pushes backend Docker image  |
+| `eas-android-build.yml`  | Push to main (frontend/**) | Triggers EAS Android APK build          |
+| `eas-ios-build.yml`      | Push to main (frontend/**) | Triggers EAS iOS IPA build              |
+
+**Required GitHub Secrets for EAS builds:**
+
+- `EXPO_TOKEN` - Expo access token (from expo.dev account settings)
+- `EXPO_USERNAME` - Expo account username
+
+**Required for iOS App Store submission (optional):**
+
+- `APPLE_ID` - Apple ID email for App Store Connect
+- `ASC_APP_ID` - App Store Connect App ID
+- `APPLE_TEAM_ID` - Apple Developer Team ID
 
 ---
 
