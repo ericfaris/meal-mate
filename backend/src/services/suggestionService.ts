@@ -74,11 +74,11 @@ export const generateWeekSuggestions = async (
   // Shuffle recipes for randomness
   const shuffledRecipes = shuffleArray([...eligibleRecipes]);
 
-  // Assign recipes to non-skipped days
+  // Assign recipes to non-skipped days (cycle through if pool is smaller than days)
   let recipeIndex = 0;
   for (const suggestion of suggestions) {
-    if (!suggestion.isSkipped && recipeIndex < shuffledRecipes.length) {
-      const recipe = shuffledRecipes[recipeIndex];
+    if (!suggestion.isSkipped && shuffledRecipes.length > 0) {
+      const recipe = shuffledRecipes[recipeIndex % shuffledRecipes.length];
       suggestion.recipeId = recipe._id.toString();
       suggestion.recipe = recipe;
       recipeIndex++;
@@ -112,12 +112,18 @@ export const getAlternativeSuggestion = async (
     query.isVegetarian = true;
   }
 
-  // Apply repeat avoidance
+  // Apply repeat avoidance with adaptive lookback window
   if (avoidRepeats) {
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    // Get total recipe count for adaptive lookback
+    const totalRecipes = await Recipe.countDocuments({ userId });
+    // Adaptive lookback: shorter window for smaller collections
+    // Min 3 days, max 10 days, scales with collection size
+    const lookbackDays = Math.min(10, Math.max(3, Math.floor(totalRecipes / 2)));
+
+    const lookbackDate = new Date();
+    lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
     query.$or = [
-      { lastUsedDate: { $lt: tenDaysAgo } },
+      { lastUsedDate: { $lt: lookbackDate } },
       { lastUsedDate: { $exists: false } },
       { lastUsedDate: null },
     ];
@@ -156,12 +162,18 @@ async function getEligibleRecipes(
     query.isVegetarian = true;
   }
 
-  // Apply repeat avoidance - exclude recipes used in last 10 days
+  // Apply repeat avoidance with adaptive lookback window
   if (avoidRepeats) {
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    // Get total recipe count for adaptive lookback
+    const totalRecipes = await Recipe.countDocuments({ userId });
+    // Adaptive lookback: shorter window for smaller collections
+    // Min 3 days, max 10 days, scales with collection size
+    const lookbackDays = Math.min(10, Math.max(3, Math.floor(totalRecipes / 2)));
+
+    const lookbackDate = new Date();
+    lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
     query.$or = [
-      { lastUsedDate: { $lt: tenDaysAgo } },
+      { lastUsedDate: { $lt: lookbackDate } },
       { lastUsedDate: { $exists: false } },
       { lastUsedDate: null },
     ];

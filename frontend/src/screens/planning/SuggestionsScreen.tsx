@@ -93,10 +93,18 @@ export default function SuggestionsScreen({ navigation, route }: Props) {
   const handleChangeRecipe = async (date: string) => {
     setLoadingDay(date);
     try {
+      // Collect ALL recipe IDs currently planned for this week to avoid duplicates
+      const allPlannedRecipeIds = suggestions
+        .filter(s => s.recipeId && s.date !== date)
+        .map(s => s.recipeId!);
+
+      // Also include recipes already excluded for this specific date
       const currentExcluded = excludedRecipeIds[date] || [];
+      const allExcluded = [...new Set([...allPlannedRecipeIds, ...currentExcluded])];
+
       const alternative = await suggestionApi.getAlternative(
         date,
-        currentExcluded,
+        allExcluded,
         {
           avoidRepeats: constraints.avoidRepeats,
           vegetarianOnly: constraints.vegetarianOnly,
