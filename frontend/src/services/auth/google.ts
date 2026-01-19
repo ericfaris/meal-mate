@@ -1,8 +1,19 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 import axios from 'axios';
+import Constants from 'expo-constants';
 import { API_ENDPOINTS } from '../../config/api';
 import { setToken, setUser, StoredUser } from '../storage';
+
+// Dynamically import GoogleSignin to handle Expo Go where native modules aren't available
+let GoogleSignin: any = null;
+try {
+  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch (error) {
+  console.log('[Google] Native module not available (likely running in Expo Go)');
+}
+
+// Check if running in Expo Go (no native modules)
+const isExpoGo = Constants.appOwnership === 'expo';
 
 export interface GoogleConfig {
   webClientId: string;
@@ -33,6 +44,12 @@ export async function getGoogleConfig(): Promise<GoogleConfig | null> {
  * Configure Google Sign-In with client IDs
  */
 export function configureGoogleSignIn(config: GoogleConfig): void {
+  // Skip configuration in Expo Go - native module not available
+  if (isExpoGo || !GoogleSignin) {
+    console.log('[Google] Skipping configuration (Expo Go or native module unavailable)');
+    return;
+  }
+
   console.log('[Google] Configuring with:', {
     webClientId: config.webClientId?.substring(0, 20) + '...',
     hasIosClientId: !!config.iosClientId,
@@ -106,6 +123,11 @@ export async function handleGoogleSignIn(credentialOrConfig?: string | GoogleCon
   }
 
   // Native platforms (Android/iOS): Use @react-native-google-signin/google-signin
+  // Check if running in Expo Go - native module not available
+  if (isExpoGo || !GoogleSignin) {
+    throw new Error('Google Sign-In is not available in Expo Go. Please use email/password login or build a development client.');
+  }
+
   try {
     console.log('[Google] Checking Play Services...');
     // Check if Google Play Services are available (Android)
@@ -154,11 +176,18 @@ export async function handleGoogleSignIn(credentialOrConfig?: string | GoogleCon
  */
 export async function signOutFromGoogle(): Promise<void> {
   try {
-    // Only sign out on native platforms (GoogleSignin not available on web)
-    if (Platform.OS !== 'web') {
+    // Only sign out on native platforms (GoogleSignin not available on web or Expo Go)
+    if (Platform.OS !== 'web' && !isExpoGo && GoogleSignin) {
       await GoogleSignin.signOut();
     }
   } catch (error) {
     console.error('Google sign-out error:', error);
   }
+}
+
+/**
+ * Check if Google Sign-In is available (not in Expo Go)
+ */
+export function isGoogleSignInAvailable(): boolean {
+  return !isExpoGo && GoogleSignin !== null;
 }
