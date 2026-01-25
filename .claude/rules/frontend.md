@@ -250,6 +250,48 @@ LoginScreen → Google Sign-In Button
 - If valid, auto-login (silent authentication)
 - If invalid/expired, show login screen
 
+### Token Expiration & App Resume Handling:
+The app handles token expiration gracefully to avoid showing empty data:
+
+1. **Axios Interceptor** (`config/api.ts`):
+   - Detects 401 responses from any API call
+   - Clears auth from SecureStore
+   - Calls `authExpiredCallback` to notify AuthContext
+
+2. **AuthContext Callback**:
+   - Registers callback via `setAuthExpiredCallback()`
+   - When called, immediately sets `user` to `null`
+   - This triggers navigation to login screen
+
+3. **AppState Listener** (foreground detection):
+   - Listens for app coming back to foreground
+   - Re-validates token by calling `/api/auth/me`
+   - If token expired while backgrounded, clears auth and redirects to login
+   - Gracefully handles network errors (doesn't log out on temporary failures)
+
+```typescript
+// Pattern: Auth expiration callback in api.ts
+let authExpiredCallback: (() => void) | null = null;
+export const setAuthExpiredCallback = (callback: (() => void) | null) => {
+  authExpiredCallback = callback;
+};
+
+// In axios interceptor:
+if (error.response?.status === 401) {
+  await clearAuth();
+  if (authExpiredCallback) {
+    authExpiredCallback();
+  }
+}
+
+// Pattern: AppState listener in AuthContext
+AppState.addEventListener('change', async (nextAppState) => {
+  if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+    await validateAuthOnResume();
+  }
+});
+```
+
 ## Screen Development Guidelines
 
 ### Screen Component Structure:

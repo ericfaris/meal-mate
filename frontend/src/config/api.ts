@@ -5,6 +5,13 @@ import { Platform } from 'react-native';
 import axios, { AxiosInstance } from 'axios';
 import { getToken, clearAuth } from '../services/storage';
 
+// Callback for when auth expires - set by AuthContext
+let authExpiredCallback: (() => void) | null = null;
+
+export const setAuthExpiredCallback = (callback: (() => void) | null) => {
+  authExpiredCallback = callback;
+};
+
 // Development URLs
 const DEV_WEB_URL = 'http://localhost:3001';
 const DEV_MOBILE_URL = 'http://192.168.0.111:3001';
@@ -64,7 +71,10 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid - clear auth data
       await clearAuth();
-      // The AuthContext will detect the missing token and redirect to login
+      // Notify AuthContext to update state and redirect to login
+      if (authExpiredCallback) {
+        authExpiredCallback();
+      }
     }
     return Promise.reject(error);
   }
