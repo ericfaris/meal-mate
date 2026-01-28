@@ -44,6 +44,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
     if (!projectId) {
       console.error('[Notifications] No projectId found in Constants');
+      Alert.alert('Push Setup Error', 'No projectId found in app config');
       return null;
     }
 
@@ -56,10 +57,8 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
     return token;
   } catch (error: any) {
     console.error('[Notifications] Error registering for push notifications:', error);
-    // Show alert in dev to help debug
-    if (__DEV__) {
-      Alert.alert('Push Notification Error', error?.message || String(error));
-    }
+    // Show alert to help debug (temporary - remove after debugging)
+    Alert.alert('Push Notification Error', error?.message || String(error));
     return null;
   }
 };
