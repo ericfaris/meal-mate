@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { Platform, Alert } from 'react-native';
 import { userApi } from './api/user';
 
 // Configure how notifications are handled when app is in foreground
@@ -39,17 +40,26 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
       return null;
     }
 
+    // Get projectId from Constants (set during EAS build)
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      console.error('[Notifications] No projectId found in Constants');
+      return null;
+    }
+
     // Get the Expo push token
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: '910a682b-5db4-440a-af99-ee987b813edf', // EAS project ID
-    });
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
 
     const token = tokenData.data;
     console.log('[Notifications] Expo push token:', token);
 
     return token;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Notifications] Error registering for push notifications:', error);
+    // Show alert in dev to help debug
+    if (__DEV__) {
+      Alert.alert('Push Notification Error', error?.message || String(error));
+    }
     return null;
   }
 };
