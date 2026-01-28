@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import RecipeSubmission from '../models/recipeSubmission';
 import User from '../models/user';
 import { importRecipeFromUrl } from './recipeImport';
+import { notifyHouseholdAdmins } from '../services/notificationService';
 
 // Submit a recipe URL for household admin approval
 export const submitRecipe = async (req: Request, res: Response) => {
@@ -50,6 +51,11 @@ export const submitRecipe = async (req: Request, res: Response) => {
     });
 
     await submission.save();
+
+    // Send push notification to household admins (don't await - fire and forget)
+    notifyHouseholdAdmins(user.householdId, user.name).catch(err => {
+      console.error('[RecipeSubmission] Failed to notify admins:', err);
+    });
 
     res.status(201).json({
       message: 'Recipe submitted for approval',

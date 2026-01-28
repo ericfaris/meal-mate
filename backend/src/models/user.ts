@@ -22,6 +22,7 @@ export interface IUser extends Document {
   profilePicture?: string;
   emailVerified: boolean;
   lastLoginAt?: Date;
+  pushToken?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -92,6 +93,10 @@ const userSchema = new Schema<IUser>(
     lastLoginAt: {
       type: Date,
     },
+    pushToken: {
+      type: String,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
@@ -100,6 +105,7 @@ const userSchema = new Schema<IUser>(
 
 // Indexes for efficient queries
 userSchema.index({ householdId: 1 });
+userSchema.index({ householdId: 1, role: 1 }); // For finding household admins with push tokens
 
 // Hash password before saving (only for local auth users)
 userSchema.pre('save', async function (next) {

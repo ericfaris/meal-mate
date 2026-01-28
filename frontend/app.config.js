@@ -62,6 +62,15 @@ export default {
             'com.googleusercontent.apps.760619972742-o3kcevm7pnr8epu0o5ci7gd223883naa',
         },
       ],
+      [
+        'expo-notifications',
+        {
+          icon: './assets/notification-icon.png',
+          color: '#4A90A4',
+          defaultChannel: 'default',
+          sounds: [],
+        },
+      ],
     ],
     extra: {
       appVersion: version,

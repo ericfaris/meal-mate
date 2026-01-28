@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Linking } from 'react-native';
 import Constants from 'expo-constants';
+import { addNotificationResponseListener } from './src/services/notifications';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -26,11 +27,28 @@ function AppContent() {
   const [showLogin, setShowLogin] = useState(true);
   const errorModalRef = useRef<ErrorModalRef>(null);
   const successModalRef = useRef<SuccessModalRef>(null);
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
     alertManager.setErrorModal(errorModalRef.current);
     alertManager.setSuccessModal(successModalRef.current);
   }, []);
+
+  // Listen for notification taps to navigate to appropriate screen
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const subscription = addNotificationResponseListener((data) => {
+      if (data?.screen === 'Household' && navigationRef.current) {
+        // Navigate to Household screen when notification is tapped
+        navigationRef.current.navigate('Main', { screen: 'Household' });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -50,6 +68,7 @@ function AppContent() {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       linking={{
         prefixes: ['exp://localhost:8081', 'mealmate://'],
         config: {

@@ -4,6 +4,7 @@ import { getToken, getUser, clearAuth, StoredUser } from '../services/storage';
 import * as authService from '../services/auth';
 import { GoogleAuthResponse } from '../services/auth/google';
 import { setAuthExpiredCallback } from '../config/api';
+import { initializePushNotifications, cleanupPushNotifications } from '../services/notifications';
 
 interface AuthContextType {
   user: StoredUser | null;
@@ -97,11 +98,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const storedUser = await getUser();
         if (storedUser) {
           setUser(storedUser);
+          // Re-register for push notifications on app load
+          initializePushNotifications().catch(err => {
+            console.log('[AuthContext] Push notification setup failed:', err);
+          });
         } else {
           // Fallback to fetching from server
           const serverUser = await authService.getCurrentUser();
           if (serverUser) {
             setUser(serverUser);
+            // Re-register for push notifications on app load
+            initializePushNotifications().catch(err => {
+              console.log('[AuthContext] Push notification setup failed:', err);
+            });
           } else {
             // Token invalid, clear auth
             await clearAuth();
@@ -122,6 +131,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.login({ email, password });
       setUser(response.user);
+      // Register for push notifications after successful login
+      initializePushNotifications().catch(err => {
+        console.log('[AuthContext] Push notification setup failed:', err);
+      });
     } catch (error) {
       throw error;
     }
@@ -131,6 +144,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.signup({ email, password, name });
       setUser(response.user);
+      // Register for push notifications after successful signup
+      initializePushNotifications().catch(err => {
+        console.log('[AuthContext] Push notification setup failed:', err);
+      });
     } catch (error) {
       throw error;
     }
@@ -139,10 +156,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithGoogle = (response: GoogleAuthResponse) => {
     // Token and user are already stored by the Google auth service
     setUser(response.user);
+    // Register for push notifications after successful Google login
+    initializePushNotifications().catch(err => {
+      console.log('[AuthContext] Push notification setup failed:', err);
+    });
   };
 
   const logout = async () => {
     try {
+      // Remove push token from server before logging out
+      await cleanupPushNotifications();
       await authService.logout();
     } catch (error) {
       console.error('Error during logout:', error);

@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-16*
+*Last Updated: 2026-01-27*
 
 ---
 
@@ -16,6 +16,7 @@
 - 🔐 Secure authentication (Email/Password + Google OAuth)
 - 📱 Native mobile app (iOS/Android via Expo)
 - 🔗 Deep linking for household invitations
+- 🔔 **Push notifications** - Admin alerts for recipe submissions
 
 ---
 
@@ -89,7 +90,7 @@ meal-mate/
 | **Backend** | Node.js, Express, TypeScript |
 | **Database** | MongoDB Atlas, Mongoose ODM |
 | **Auth** | JWT, bcrypt, OAuth (Google) |
-| **Mobile** | React Navigation, Expo Secure Store |
+| **Mobile** | React Navigation, Expo Secure Store, Expo Notifications |
 
 ---
 
@@ -99,6 +100,7 @@ meal-mate/
 - Email/password or OAuth (Google, Apple)
 - JWT token-based authentication
 - Household membership with role-based permissions (admin/member)
+- Optional `pushToken` for Expo push notifications
 
 ### Household
 - Named groups for shared cooking communities
@@ -175,6 +177,12 @@ PUT    /api/submissions/:id       # Review submission (approve/deny)
 POST   /api/suggestions/generate    # Week of suggestions
 POST   /api/suggestions/alternative # Get alternative
 POST   /api/suggestions/approve     # Save as plans
+```
+
+### User Management
+```
+PUT    /api/users/push-token        # Save push token for notifications
+DELETE /api/users/push-token        # Remove push token (on logout)
 ```
 
 See @.claude/rules/api-design.md for full API documentation.
@@ -522,6 +530,12 @@ Recent changes:
   - One-tap navigation to Household screen for review
   - Dynamic text showing submission count with proper pluralization
   - Positioned prominently after greeting for high visibility
+- **📲 Push Notifications** - Native Android/iOS push notifications via Expo
+  - Admins receive push notifications when members submit recipes
+  - Uses Expo Push Notifications service (works with EAS builds)
+  - Notification channels for Android (Recipe Submissions)
+  - Tap notification to navigate directly to Household screen
+  - Push token management: saved on login, removed on logout
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation
@@ -532,6 +546,7 @@ Recent changes:
 
 - [ ] AI-powered suggestions (Anthropic Claude API)
 - [ ] Grocery list generation from meal plans
+- [x] Push notifications for recipe submissions (completed)
 - [ ] Push notifications for meal reminders
 - [ ] Apple OAuth refinement and testing
 - [ ] EAS Build for App Store submission
