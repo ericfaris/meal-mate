@@ -21,6 +21,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
     console.log('[Notifications] Push notifications require a physical device');
+    Alert.alert('Push Debug', 'Not a physical device - push notifications disabled');
     return null;
   }
 
@@ -37,6 +38,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 
     if (finalStatus !== 'granted') {
       console.log('[Notifications] Permission not granted for push notifications');
+      Alert.alert('Push Debug', `Permission not granted. Status: ${finalStatus}`);
       return null;
     }
 
@@ -44,7 +46,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
     if (!projectId) {
       console.error('[Notifications] No projectId found in Constants');
-      Alert.alert('Push Setup Error', 'No projectId found in app config');
+      Alert.alert('Push Debug', 'No projectId found in app config');
       return null;
     }
 
@@ -54,11 +56,13 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
     const token = tokenData.data;
     console.log('[Notifications] Expo push token:', token);
 
+    // Debug: show success
+    Alert.alert('Push Debug', `Token obtained: ${token.substring(0, 30)}...`);
+
     return token;
   } catch (error: any) {
     console.error('[Notifications] Error registering for push notifications:', error);
-    // Show alert to help debug (temporary - remove after debugging)
-    Alert.alert('Push Notification Error', error?.message || String(error));
+    Alert.alert('Push Error', error?.message || String(error));
     return null;
   }
 };
