@@ -36,6 +36,7 @@ export default {
         backgroundColor: '#FDFAF6',
       },
       permissions: ['INTERNET'],
+      googleServicesFile: './google-services.json',
     },
     ios: {
       bundleIdentifier: 'com.mealmate.app',
