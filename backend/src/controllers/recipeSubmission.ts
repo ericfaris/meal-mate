@@ -52,14 +52,10 @@ export const submitRecipe = async (req: Request, res: Response) => {
 
     await submission.save();
 
-    // Send push notification to household admins
-    let notificationDebug: any = null;
-    try {
-      notificationDebug = await notifyHouseholdAdmins(user.householdId, user.name);
-    } catch (err: any) {
-      notificationDebug = { error: err.message };
+    // Send push notification to household admins (fire-and-forget)
+    notifyHouseholdAdmins(user.householdId, user.name).catch(err => {
       console.error('[RecipeSubmission] Failed to notify admins:', err);
-    }
+    });
 
     res.status(201).json({
       message: 'Recipe submitted for approval',
@@ -69,7 +65,6 @@ export const submitRecipe = async (req: Request, res: Response) => {
         status: submission.status,
         createdAt: submission.createdAt,
       },
-      notificationDebug, // Temporary - remove after debugging
     });
   } catch (error: any) {
     console.error('Error submitting recipe:', error);
