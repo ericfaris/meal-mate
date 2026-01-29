@@ -144,6 +144,5 @@ vite.config.ts.timestamp-*
 # expo
 .expo
 
-# Firebase
-google-services.json
+# Firebase (service account keys are sensitive, google-services.json is safe to commit)
 firebase-service-account*.json
