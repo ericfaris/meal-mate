@@ -87,7 +87,7 @@ export const sendPushNotifications = async (
 export const notifyHouseholdAdmins = async (
   householdId: mongoose.Types.ObjectId | string,
   submitterName: string
-): Promise<void> => {
+): Promise<any> => {
   try {
     // Find all admins in the household who have push tokens
     const admins = await User.find({
@@ -98,14 +98,14 @@ export const notifyHouseholdAdmins = async (
 
     if (admins.length === 0) {
       console.log('[Notifications] No admins with push tokens found for household');
-      return;
+      return { adminsFound: 0, message: 'No admins with push tokens' };
     }
 
     const tokens = admins.map(admin => admin.pushToken).filter(Boolean) as string[];
 
     console.log(`[Notifications] Found ${tokens.length} admin(s) with push tokens`);
 
-    await sendPushNotifications(
+    const result = await sendPushNotifications(
       tokens,
       'New Recipe Submission',
       `${submitterName} submitted a recipe for your approval`,
@@ -114,8 +114,10 @@ export const notifyHouseholdAdmins = async (
         type: 'recipe_submission',
       }
     );
+
+    return { adminsFound: admins.length, tokens: tokens.length, pushResult: result };
   } catch (error: any) {
-    // Log but don't throw - notification failures shouldn't block submissions
     console.error('[Notifications] Error notifying household admins:', error.message);
+    return { error: error.message };
   }
 };
