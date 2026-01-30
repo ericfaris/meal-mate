@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",

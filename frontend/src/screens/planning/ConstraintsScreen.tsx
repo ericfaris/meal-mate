@@ -52,6 +52,7 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
   // Days to cook - all days selected by default
   const [dinnerDays, setDinnerDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [avoidRepeats, setAvoidRepeats] = useState(true);
+  const [useAI, setUseAI] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
 
   // Store results to navigate after loader completes
@@ -98,6 +99,7 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
         daysToSkip: getDaysToSkip(),
         avoidRepeats,
         vegetarianOnly: false,
+        useAI,
       };
 
       const suggestions = await suggestionApi.generateSuggestions(constraints);
@@ -219,6 +221,22 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
           </View>
           <View style={[styles.toggle, avoidRepeats && styles.toggleActive]}>
             {avoidRepeats && <Text style={styles.toggleCheck}>✓</Text>}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.toggleRow, useAI && styles.toggleRowActive]}
+          onPress={() => setUseAI(!useAI)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.toggleInfo}>
+            <Text style={styles.toggleLabel}>AI-enhanced suggestions</Text>
+            <Text style={styles.toggleDescription}>
+              Use AI for smarter meal variety
+            </Text>
+          </View>
+          <View style={[styles.toggle, useAI && styles.toggleActive]}>
+            {useAI && <Text style={styles.toggleCheck}>✓</Text>}
           </View>
         </TouchableOpacity>
       </View>

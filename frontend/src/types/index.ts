@@ -38,6 +38,7 @@ export interface SuggestionConstraints {
   daysToSkip: number[]; // [0=Mon, 1=Tue, ..., 6=Sun]
   avoidRepeats: boolean;
   vegetarianOnly: boolean;
+  useAI?: boolean;
 }
 
 export interface Household {

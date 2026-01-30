@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 import Recipe, { IRecipe } from '../models/recipe';
 import Plan from '../models/plan';
+import { getAISuggestions } from './aiSuggestionService';
 
 export interface SuggestionConstraints {
   startDate: string; // YYYY-MM-DD
   daysToSkip: number[]; // [0=Mon, 1=Tue, ..., 6=Sun] - indices of days to skip
   avoidRepeats: boolean;
   vegetarianOnly: boolean;
+  useAI?: boolean;
 }
 
 export interface DaySuggestion {
@@ -69,6 +71,52 @@ export const generateWeekSuggestions = async (
 
   if (eligibleRecipes.length === 0) {
     return suggestions; // Return with no recipes if none available
+  }
+
+  // Try AI-enhanced suggestions if requested
+  if (constraints.useAI) {
+    const nonSkippedDates = suggestions
+      .filter((s) => !s.isSkipped)
+      .map((s) => ({ date: s.date, dayName: s.dayName }));
+
+    const aiResult = await getAISuggestions({
+      recipes: eligibleRecipes,
+      nonSkippedDates,
+      userId,
+    });
+
+    if (aiResult) {
+      const recipeMap = new Map(
+        eligibleRecipes.map((r) => [r._id.toString(), r])
+      );
+      for (const suggestion of suggestions) {
+        if (!suggestion.isSkipped) {
+          const recipeId = aiResult.get(suggestion.date);
+          if (recipeId && recipeMap.has(recipeId)) {
+            suggestion.recipeId = recipeId;
+            suggestion.recipe = recipeMap.get(recipeId)!;
+          }
+        }
+      }
+      // Fill any days AI missed with heuristic fallback
+      const assignedIds = new Set(
+        suggestions.filter((s) => s.recipeId).map((s) => s.recipeId)
+      );
+      const remaining = eligibleRecipes.filter(
+        (r) => !assignedIds.has(r._id.toString())
+      );
+      let fallbackIdx = 0;
+      for (const suggestion of suggestions) {
+        if (!suggestion.isSkipped && !suggestion.recipeId && remaining.length > 0) {
+          const recipe = remaining[fallbackIdx % remaining.length];
+          suggestion.recipeId = recipe._id.toString();
+          suggestion.recipe = recipe;
+          fallbackIdx++;
+        }
+      }
+      return suggestions;
+    }
+    // If AI returned null, fall through to heuristic
   }
 
   // Shuffle recipes for randomness

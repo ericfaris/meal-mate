@@ -27,6 +27,7 @@ export const generateSuggestions = async (req: Request, res: Response): Promise<
       daysToSkip = [],
       avoidRepeats = true,
       vegetarianOnly = false,
+      useAI = false,
     } = req.body;
 
     // Validation
@@ -40,6 +41,7 @@ export const generateSuggestions = async (req: Request, res: Response): Promise<
       daysToSkip,
       avoidRepeats,
       vegetarianOnly,
+      useAI,
     };
 
     const suggestions = await generateWeekSuggestions(constraints, userId);
