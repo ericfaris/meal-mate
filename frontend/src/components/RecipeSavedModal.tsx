@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.successLight,
+    backgroundColor: colors.secondaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },

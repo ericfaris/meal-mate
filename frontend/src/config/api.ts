@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
   auth: `${API_BASE_URL}/api/auth`,
   households: `${API_BASE_URL}/api/household`,
   submissions: `${API_BASE_URL}/api/submissions`,
+  groceryLists: `${API_BASE_URL}/api/grocery-lists`,
   health: `${API_BASE_URL}/health`,
 };
 

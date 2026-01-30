@@ -16,6 +16,11 @@ import PlannerScreen from '../screens/PlannerScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HouseholdScreen from '../screens/HouseholdScreen';
 
+// Grocery Screens
+import GroceryListPickerScreen from '../screens/grocery/GroceryListPickerScreen';
+import GroceryListStoreModeScreen from '../screens/grocery/GroceryListStoreModeScreen';
+import GroceryListHistoryScreen from '../screens/grocery/GroceryListHistoryScreen';
+
 // Planning Flow Screens
 import ConstraintsScreen from '../screens/planning/ConstraintsScreen';
 import SuggestionsScreen from '../screens/planning/SuggestionsScreen';
@@ -48,10 +53,17 @@ export type PlannerStackParamList = {
   Success: { plans: Plan[] };
 };
 
+export type GroceryStackParamList = {
+  GroceryPicker: undefined;
+  GroceryStoreMode: { listId: string };
+  GroceryHistory: undefined;
+};
+
 export type RootTabParamList = {
   HomeTab: undefined;
   RecipesTab: undefined;
   PlannerTab: undefined;
+  GroceryTab: undefined;
 };
 
 export type RootStackParamList = {
@@ -62,6 +74,7 @@ export type RootStackParamList = {
 
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
 const PlannerStack = createNativeStackNavigator<PlannerStackParamList>();
+const GroceryStack = createNativeStackNavigator<GroceryStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -158,6 +171,39 @@ function PlannerStackNavigator() {
   );
 }
 
+function GroceryStackNavigator() {
+  return (
+    <GroceryStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTintColor: colors.textOnPrimary,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        headerBackTitleVisible: false,
+      }}
+    >
+      <GroceryStack.Screen
+        name="GroceryPicker"
+        component={GroceryListPickerScreen}
+        options={{ title: 'Grocery List' }}
+      />
+      <GroceryStack.Screen
+        name="GroceryStoreMode"
+        component={GroceryListStoreModeScreen}
+        options={{ title: 'Shopping' }}
+      />
+      <GroceryStack.Screen
+        name="GroceryHistory"
+        component={GroceryListHistoryScreen}
+        options={{ title: 'Past Lists' }}
+      />
+    </GroceryStack.Navigator>
+  );
+}
+
 function TabNavigator() {
   const { isDesktop, isWeb, width } = useResponsive();
 
@@ -197,6 +243,8 @@ function TabNavigator() {
             iconName = focused ? 'book' : 'book-outline';
           } else if (route.name === 'PlannerTab') {
             iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'GroceryTab') {
+            iconName = focused ? 'cart' : 'cart-outline';
           } else {
             iconName = 'help-outline';
           }
@@ -253,6 +301,14 @@ function TabNavigator() {
         component={PlannerStackNavigator}
         options={{
           title: 'Planner',
+          headerShown: false, // Stack has its own header
+        }}
+      />
+      <Tab.Screen
+        name="GroceryTab"
+        component={GroceryStackNavigator}
+        options={{
+          title: 'Grocery',
           headerShown: false, // Stack has its own header
         }}
       />

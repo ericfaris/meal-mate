@@ -240,7 +240,7 @@ export default function HomeScreen({ navigation }: Props) {
                   <View style={styles.todayOverlay}>
                     <Text style={styles.todayTitle}>{(todayPlan.recipeId as Recipe).title}</Text>
                     <View style={styles.todayMeta}>
-                      {(todayPlan.recipeId as Recipe).cookTime && (todayPlan.recipeId as Recipe).cookTime > 0 && (
+                      {(todayPlan.recipeId as Recipe).cookTime != null && (todayPlan.recipeId as Recipe).cookTime! > 0 && (
                         <View style={styles.metaItem}>
                           <Ionicons name="time-outline" size={16} color={colors.white} />
                           <Text style={styles.metaText}>
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     marginBottom: spacing.md,
     marginHorizontal: spacing.md,
-    ...shadows.sm,
+    ...shadows.card,
   },
   notificationContent: {
     flexDirection: 'row',
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.secondaryDark,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -128,6 +128,13 @@ meal-mate/
 - Confirmed plans update recipe's `lastUsedDate`
 - Household plans visible to all members
 
+### GroceryList
+- User-owned grocery lists generated from meal plans
+- Embedded items array with name, quantity, category, recipe sources
+- Categories: Produce, Meat & Seafood, Dairy & Eggs, Pantry, Frozen, Bakery, Other
+- AI-powered ingredient parsing with regex fallback
+- Status: active/archived
+
 ---
 
 ## 🔌 API Endpoints
@@ -177,6 +184,18 @@ PUT    /api/submissions/:id       # Review submission (approve/deny)
 POST   /api/suggestions/generate    # Week of suggestions
 POST   /api/suggestions/alternative # Get alternative
 POST   /api/suggestions/approve     # Save as plans
+```
+
+### Grocery Lists
+```
+POST   /api/grocery-lists              # Create from plans
+GET    /api/grocery-lists              # List all (?status=)
+GET    /api/grocery-lists/:id          # Get single list
+PUT    /api/grocery-lists/:id          # Update name/status
+PUT    /api/grocery-lists/:id/items/:index  # Check/edit item
+POST   /api/grocery-lists/:id/items    # Add custom item
+DELETE /api/grocery-lists/:id/items/:index  # Remove item
+DELETE /api/grocery-lists/:id          # Delete list
 ```
 
 ### User Management
@@ -544,6 +563,14 @@ Recent changes:
     5. Upload to Expo: `eas credentials -p android` → Push Notifications → FCM V1 Service Account Key
     6. Also upload via Expo dashboard: Project → Credentials → Android → Push Notifications (FCM V1)
   - **Backend deploys via Docker**: Changes to `backend/` on `main` trigger GitHub Actions → Docker Hub → Railway auto-deploy. Frontend changes require EAS build.
+- **🛒 Grocery List Generation** - Generate shopping lists from planned meals
+  - AI-powered ingredient parsing and categorization (Claude Sonnet 4)
+  - Regex fallback parser when API key unavailable
+  - Ingredient aggregation across multiple recipes
+  - Store Mode with category-grouped checklist and progress tracking
+  - Add custom items, drill-down to see which recipes use each ingredient
+  - Grocery list history with completion percentages
+  - New bottom tab with Picker, Store Mode, and History screens
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation
@@ -553,7 +580,7 @@ Recent changes:
 ## 📋 Future Roadmap
 
 - [ ] AI-powered suggestions (Anthropic Claude API)
-- [ ] Grocery list generation from meal plans
+- [x] Grocery list generation from meal plans (completed)
 - [x] Push notifications for recipe submissions (completed)
 - [ ] Push notifications for meal reminders
 - [ ] Apple OAuth refinement and testing

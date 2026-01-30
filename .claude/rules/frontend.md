@@ -53,12 +53,16 @@ RootStack
 │   │   ├── RecipesList
 │   │   ├── RecipeDetail
 │   │   └── RecipeEntry
-│   └── PlannerTab (Stack)
-│       ├── PlannerHome
-│       ├── Constraints
-│       ├── Suggestions
-│       ├── RecipePicker
-│       └── Success
+│   ├── PlannerTab (Stack)
+│   │   ├── PlannerHome
+│   │   ├── Constraints
+│   │   ├── Suggestions
+│   │   ├── RecipePicker
+│   │   └── Success
+│   └── GroceryTab (Stack)
+│       ├── GroceryPicker
+│       ├── GroceryStoreMode
+│       └── GroceryHistory
 ├── Settings (Modal)
 └── Household (Modal)
 ```

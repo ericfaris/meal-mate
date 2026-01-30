@@ -217,7 +217,8 @@ export default function PlannerScreen() {
       // Get all recipe IDs already planned for this week to avoid duplicates
       const plannedRecipeIds = plans
         .filter(p => p.recipeId && p.date !== date)
-        .map(p => typeof p.recipeId === 'object' ? p.recipeId._id : p.recipeId);
+        .map(p => typeof p.recipeId === 'object' ? p.recipeId._id : p.recipeId)
+        .filter((id): id is string => id !== undefined);
 
       // Get a random suggestion excluding already-planned recipes
       const recipe = await suggestionApi.getAlternative(

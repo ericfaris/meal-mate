@@ -12,6 +12,7 @@ export interface Recipe {
   prepTime?: number;
   cookTime?: number;
   servings?: number;
+  complexity?: 'simple' | 'medium' | 'complex';
   planCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -84,4 +85,31 @@ export interface SubmitRecipeRequest {
 export interface ReviewSubmissionRequest {
   action: 'approve' | 'deny';
   reviewNotes?: string;
+}
+
+export interface GroceryItem {
+  name: string;
+  quantity: string;
+  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Other';
+  recipeIds: string[];
+  recipeNames: string[];
+  isChecked: boolean;
+  originalTexts: string[];
+}
+
+export interface GroceryList {
+  _id: string;
+  name: string;
+  status: 'active' | 'archived';
+  startDate: string;
+  endDate: string;
+  items: GroceryItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGroceryListRequest {
+  startDate: string;
+  daysCount: number;
+  name?: string;
 }

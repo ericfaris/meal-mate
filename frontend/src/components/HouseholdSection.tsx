@@ -11,6 +11,7 @@ import {
   TextInput,
   Clipboard,
   Linking,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -1031,9 +1032,6 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.medium as any,
-  },
-  denyButton: {
-    backgroundColor: colors.error,
   },
   buttonDisabled: {
     opacity: 0.5,
