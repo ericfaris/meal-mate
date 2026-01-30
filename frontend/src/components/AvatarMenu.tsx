@@ -7,8 +7,8 @@ import {
   Modal,
   Pressable,
   Animated,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { useAuth } from '../contexts/AuthContext';

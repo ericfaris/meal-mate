@@ -8,8 +8,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   TextInput,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { recipeApi } from '../services/api';

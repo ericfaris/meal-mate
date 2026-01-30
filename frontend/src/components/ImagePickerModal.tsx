@@ -4,12 +4,12 @@ import {
   Text,
   Modal,
   TouchableOpacity,
-  Image,
   FlatList,
   StyleSheet,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { imageSearchApi, SearchImage, ImageSource } from '../services/api/imageSearch';

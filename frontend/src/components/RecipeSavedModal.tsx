@@ -6,9 +6,9 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Image,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
