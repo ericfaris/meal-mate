@@ -54,7 +54,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       email,
       passwordHash: password, // Will be hashed by pre-save hook
       name,
-      role: 'member',
+      role: 'admin',
     });
 
     await user.save();
