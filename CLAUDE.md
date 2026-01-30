@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-27*
+*Last Updated: 2026-01-28*
 
 ---
 
@@ -536,6 +536,14 @@ Recent changes:
   - Notification channels for Android (Recipe Submissions)
   - Tap notification to navigate directly to Household screen
   - Push token management: saved on login, removed on logout
+  - **Firebase/FCM Setup Required**: Push notifications require Firebase Cloud Messaging:
+    1. Create Firebase project + add Android app (package: `com.mealmate.app`)
+    2. Download `google-services.json` → place in `frontend/` (safe to commit, public config only)
+    3. Add `googleServicesFile: './google-services.json'` to android config in `app.config.js`
+    4. Generate FCM V1 Service Account Key from Firebase Console → Project Settings → Service Accounts
+    5. Upload to Expo: `eas credentials -p android` → Push Notifications → FCM V1 Service Account Key
+    6. Also upload via Expo dashboard: Project → Credentials → Android → Push Notifications (FCM V1)
+  - **Backend deploys via Docker**: Changes to `backend/` on `main` trigger GitHub Actions → Docker Hub → Railway auto-deploy. Frontend changes require EAS build.
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation
