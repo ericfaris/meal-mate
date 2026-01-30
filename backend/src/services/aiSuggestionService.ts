@@ -78,7 +78,7 @@ No explanation, no markdown fences.`;
 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
-      model: 'claude-haiku-4-20250414',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
     });

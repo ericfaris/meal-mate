@@ -78,6 +78,7 @@ export default function SettingsScreen() {
   const { user, logout, refreshUser } = useAuth();
   const route = useRoute<SettingsRouteProp>();
   const [defaultAvoidRepeats, setDefaultAvoidRepeats] = useState(true);
+  const [defaultUseAI, setDefaultUseAI] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -268,25 +269,41 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Planning Defaults Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Planning Defaults</Text>
-        <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.settingRow}
-            onPress={() => setDefaultAvoidRepeats(!defaultAvoidRepeats)}
-          >
-            <View style={[styles.settingIcon, { backgroundColor: colors.secondary + '20' }]}>
-              <Ionicons name="refresh-outline" size={20} color={colors.secondary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Avoid Recent Repeats</Text>
-              <Text style={styles.settingSubtitle}>Skip recipes used in last 10 days</Text>
-            </View>
-            {renderToggle(defaultAvoidRepeats)}
-          </TouchableOpacity>
+      {/* Planning Defaults Section (admin only) */}
+      {user?.role === 'admin' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Planning Defaults</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => setDefaultAvoidRepeats(!defaultAvoidRepeats)}
+            >
+              <View style={[styles.settingIcon, { backgroundColor: colors.secondary + '20' }]}>
+                <Ionicons name="refresh-outline" size={20} color={colors.secondary} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Avoid Recent Repeats</Text>
+                <Text style={styles.settingSubtitle}>Skip recipes used in last 10 days</Text>
+              </View>
+              {renderToggle(defaultAvoidRepeats)}
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => setDefaultUseAI(!defaultUseAI)}
+            >
+              <View style={[styles.settingIcon, { backgroundColor: colors.primary + '20' }]}>
+                <Ionicons name="flash-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Use AI Suggestions</Text>
+                <Text style={styles.settingSubtitle}>Enhance suggestions with Claude AI</Text>
+              </View>
+              {renderToggle(defaultUseAI)}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Data Section */}
       <View style={styles.section}>
