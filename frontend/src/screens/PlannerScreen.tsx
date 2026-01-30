@@ -349,14 +349,16 @@ export default function PlannerScreen() {
             <View style={[
               styles.labelBadge,
               item.label === 'Eating Out' && styles.labelBadgeEatingOut,
+              item.label === 'Leftovers' && styles.labelBadgeLeftovers,
               item.label === 'TBD' && styles.labelBadgeTBD
             ]}>
               <Text style={styles.labelEmoji}>
-                {item.label === 'Eating Out' ? '🍽️' : '❓'}
+                {item.label === 'Eating Out' ? '🍽️' : item.label === 'Leftovers' ? '📦' : '❓'}
               </Text>
               <Text style={[
                 styles.labelText,
                 item.label === 'Eating Out' && styles.labelTextEatingOut,
+                item.label === 'Leftovers' && styles.labelTextLeftovers,
                 item.label === 'TBD' && styles.labelTextTBD
               ]}>{item.label}</Text>
             </View>
@@ -900,6 +902,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FF9800',
   },
+  labelBadgeLeftovers: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
   labelBadgeTBD: {
     backgroundColor: '#F5F5F5',
     borderWidth: 2,
@@ -915,6 +922,9 @@ const styles = StyleSheet.create({
   },
   labelTextEatingOut: {
     color: '#E65100',
+  },
+  labelTextLeftovers: {
+    color: '#2E7D32',
   },
   labelTextTBD: {
     color: '#616161',

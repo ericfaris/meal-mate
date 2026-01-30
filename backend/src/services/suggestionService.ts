@@ -74,7 +74,7 @@ export const generateWeekSuggestions = async (
   // Shuffle recipes for randomness
   const shuffledRecipes = shuffleArray([...eligibleRecipes]);
 
-  // Assign recipes to non-skipped days (cycle through if pool is smaller than days)
+  // Assign recipes to non-skipped days (pick without replacement, only cycle if pool exhausted)
   let recipeIndex = 0;
   for (const suggestion of suggestions) {
     if (!suggestion.isSkipped && shuffledRecipes.length > 0) {
@@ -82,6 +82,10 @@ export const generateWeekSuggestions = async (
       suggestion.recipeId = recipe._id.toString();
       suggestion.recipe = recipe;
       recipeIndex++;
+      // If we've used all recipes, reshuffle for variety before cycling
+      if (recipeIndex > 0 && recipeIndex % shuffledRecipes.length === 0) {
+        shuffleArray(shuffledRecipes);
+      }
     }
   }
 
@@ -146,7 +150,8 @@ export const getAlternativeSuggestion = async (
 };
 
 /**
- * Get recipes eligible for suggestions based on constraints
+ * Get recipes eligible for suggestions based on constraints,
+ * weighted by recent plan frequency so less-planned recipes are preferred.
  */
 async function getEligibleRecipes(
   constraints: SuggestionConstraints,
@@ -154,38 +159,72 @@ async function getEligibleRecipes(
 ): Promise<IRecipe[]> {
   const { avoidRepeats, vegetarianOnly } = constraints;
 
-  // Build query - filter by userId
-  const query: any = { userId };
+  // Build match stage
+  const matchStage: any = { userId: new mongoose.Types.ObjectId(userId) };
 
-  // Apply vegetarian filter
   if (vegetarianOnly) {
-    query.isVegetarian = true;
+    matchStage.isVegetarian = true;
   }
 
   // Apply repeat avoidance with adaptive lookback window
   if (avoidRepeats) {
-    // Get total recipe count for adaptive lookback
     const totalRecipes = await Recipe.countDocuments({ userId });
-    // Adaptive lookback: shorter window for smaller collections
-    // Min 3 days, max 10 days, scales with collection size
     const lookbackDays = Math.min(10, Math.max(3, Math.floor(totalRecipes / 2)));
-
     const lookbackDate = new Date();
     lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
-    query.$or = [
+    matchStage.$or = [
       { lastUsedDate: { $lt: lookbackDate } },
       { lastUsedDate: { $exists: false } },
       { lastUsedDate: null },
     ];
   }
 
-  // Build sort
-  const sort: any = {};
-  sort.lastUsedDate = 1; // Prefer least recently used
+  // Date threshold for "recent" plan counting (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-  let recipes = await Recipe.find(query).sort(sort);
+  const pipeline = [
+    { $match: matchStage },
+    // Join with plans to count recent usage
+    {
+      $lookup: {
+        from: 'plans',
+        let: { recipeId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$recipeId', '$$recipeId'] },
+              date: { $gte: thirtyDaysAgoStr },
+            },
+          },
+        ],
+        as: 'recentPlans',
+      },
+    },
+    { $addFields: { recentPlanCount: { $size: '$recentPlans' } } },
+    { $project: { recentPlans: 0 } },
+    // Sort by least recently planned first, then by lastUsedDate ascending
+    { $sort: { recentPlanCount: 1 as 1, lastUsedDate: 1 as 1 } },
+  ];
 
-  return recipes;
+  const recipes = await Recipe.aggregate(pipeline);
+
+  // Shuffle within weight tiers so same-count recipes get randomized
+  const tiers = new Map<number, any[]>();
+  for (const r of recipes) {
+    const count = r.recentPlanCount;
+    if (!tiers.has(count)) tiers.set(count, []);
+    tiers.get(count)!.push(r);
+  }
+
+  const result: IRecipe[] = [];
+  const sortedCounts = [...tiers.keys()].sort((a, b) => a - b);
+  for (const count of sortedCounts) {
+    result.push(...shuffleArray(tiers.get(count)!));
+  }
+
+  return result;
 }
 
 /**

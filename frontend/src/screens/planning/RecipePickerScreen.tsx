@@ -153,6 +153,24 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
     }
   };
 
+  const handleLeftovers = async () => {
+    try {
+      console.log('Marking as Leftovers for date:', date);
+      const updatedPlan = await planApi.updateByDate(date, {
+        label: 'Leftovers',
+        isConfirmed: false,
+      });
+      console.log('Plan updated successfully:', updatedPlan);
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error marking as leftovers:', error);
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to mark as leftovers. Please try again.',
+      });
+    }
+  };
+
   const handleTBD = async () => {
     try {
       console.log('Marking as TBD for date:', date);
@@ -238,6 +256,16 @@ export default function RecipePickerScreen({ navigation, route }: Props) {
           <Text style={styles.specialActionEmoji}>🍽️</Text>
           <Text style={styles.specialActionTitle}>Eating Out</Text>
           <Text style={styles.specialActionSubtitle}>No cooking tonight</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.specialActionCard, styles.leftoversCard]}
+          onPress={handleLeftovers}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.specialActionEmoji}>📦</Text>
+          <Text style={styles.specialActionTitle}>Leftovers</Text>
+          <Text style={styles.specialActionSubtitle}>Use what's on hand</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -341,6 +369,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3E0',
     borderWidth: 2,
     borderColor: '#FF9800',
+  },
+  leftoversCard: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
   },
   tbdCard: {
     backgroundColor: '#F5F5F5',

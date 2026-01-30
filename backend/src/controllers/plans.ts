@@ -158,8 +158,8 @@ export const updatePlanByDate = async (req: Request, res: Response): Promise<voi
       }
     ).populate('recipeId');
 
-    // If plan is confirmed with a recipe, update the recipe's lastUsedDate
-    if (isConfirmed && recipeId) {
+    // Update the recipe's lastUsedDate whenever a recipe is planned
+    if (recipeId) {
       await markRecipeAsUsed(recipeId, date);
     }
 

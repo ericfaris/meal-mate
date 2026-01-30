@@ -271,18 +271,20 @@ export default function HomeScreen({ navigation }: Props) {
                 <View style={[
                   styles.labelCard,
                   todayPlan.label === 'Eating Out' && styles.eatingOutCard,
+                  todayPlan.label === 'Leftovers' && styles.leftoversCard,
                   todayPlan.label === 'TBD' && styles.tbdCard
                 ]}>
                   <Text style={styles.labelCardEmoji}>
-                    {todayPlan.label === 'Eating Out' ? '🍽️' : '❓'}
+                    {todayPlan.label === 'Eating Out' ? '🍽️' : todayPlan.label === 'Leftovers' ? '📦' : '❓'}
                   </Text>
                   <Text style={[
                     styles.labelCardText,
                     todayPlan.label === 'Eating Out' && styles.eatingOutText,
+                    todayPlan.label === 'Leftovers' && styles.leftoversText,
                     todayPlan.label === 'TBD' && styles.tbdText
                   ]}>{todayPlan.label}</Text>
                   <Text style={styles.labelCardSubtext}>
-                    {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : 'Decision pending'}
+                    {todayPlan.label === 'Eating Out' ? 'Enjoy your meal out!' : todayPlan.label === 'Leftovers' ? 'Using what\'s on hand' : 'Decision pending'}
                   </Text>
                 </View>
               ) : (
@@ -575,6 +577,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3E0',
     borderColor: '#FF9800',
   },
+  leftoversCard: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+  },
   tbdCard: {
     backgroundColor: '#F5F5F5',
     borderColor: '#9E9E9E',
@@ -590,6 +596,9 @@ const styles = StyleSheet.create({
   },
   eatingOutText: {
     color: '#E65100',
+  },
+  leftoversText: {
+    color: '#2E7D32',
   },
   tbdText: {
     color: '#616161',
