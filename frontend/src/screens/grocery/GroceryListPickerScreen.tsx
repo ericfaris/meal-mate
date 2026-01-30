@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,39 +14,64 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { Plan } from '../../types';
 import { planApi } from '../../services/api/plans';
 import { groceryListApi } from '../../services/api/groceryLists';
-import { getTodayString } from '../../utils/dateUtils';
+import { getTodayString, addDays, parseDate, dateToString } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 
 type Props = {
   navigation: any;
 };
 
-const DINNER_OPTIONS = [3, 5, 7, 10, 14];
+/** Build an array of date strings for the next `count` days starting from `from`. */
+function buildDateRange(from: string, count: number): string[] {
+  const dates: string[] = [];
+  for (let i = 0; i < count; i++) {
+    dates.push(addDays(from, i));
+  }
+  return dates;
+}
+
+/** Format YYYY-MM-DD for a short label like "Mon 2/3" */
+function shortLabel(dateStr: string): { weekday: string; monthDay: string } {
+  const d = parseDate(dateStr);
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+  const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
+  return { weekday, monthDay };
+}
 
 export default function GroceryListPickerScreen({ navigation }: Props) {
-  const [selectedCount, setSelectedCount] = useState(7);
+  const today = getTodayString();
+  // Show 21 days of selectable dates (3 weeks ahead)
+  const selectableDates = useMemo(() => buildDateRange(today, 21), [today]);
+
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(addDays(today, 6));
+  const [picking, setPicking] = useState<'start' | 'end' | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
-  const shouldConstrainWidth = width > contentMaxWidth + 96;
-  const contentWidth = shouldConstrainWidth ? contentMaxWidth : '100%';
+  const contentWidth = width > contentMaxWidth + 96 ? contentMaxWidth : '100%';
 
-  const startDate = getTodayString();
+  // How many days in range
+  const dayCount = useMemo(() => {
+    const s = parseDate(startDate);
+    const e = parseDate(endDate);
+    return Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+  }, [startDate, endDate]);
 
   const loadPlans = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await planApi.getWeekPlans(startDate, selectedCount);
+      const result = await planApi.getWeekPlans(startDate, dayCount);
       setPlans(result.filter((p) => p.recipeId));
     } catch {
       setPlans([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedCount, startDate]);
+  }, [startDate, dayCount]);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,18 +79,36 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
     }, [loadPlans])
   );
 
+  const handleDateTap = (dateStr: string) => {
+    if (picking === 'start') {
+      setStartDate(dateStr);
+      if (dateStr > endDate) setEndDate(dateStr);
+      setPicking('end');
+    } else if (picking === 'end') {
+      if (dateStr < startDate) {
+        setStartDate(dateStr);
+        setEndDate(dateStr);
+      } else {
+        setEndDate(dateStr);
+      }
+      setPicking(null);
+    } else {
+      // Not in picking mode — start picking from start
+      setStartDate(dateStr);
+      setPicking('end');
+    }
+  };
+
+  const isInRange = (dateStr: string) => dateStr >= startDate && dateStr <= endDate;
+
   const handleGenerate = async () => {
     if (plans.length === 0) {
       Alert.alert('No Plans', 'There are no planned meals in this range. Plan some meals first!');
       return;
     }
-
     try {
       setGenerating(true);
-      const list = await groceryListApi.create({
-        startDate,
-        daysCount: selectedCount,
-      });
+      const list = await groceryListApi.create({ startDate, endDate });
       navigation.navigate('GroceryStoreMode', { listId: list._id });
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.error || 'Failed to generate grocery list');
@@ -74,17 +117,9 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
     }
   };
 
-  // Calculate end date for display
-  const getEndDate = () => {
-    const [y, m, d] = startDate.split('-').map(Number);
-    const end = new Date(y, m - 1, d);
-    end.setDate(end.getDate() + selectedCount - 1);
-    return `${end.getMonth() + 1}/${end.getDate()}`;
-  };
-
-  const getStartDisplay = () => {
-    const [y, m, d] = startDate.split('-').map(Number);
-    return `${m}/${d}`;
+  const formatDisplay = (dateStr: string) => {
+    const d = parseDate(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -96,38 +131,75 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
       ]}
     >
       <Text style={styles.title}>Generate Grocery List</Text>
-      <Text style={styles.subtitle}>
-        How many upcoming dinners do you want to shop for?
+      <Text style={styles.subtitle}>Pick a date range to shop for.</Text>
+
+      {/* Date range display */}
+      <View style={styles.rangePicker}>
+        <TouchableOpacity
+          style={[styles.dateButton, picking === 'start' && styles.dateButtonActive]}
+          onPress={() => setPicking(picking === 'start' ? null : 'start')}
+        >
+          <Text style={styles.dateButtonLabel}>From</Text>
+          <Text style={styles.dateButtonValue}>{formatDisplay(startDate)}</Text>
+        </TouchableOpacity>
+        <Ionicons name="arrow-forward" size={18} color={colors.textMuted} />
+        <TouchableOpacity
+          style={[styles.dateButton, picking === 'end' && styles.dateButtonActive]}
+          onPress={() => setPicking(picking === 'end' ? null : 'end')}
+        >
+          <Text style={styles.dateButtonLabel}>To</Text>
+          <Text style={styles.dateButtonValue}>{formatDisplay(endDate)}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Calendar strip */}
+      {picking !== null && (
+        <View style={styles.calendarStrip}>
+          <Text style={styles.calendarHint}>
+            {picking === 'start' ? 'Tap a start date' : 'Tap an end date'}
+          </Text>
+          <View style={styles.calendarGrid}>
+            {selectableDates.map((dateStr) => {
+              const { weekday, monthDay } = shortLabel(dateStr);
+              const inRange = isInRange(dateStr);
+              const isEdge = dateStr === startDate || dateStr === endDate;
+              return (
+                <TouchableOpacity
+                  key={dateStr}
+                  style={[
+                    styles.calendarDay,
+                    inRange && styles.calendarDayInRange,
+                    isEdge && styles.calendarDayEdge,
+                  ]}
+                  onPress={() => handleDateTap(dateStr)}
+                >
+                  <Text
+                    style={[
+                      styles.calendarWeekday,
+                      (inRange || isEdge) && styles.calendarTextHighlight,
+                    ]}
+                  >
+                    {weekday}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.calendarDate,
+                      (inRange || isEdge) && styles.calendarTextHighlight,
+                      isEdge && styles.calendarDateEdge,
+                    ]}
+                  >
+                    {monthDay}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
+      <Text style={styles.rangeInfo}>
+        {dayCount} day{dayCount !== 1 ? 's' : ''} selected
       </Text>
-
-      <View style={styles.optionsRow}>
-        {DINNER_OPTIONS.map((count) => (
-          <TouchableOpacity
-            key={count}
-            style={[
-              styles.optionChip,
-              selectedCount === count && styles.optionChipSelected,
-            ]}
-            onPress={() => setSelectedCount(count)}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selectedCount === count && styles.optionTextSelected,
-              ]}
-            >
-              {count}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.dateRange}>
-        <Ionicons name="calendar-outline" size={16} color={colors.textLight} />
-        <Text style={styles.dateRangeText}>
-          {getStartDisplay()} — {getEndDate()}
-        </Text>
-      </View>
 
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
@@ -145,7 +217,7 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
             {plans.map((plan, i) => (
               <View key={i} style={styles.planRow}>
                 <Text style={styles.planDate}>
-                  {new Date(plan.date + 'T12:00:00').toLocaleDateString('en-US', {
+                  {parseDate(plan.date).toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -205,41 +277,90 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginBottom: spacing.lg,
   },
-  optionsRow: {
+  rangePicker: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
     marginBottom: spacing.md,
   },
-  optionChip: {
+  dateButton: {
     flex: 1,
-    paddingVertical: spacing.sm + 2,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 2,
     borderColor: colors.border,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
-    backgroundColor: colors.white,
   },
-  optionChipSelected: {
+  dateButtonActive: {
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
   },
-  optionText: {
+  dateButtonLabel: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textMuted,
+    marginBottom: 2,
+  },
+  dateButtonValue: {
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.semibold,
-    color: colors.textLight,
+    color: colors.text,
   },
-  optionTextSelected: {
+  calendarStrip: {
+    marginBottom: spacing.md,
+  },
+  calendarHint: {
+    fontSize: typography.sizes.small,
     color: colors.primary,
+    fontWeight: typography.weights.medium,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
   },
-  dateRange: {
+  calendarGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: spacing.xs,
-    marginBottom: spacing.lg,
   },
-  dateRangeText: {
+  calendarDay: {
+    width: '13%',
+    alignItems: 'center',
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  calendarDayInRange: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryLight,
+  },
+  calendarDayEdge: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  calendarWeekday: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textMuted,
+  },
+  calendarDate: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.medium,
+    color: colors.text,
+  },
+  calendarTextHighlight: {
+    color: colors.text,
+  },
+  calendarDateEdge: {
+    color: colors.textOnPrimary,
+    fontWeight: typography.weights.bold,
+  },
+  rangeInfo: {
     fontSize: typography.sizes.small,
     color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
   loader: {
     marginTop: spacing.xl,

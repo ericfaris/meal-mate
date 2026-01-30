@@ -5,19 +5,24 @@ import * as groceryListService from '../services/groceryListService';
 export const createGroceryList = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { startDate, daysCount, name } = req.body;
+    const { startDate, endDate, name } = req.body;
 
-    if (!startDate || !daysCount) {
-      res.status(400).json({ error: 'startDate and daysCount are required' });
+    if (!startDate || !endDate) {
+      res.status(400).json({ error: 'startDate and endDate are required' });
       return;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
       res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
       return;
     }
 
-    const list = await groceryListService.createFromPlans(userId, startDate, daysCount, name);
+    if (endDate < startDate) {
+      res.status(400).json({ error: 'End date must be on or after start date' });
+      return;
+    }
+
+    const list = await groceryListService.createFromPlans(userId, startDate, endDate, name);
     res.status(201).json(list);
   } catch (error) {
     console.error('Error creating grocery list:', error);

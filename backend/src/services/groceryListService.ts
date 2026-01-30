@@ -14,14 +14,9 @@ import {
 export async function createFromPlans(
   userId: string,
   startDate: string,
-  daysCount: number,
+  endDate: string,
   name?: string
 ): Promise<IGroceryList> {
-  // Calculate end date
-  const [year, month, day] = startDate.split('-').map(Number);
-  const endDateObj = new Date(year, month - 1, day);
-  endDateObj.setDate(endDateObj.getDate() + daysCount - 1);
-  const endDate = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, '0')}-${String(endDateObj.getDate()).padStart(2, '0')}`;
 
   // Get user for household context
   const user = await User.findById(userId);
@@ -60,8 +55,13 @@ export async function createFromPlans(
 
   const aggregated = aggregateIngredients(parsed);
 
-  // Build grocery list
-  const listName = name || `Next ${daysCount} Dinners`;
+  // Build grocery list name from dates
+  const formatShort = (d: string) => {
+    const [y, m, day] = d.split('-').map(Number);
+    const date = new Date(y, m - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const listName = name || `${formatShort(startDate)} – ${formatShort(endDate)}`;
   const groceryList = new GroceryList({
     userId,
     name: listName,

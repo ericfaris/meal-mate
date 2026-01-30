@@ -110,6 +110,6 @@ export interface GroceryList {
 
 export interface CreateGroceryListRequest {
   startDate: string;
-  daysCount: number;
+  endDate: string;
   name?: string;
 }

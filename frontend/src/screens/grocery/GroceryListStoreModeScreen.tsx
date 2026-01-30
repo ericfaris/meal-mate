@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -68,6 +68,13 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
       loadList();
     }, [loadList])
   );
+
+  // Set the header title to the list name
+  useEffect(() => {
+    if (list?.name) {
+      navigation.setOptions({ title: list.name });
+    }
+  }, [list?.name, navigation]);
 
   const handleToggleItem = async (itemIndex: number) => {
     if (!list) return;
