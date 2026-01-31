@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,19 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
-  Animated,
   Modal,
   Pressable,
+
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { GroceryList, GroceryItem } from '../../types';
+import { GroceryList, GroceryItem, Store } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
+import { storesApi } from '../../services/api/stores';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import AddStapleModal from '../../components/AddStapleModal';
+import ManageStoresModal from '../../components/ManageStoresModal';
 
 type Props = {
   navigation: any;
@@ -31,10 +34,11 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Pantry': '🫙',
   'Frozen': '🧊',
   'Bakery': '🍞',
+  'Household': '🧹',
   'Other': '📦',
 };
 
-const CATEGORY_ORDER = ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Other'];
+const CATEGORY_ORDER = ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Household', 'Other'];
 
 export default function GroceryListStoreModeScreen({ navigation, route }: Props) {
   const { listId } = route.params;
@@ -44,8 +48,10 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [drillDownItem, setDrillDownItem] = useState<GroceryItem | null>(null);
   const [addItemVisible, setAddItemVisible] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [manageStoresVisible, setManageStoresVisible] = useState(false);
   const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
@@ -63,10 +69,24 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
     }
   }, [listId]);
 
+  const loadStores = useCallback(async () => {
+    try {
+      const data = await storesApi.getAll();
+      setStores(data);
+      const defaultStore = data.find((s) => s.isDefault);
+      if (defaultStore && !selectedStore) {
+        setSelectedStore(defaultStore);
+      }
+    } catch {
+      // Non-critical, silently fail
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadList();
-    }, [loadList])
+      loadStores();
+    }, [loadList, loadStores])
   );
 
   // Set the header title to the list name
@@ -95,35 +115,38 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
     }
   };
 
-  const handleAddItem = async () => {
-    if (!newItemName.trim()) return;
+  const handleAddItem = async (data: { name: string; quantity: string; category: string }) => {
     try {
-      const updated = await groceryListApi.addItem(listId, { name: newItemName.trim() });
+      const updated = await groceryListApi.addItem(listId, {
+        name: data.name,
+        quantity: data.quantity || undefined,
+        category: data.category,
+      });
       setList(updated);
-      setNewItemName('');
       setAddItemVisible(false);
     } catch {
       Alert.alert('Error', 'Failed to add item');
     }
   };
 
-  const handleRemoveItem = (itemIndex: number) => {
-    Alert.alert('Remove Item', 'Remove this item from the list?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const updated = await groceryListApi.removeItem(listId, itemIndex);
-            setList(updated);
-          } catch {
-            Alert.alert('Error', 'Failed to remove item');
-          }
-        },
-      },
-    ]);
+  const handleRemoveItem = async (itemIndex: number) => {
+    try {
+      const updated = await groceryListApi.removeItem(listId, itemIndex);
+      setList(updated);
+    } catch {
+      Alert.alert('Error', 'Failed to remove item');
+    }
   };
+
+  const handleSelectStore = async (store: Store | null) => {
+    setSelectedStore(store);
+    // Fire-and-forget: mark as default
+    if (store) {
+      storesApi.update(store._id, { isDefault: true }).catch(() => {});
+    }
+  };
+
+  const activeCategoryOrder = selectedStore?.categoryOrder ?? CATEGORY_ORDER;
 
   if (loading || !list) {
     return (
@@ -141,7 +164,7 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
     : list.items;
 
   // Group by category
-  const sections = CATEGORY_ORDER
+  const sections = activeCategoryOrder
     .map((category) => ({
       title: category,
       emoji: CATEGORY_EMOJIS[category] || '📦',
@@ -151,23 +174,34 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
     }))
     .filter((section) => section.data.length > 0);
 
-  const checkedCount = list.items.filter((i) => i.isChecked).length;
-  const totalCount = list.items.length;
-  const progress = totalCount > 0 ? checkedCount / totalCount : 0;
-
   return (
     <View style={styles.container}>
-      {/* Progress bar */}
-      <View style={[styles.progressContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
-        <View style={styles.progressInfo}>
-          <Text style={styles.progressText}>
-            {checkedCount}/{totalCount} items
-          </Text>
-          <Text style={styles.progressPercent}>{Math.round(progress * 100)}%</Text>
-        </View>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-        </View>
+      {/* Store selector */}
+      <View style={[styles.storeChipsContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
+        <TouchableOpacity
+          style={[styles.storeChip, !selectedStore && styles.storeChipActive]}
+          onPress={() => handleSelectStore(null)}
+        >
+          <Text style={[styles.storeChipText, !selectedStore && styles.storeChipTextActive]}>All</Text>
+        </TouchableOpacity>
+        {stores.map((store) => (
+          <TouchableOpacity
+            key={store._id}
+            style={[styles.storeChip, selectedStore?._id === store._id && styles.storeChipActive]}
+            onPress={() => handleSelectStore(store)}
+          >
+            <Text style={[styles.storeChipText, selectedStore?._id === store._id && styles.storeChipTextActive]}>
+              {store.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          style={styles.storeChipManage}
+          onPress={() => setManageStoresVisible(true)}
+        >
+          <Ionicons name="settings-outline" size={14} color={colors.primary} />
+          <Text style={styles.storeChipManageText}>Manage</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search */}
@@ -220,39 +254,56 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         renderItem={({ item: { item, originalIndex }, section }) => {
           if (collapsedCategories.has(section.title)) return null;
           return (
-            <TouchableOpacity
-              style={styles.itemRow}
-              onPress={() => handleToggleItem(originalIndex)}
-              onLongPress={() => setDrillDownItem(item)}
-            >
-              <Ionicons
-                name={item.isChecked ? 'checkbox' : 'square-outline'}
-                size={24}
-                color={item.isChecked ? colors.success : colors.textMuted}
-              />
-              <View style={styles.itemInfo}>
-                <Text
-                  style={[
-                    styles.itemName,
-                    item.isChecked && styles.itemNameChecked,
-                  ]}
-                >
-                  {item.name}
-                </Text>
-                {item.quantity ? (
-                  <Text style={styles.itemQuantity}>{item.quantity}</Text>
-                ) : null}
-              </View>
-              {item.recipeNames.length > 1 && (
-                <View style={styles.recipeBadge}>
-                  <Text style={styles.recipeBadgeText}>{item.recipeNames.length}</Text>
+            <View style={styles.itemRow}>
+              <Pressable
+                style={styles.itemRowMain}
+                onPress={() => handleToggleItem(originalIndex)}
+                onLongPress={() => setDrillDownItem(item)}
+              >
+                <Ionicons
+                  name={item.isChecked ? 'checkbox' : 'square-outline'}
+                  size={24}
+                  color={item.isChecked ? colors.success : colors.textMuted}
+                />
+                <View style={styles.itemInfo}>
+                  <Text
+                    style={[
+                      styles.itemName,
+                      item.isChecked && styles.itemNameChecked,
+                    ]}
+                  >
+                    {item.name}
+                  </Text>
+                  {item.quantity ? (
+                    <Text style={styles.itemQuantity}>{item.quantity}</Text>
+                  ) : null}
                 </View>
-              )}
-            </TouchableOpacity>
+                {item.recipeNames.length > 1 && (
+                  <View style={styles.recipeBadge}>
+                    <Text style={styles.recipeBadgeText}>{item.recipeNames.length}</Text>
+                  </View>
+                )}
+              </Pressable>
+              <Pressable
+                style={styles.removeButton}
+                onPress={() => handleRemoveItem(originalIndex)}
+              >
+                <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+              </Pressable>
+            </View>
           );
         }}
         stickySectionHeadersEnabled
       />
+
+      {/* Staples button */}
+      <TouchableOpacity
+        style={styles.staplesButton}
+        onPress={() => navigation.navigate('Staples', { listId })}
+      >
+        <Ionicons name="star" size={20} color={colors.textOnPrimary} />
+        <Text style={styles.staplesButtonText}>Staples</Text>
+      </TouchableOpacity>
 
       {/* FAB to add item */}
       <TouchableOpacity
@@ -270,33 +321,31 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
       )}
 
       {/* Add item modal */}
-      <Modal visible={addItemVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setAddItemVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Add Item</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Item name"
-              placeholderTextColor={colors.textMuted}
-              value={newItemName}
-              onChangeText={setNewItemName}
-              autoFocus
-              onSubmitEditing={handleAddItem}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalCancel}
-                onPress={() => setAddItemVisible(false)}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalAdd} onPress={handleAddItem}>
-                <Text style={styles.modalAddText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <AddStapleModal
+        visible={addItemVisible}
+        onClose={() => setAddItemVisible(false)}
+        onAdd={handleAddItem}
+        title="Add Item"
+      />
+
+      {/* Manage stores modal */}
+      <ManageStoresModal
+        visible={manageStoresVisible}
+        onClose={() => setManageStoresVisible(false)}
+        stores={stores}
+        onStoresChanged={(updated) => {
+          setStores(updated);
+          // If selected store was deleted, deselect
+          if (selectedStore && !updated.find((s) => s._id === selectedStore._id)) {
+            setSelectedStore(null);
+          }
+          // Update selectedStore's categoryOrder if it changed
+          if (selectedStore) {
+            const updatedStore = updated.find((s) => s._id === selectedStore._id);
+            if (updatedStore) setSelectedStore(updatedStore);
+          }
+        }}
+      />
 
       {/* Drill-down modal */}
       <Modal visible={!!drillDownItem} transparent animationType="fade">
@@ -345,35 +394,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-  progressContainer: {
+  storeChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
+    gap: spacing.xs,
   },
-  progressInfo: {
+  storeChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  storeChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  storeChipText: {
+    fontSize: typography.sizes.small,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
+  },
+  storeChipTextActive: {
+    color: colors.textOnPrimary,
+  },
+  storeChipManage: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
+    backgroundColor: colors.white,
   },
-  progressText: {
+  storeChipManageText: {
     fontSize: typography.sizes.small,
-    color: colors.textLight,
-  },
-  progressPercent: {
-    fontSize: typography.sizes.small,
-    fontWeight: typography.weights.semibold,
     color: colors.primary,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: colors.divider,
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.success,
-    borderRadius: borderRadius.full,
+    fontWeight: typography.weights.medium,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -421,11 +484,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 4,
-    gap: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
+  },
+  itemRowMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: spacing.lg,
+    paddingVertical: spacing.sm + 4,
+    gap: spacing.md,
   },
   itemInfo: {
     flex: 1,
@@ -451,10 +519,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  removeButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    justifyContent: 'center',
+  },
   recipeBadgeText: {
     fontSize: typography.sizes.tiny,
     fontWeight: typography.weights.bold,
     color: colors.primary,
+  },
+  staplesButton: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.lg + 56 + spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.secondary,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    ...shadows.floating,
+  },
+  staplesButtonText: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.semibold,
+    color: colors.textOnPrimary,
   },
   fab: {
     position: 'absolute',
@@ -501,32 +592,6 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.md,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    fontSize: typography.sizes.body,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  modalCancel: {
-    flex: 1,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: typography.sizes.body,
-    color: colors.textLight,
   },
   modalAdd: {
     flex: 1,

@@ -131,9 +131,23 @@ meal-mate/
 ### GroceryList
 - User-owned grocery lists generated from meal plans
 - Embedded items array with name, quantity, category, recipe sources
-- Categories: Produce, Meat & Seafood, Dairy & Eggs, Pantry, Frozen, Bakery, Other
+- Categories: Produce, Meat & Seafood, Dairy & Eggs, Pantry, Frozen, Bakery, Household, Other
 - AI-powered ingredient parsing with regex fallback
 - Status: active/archived
+
+### Store
+- User-owned store layout configurations for grocery shopping
+- Fields: name, categoryOrder (ordered array of 8 categories), isDefault
+- Unique compound index on userId + name
+- Auto-seeds 6 default stores (Aldi, Meijer, Kroger, Walmart, Whole Foods, Trader Joe's) on first access
+- Store Mode reorders categories to match selected store's physical layout
+
+### Staple
+- User-owned "My Staples" list of frequently purchased items
+- Auto-saved when users add custom items to grocery lists (passive history)
+- Fields: name, quantity, category, usageCount, lastUsedAt
+- Unique compound index on userId + name (case-insensitive upsert)
+- Bulk-add staples to any grocery list in one tap
 
 ---
 
@@ -193,9 +207,26 @@ GET    /api/grocery-lists              # List all (?status=)
 GET    /api/grocery-lists/:id          # Get single list
 PUT    /api/grocery-lists/:id          # Update name/status
 PUT    /api/grocery-lists/:id/items/:index  # Check/edit item
-POST   /api/grocery-lists/:id/items    # Add custom item
+POST   /api/grocery-lists/:id/items    # Add custom item (auto-saves to staples)
+POST   /api/grocery-lists/:id/staples  # Bulk-add staples to list
 DELETE /api/grocery-lists/:id/items/:index  # Remove item
 DELETE /api/grocery-lists/:id          # Delete list
+```
+
+### Staples
+```
+GET    /api/staples                 # Get user's staples (sorted by usageCount)
+POST   /api/staples                 # Create/update staple (upsert by name)
+DELETE /api/staples/:id             # Delete single staple
+DELETE /api/staples                 # Clear all staples
+```
+
+### Stores
+```
+GET    /api/stores                   # Get user's stores (seeds defaults if empty)
+POST   /api/stores                   # Create a new store
+PUT    /api/stores/:id               # Update (name, categoryOrder, isDefault)
+DELETE /api/stores/:id               # Delete a store
 ```
 
 ### User Management
@@ -571,6 +602,20 @@ Recent changes:
   - Add custom items, drill-down to see which recipes use each ingredient
   - Grocery list history with completion percentages
   - New bottom tab with Picker, Store Mode, and History screens
+- **🌟 My Staples** - Personal staples list for quick grocery shopping
+  - Auto-saves custom items added to grocery lists as staples (passive history)
+  - Dedicated "My Staples" screen with search, category filters, and bulk-select
+  - Bulk-add selected staples to any grocery list in one tap
+  - Enhanced add-item modal with quantity and category picker in Store Mode
+  - "Add Staples" button in Store Mode for quick access
+  - 'Household' category added to grocery items and staples
+- **🏪 Store Layouts** - Per-store category ordering in Store Mode
+  - Users select a store to reorder grocery categories to match the store's physical layout
+  - 6 default stores seeded on first use (Aldi, Meijer, Kroger, Walmart, Whole Foods, Trader Joe's)
+  - Manage Stores modal with category reordering via up/down arrows
+  - Add custom stores, delete stores
+  - Last-used store auto-selected on next visit (isDefault flag)
+  - Store selector chip row in Store Mode below progress bar
 - Recipe creation refactor (ingredients/directions optional)
 - Plan count tracking on recipes
 - Clickable stat cards for navigation

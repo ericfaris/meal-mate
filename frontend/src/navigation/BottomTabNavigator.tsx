@@ -20,6 +20,7 @@ import HouseholdScreen from '../screens/HouseholdScreen';
 import GroceryListPickerScreen from '../screens/grocery/GroceryListPickerScreen';
 import GroceryListStoreModeScreen from '../screens/grocery/GroceryListStoreModeScreen';
 import GroceryListHistoryScreen from '../screens/grocery/GroceryListHistoryScreen';
+import StaplesScreen from '../screens/grocery/StaplesScreen';
 
 // Planning Flow Screens
 import ConstraintsScreen from '../screens/planning/ConstraintsScreen';
@@ -57,6 +58,7 @@ export type GroceryStackParamList = {
   GroceryPicker: undefined;
   GroceryStoreMode: { listId: string };
   GroceryHistory: undefined;
+  Staples: { listId?: string };
 };
 
 export type RootTabParamList = {
@@ -199,6 +201,11 @@ function GroceryStackNavigator() {
         name="GroceryHistory"
         component={GroceryListHistoryScreen}
         options={{ title: 'Past Lists' }}
+      />
+      <GroceryStack.Screen
+        name="Staples"
+        component={StaplesScreen}
+        options={{ title: 'My Staples' }}
       />
     </GroceryStack.Navigator>
   );

@@ -4,7 +4,7 @@ import { IRecipe } from '../models/recipe';
 export interface ParsedIngredient {
   name: string;
   quantity: string;
-  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Other';
+  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Household' | 'Other';
   recipeId: string;
   recipeName: string;
   originalText: string;

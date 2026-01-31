@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IGroceryItem {
   name: string;
   quantity: string;
-  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Other';
+  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Household' | 'Other';
   recipeIds: mongoose.Types.ObjectId[];
   recipeNames: string[];
   isChecked: boolean;
@@ -28,7 +28,7 @@ const groceryItemSchema = new Schema<IGroceryItem>(
     quantity: { type: String, default: '' },
     category: {
       type: String,
-      enum: ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Other'],
+      enum: ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Household', 'Other'],
       default: 'Other',
     },
     recipeIds: [{ type: Schema.Types.ObjectId, ref: 'Recipe' }],

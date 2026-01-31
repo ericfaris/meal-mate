@@ -90,7 +90,7 @@ export interface ReviewSubmissionRequest {
 export interface GroceryItem {
   name: string;
   quantity: string;
-  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Other';
+  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Household' | 'Other';
   recipeIds: string[];
   recipeNames: string[];
   isChecked: boolean;
@@ -112,4 +112,24 @@ export interface CreateGroceryListRequest {
   startDate: string;
   endDate: string;
   name?: string;
+}
+
+export interface Store {
+  _id: string;
+  name: string;
+  categoryOrder: string[];
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Staple {
+  _id: string;
+  name: string;
+  quantity: string;
+  category: 'Produce' | 'Meat & Seafood' | 'Dairy & Eggs' | 'Pantry' | 'Frozen' | 'Bakery' | 'Household' | 'Other';
+  lastUsedAt: string;
+  usageCount: number;
+  createdAt: string;
+  updatedAt: string;
 }

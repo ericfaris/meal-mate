@@ -10,6 +10,8 @@ import householdRoutes from './routes/household';
 import recipeSubmissionRoutes from './routes/recipeSubmission';
 import userRoutes from './routes/user';
 import groceryListRoutes from './routes/groceryList';
+import stapleRoutes from './routes/staples';
+import storeRoutes from './routes/stores';
 import { authenticate } from './middleware/auth';
 
 export const createApp = (): Express => {
@@ -53,6 +55,8 @@ export const createApp = (): Express => {
   app.use('/api/submissions', authenticate, recipeSubmissionRoutes);
   app.use('/api/users', authenticate, userRoutes);
   app.use('/api/grocery-lists', authenticate, groceryListRoutes);
+  app.use('/api/staples', authenticate, stapleRoutes);
+  app.use('/api/stores', authenticate, storeRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

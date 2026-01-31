@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as groceryListService from '../services/groceryListService';
+import Staple from '../models/staple';
 
 // POST /api/grocery-lists - Create grocery list from plans
 export const createGroceryList = async (req: Request, res: Response): Promise<void> => {
@@ -118,6 +119,28 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
       res.status(404).json({ error: 'Grocery list not found' });
       return;
     }
+
+    // Auto-save to staples (passive history)
+    try {
+      const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await Staple.findOneAndUpdate(
+        { userId: req.userId, name: { $regex: new RegExp(`^${escapedName}$`, 'i') } },
+        {
+          $set: {
+            name: name.trim(),
+            ...(quantity && { quantity }),
+            ...(category && { category }),
+            lastUsedAt: new Date(),
+          },
+          $inc: { usageCount: 1 },
+          $setOnInsert: { userId: req.userId },
+        },
+        { upsert: true }
+      );
+    } catch (stapleErr) {
+      console.error('Auto-save staple failed (non-blocking):', stapleErr);
+    }
+
     res.json(list);
   } catch (error) {
     console.error('Error adding grocery item:', error);
