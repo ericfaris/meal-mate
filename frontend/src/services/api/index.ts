@@ -5,3 +5,4 @@ export { submissionApi } from './submissions';
 export { groceryListApi } from './groceryLists';
 export { staplesApi } from './staples';
 export { storesApi } from './stores';
+export { recipePhotoImportApi } from './recipePhotoImport';

@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -22,6 +23,8 @@ import { colors, typography, spacing, borderRadius, shadows, heights } from '../
 import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { recipeImportApi } from '../services/api/recipeImport';
+import { recipePhotoImportApi } from '../services/api/recipePhotoImport';
+import * as ImagePicker from 'expo-image-picker';
 import RecipeSavedModal from '../components/RecipeSavedModal';
 import ErrorModal from '../components/ErrorModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,7 +35,7 @@ type Props = {
   navigation: any;
 };
 
-type Tab = 'import' | 'browse' | 'manual';
+type Tab = 'import' | 'browse' | 'photo' | 'manual';
 
 const DEFAULT_RECIPE_SITES = [
   { name: 'AllRecipes', url: 'https://www.allrecipes.com' },
@@ -87,6 +90,10 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   const [prepTime, setPrepTime] = useState(existingRecipe?.prepTime?.toString() || '');
   const [cookTime, setCookTime] = useState(existingRecipe?.cookTime?.toString() || '');
   const [servings, setServings] = useState(existingRecipe?.servings?.toString() || '');
+
+  // Photo tab state
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -239,6 +246,20 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         />
         <Text style={[styles.tabText, activeTab === 'browse' && styles.tabTextActive]}>
           Browse Web
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'photo' && styles.tabActive]}
+        onPress={() => setActiveTab('photo')}
+        disabled={isEditMode}
+      >
+        <Ionicons
+          name="camera-outline"
+          size={18}
+          color={activeTab === 'photo' ? colors.primary : colors.textMuted}
+        />
+        <Text style={[styles.tabText, activeTab === 'photo' && styles.tabTextActive]}>
+          Photo
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -605,6 +626,167 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
     </ScrollView>
   );
 
+  const handleTakePhoto = async () => {
+    try {
+      console.log('[Photo] Requesting camera permissions...');
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      console.log('[Photo] Camera permission status:', status);
+      if (status !== 'granted') {
+        showError('Permission Required', 'Camera permission is needed to take photos.');
+        return;
+      }
+
+      console.log('[Photo] Launching camera...');
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      console.log('[Photo] Camera result:', { cancelled: result.canceled, assets: result.assets?.length });
+      if (!result.canceled && result.assets[0]) {
+        console.log('[Photo] Photo captured, URI:', result.assets[0].uri.substring(0, 80) + '...');
+        setPhotoUri(result.assets[0].uri);
+      }
+    } catch (error: any) {
+      console.error('[Photo] Camera error:', error);
+      showError('Camera Error', error.message || 'Failed to take photo');
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    try {
+      console.log('[Photo] Requesting media library permissions...');
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('[Photo] Media library permission status:', status);
+      if (status !== 'granted') {
+        showError('Permission Required', 'Photo library permission is needed to select photos.');
+        return;
+      }
+
+      console.log('[Photo] Launching image picker...');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      console.log('[Photo] Picker result:', { cancelled: result.canceled, assets: result.assets?.length });
+      if (!result.canceled && result.assets[0]) {
+        console.log('[Photo] Image selected, URI:', result.assets[0].uri.substring(0, 80) + '...');
+        setPhotoUri(result.assets[0].uri);
+      }
+    } catch (error: any) {
+      console.error('[Photo] Gallery error:', error);
+      showError('Gallery Error', error.message || 'Failed to pick photo');
+    }
+  };
+
+  const handleExtractRecipe = async () => {
+    if (!photoUri) return;
+
+    setExtracting(true);
+    try {
+      console.log('[Photo] Starting recipe extraction...');
+      console.log('[Photo] Sending image URI:', photoUri.substring(0, 80) + '...');
+      const extracted = await recipePhotoImportApi.importFromPhoto(photoUri);
+      console.log('[Photo] Extraction successful:', { title: extracted.title, tagsCount: extracted.tags?.length });
+
+      // Pre-fill the manual form fields
+      setTitle(extracted.title || '');
+      setIngredientsText(extracted.ingredientsText || '');
+      setDirectionsText(extracted.directionsText || '');
+      setPrepTime(extracted.prepTime ? String(extracted.prepTime) : '');
+      setCookTime(extracted.cookTime ? String(extracted.cookTime) : '');
+      setServings(extracted.servings ? String(extracted.servings) : '');
+      setTags(extracted.tags?.join(', ') || '');
+
+      // Switch to manual tab for review
+      setActiveTab('manual');
+      setPhotoUri(null);
+    } catch (error: any) {
+      console.error('[Photo] Extraction error:', error);
+      console.error('[Photo] Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        code: error.code,
+      });
+      const message = error.response?.data?.error || 'Failed to extract recipe from photo. Please try again.';
+      showError('Extraction Failed', message);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const renderPhotoTab = () => (
+    <ScrollView style={styles.importContainer} contentContainerStyle={{ alignItems: 'center' }}>
+      <View style={styles.importHeader}>
+        <Text style={styles.importTitle}>Import from Photo</Text>
+        <Text style={styles.importSubtitle}>
+          Take a photo of a recipe or choose one from your gallery
+        </Text>
+      </View>
+
+      <View style={styles.photoButtonRow}>
+        {Platform.OS !== 'web' && (
+          <TouchableOpacity
+            style={[styles.photoButton, extracting && styles.importButtonDisabled]}
+            onPress={handleTakePhoto}
+            disabled={extracting}
+          >
+            <Ionicons name="camera" size={24} color={colors.primary} />
+            <Text style={styles.photoButtonText}>Take Photo</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[styles.photoButton, extracting && styles.importButtonDisabled]}
+          onPress={handlePickFromGallery}
+          disabled={extracting}
+        >
+          <Ionicons name="images" size={24} color={colors.primary} />
+          <Text style={styles.photoButtonText}>{Platform.OS === 'web' ? 'Choose Image' : 'Gallery'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {photoUri && (
+        <View style={styles.photoPreviewContainer}>
+          <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="contain" />
+          <TouchableOpacity
+            style={styles.photoRemoveButton}
+            onPress={() => setPhotoUri(null)}
+          >
+            <Ionicons name="close-circle" size={28} color={colors.error} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {photoUri && (
+        <TouchableOpacity
+          style={[styles.importButton, extracting && styles.importButtonDisabled]}
+          onPress={handleExtractRecipe}
+          disabled={extracting}
+        >
+          {extracting ? (
+            <View style={styles.extractingRow}>
+              <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              <Text style={styles.importButtonText}>Analyzing recipe...</Text>
+            </View>
+          ) : (
+            <>
+              <Ionicons name="sparkles" size={20} color={colors.textOnPrimary} />
+              <Text style={styles.importButtonText}>Extract Recipe</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
+
+      <Text style={styles.supportedSites}>
+        Works best with clear photos of printed or handwritten recipes.
+      </Text>
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+
   const renderContent = () => {
     if (isEditMode) {
       return renderManualTab();
@@ -615,6 +797,8 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         return renderImportTab();
       case 'browse':
         return renderBrowseTab();
+      case 'photo':
+        return renderPhotoTab();
       case 'manual':
         return renderManualTab();
       default:
@@ -763,6 +947,54 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.lg,
+  },
+  // Photo Tab
+  photoButtonRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+    width: '100%',
+  },
+  photoButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.primaryLight,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    borderStyle: 'dashed',
+  },
+  photoButtonText: {
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.medium,
+    color: colors.primary,
+  },
+  photoPreviewContainer: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 300,
+  },
+  photoRemoveButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+  },
+  extractingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   // Browse Tab
   browserContainer: {

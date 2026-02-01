@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth';
 import recipeRoutes from './routes/recipes';
 import recipeImportRoutes from './routes/recipeImport';
+import recipePhotoImportRoutes from './routes/recipePhotoImport';
 import planRoutes from './routes/plans';
 import suggestionRoutes from './routes/suggestions';
 import imageSearchRoutes from './routes/imageSearch';
@@ -48,6 +49,7 @@ export const createApp = (): Express => {
   // Protected API Routes - require authentication
   app.use('/api/recipes', authenticate, recipeRoutes);
   app.use('/api/recipes', authenticate, recipeImportRoutes);
+  app.use('/api/recipes', authenticate, recipePhotoImportRoutes);
   app.use('/api/plans', authenticate, planRoutes);
   app.use('/api/suggestions', authenticate, suggestionRoutes);
   app.use('/api/images', authenticate, imageSearchRoutes);

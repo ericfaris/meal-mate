@@ -18,6 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
+    "@types/multer": "^2.0.0",
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
@@ -29,6 +30,7 @@
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.3",
+    "multer": "^2.0.2",
     "recipe-scraper": "^2.1.1"
   },
   "devDependencies": {

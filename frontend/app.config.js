@@ -35,7 +35,7 @@ export default {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#FDFAF6',
       },
-      permissions: ['INTERNET'],
+      permissions: ['INTERNET', 'CAMERA', 'READ_MEDIA_IMAGES'],
       googleServicesFile: './google-services.json',
     },
     ios: {
@@ -70,6 +70,7 @@ export default {
           defaultChannel: 'default',
         },
       ],
+      'expo-image-picker',
     ],
     extra: {
       appVersion: version,

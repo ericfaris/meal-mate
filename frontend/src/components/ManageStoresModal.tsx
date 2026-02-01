@@ -125,7 +125,7 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
                       onPress={() => handleDeleteStore(store)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                      <Ionicons name="trash-outline" size={18} color={colors.error} />
                     </TouchableOpacity>
                   </TouchableOpacity>
 
