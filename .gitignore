@@ -146,3 +146,6 @@ vite.config.ts.timestamp-*
 
 # Firebase (service account keys are sensitive, google-services.json is safe to commit)
 firebase-service-account*.json
+
+
+/frontend/android
