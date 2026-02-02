@@ -172,11 +172,22 @@ export const updateRecipe = async (req: Request, res: Response): Promise<void> =
   try {
     const userId = req.userId;
 
-    // Check if user is admin in their household
     const user = await User.findById(userId);
-    if (!user || user.role !== 'admin') {
-      res.status(403).json({ error: 'Only household admins can update recipes' });
+    if (!user) {
+      res.status(401).json({ error: 'User not found' });
       return;
+    }
+
+    // Determine the recipe owner: if in a household, recipes belong to the admin
+    let targetUserId: any = userId;
+    if (user.householdId) {
+      const adminUser = await User.findOne({
+        householdId: user.householdId,
+        role: 'admin'
+      });
+      if (adminUser) {
+        targetUserId = adminUser._id;
+      }
     }
 
     const {
@@ -195,7 +206,7 @@ export const updateRecipe = async (req: Request, res: Response): Promise<void> =
     } = req.body;
 
     const recipe = await Recipe.findOneAndUpdate(
-      { _id: req.params.id, userId },
+      { _id: req.params.id, userId: targetUserId },
       {
         title,
         imageUrl,
