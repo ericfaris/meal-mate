@@ -1,12 +1,13 @@
 name: EAS iOS Simulator Build
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - 'version.json'
-      - '.github/workflows/eas-ios-build.yml'
+  # Automatic builds disabled - iOS builds can still be triggered manually
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'frontend/**'
+  #     - 'version.json'
+  #     - '.github/workflows/eas-ios-build.yml'
   workflow_dispatch:
     inputs:
       profile:
