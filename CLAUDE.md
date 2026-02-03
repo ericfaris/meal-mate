@@ -100,6 +100,7 @@ meal-mate/
 ### User
 - Email/password or OAuth (Google, Apple)
 - JWT token-based authentication
+- **All new users default to 'admin' role** (no household membership initially)
 - Household membership with role-based permissions (admin/member)
 - Optional `pushToken` for Expo push notifications
 

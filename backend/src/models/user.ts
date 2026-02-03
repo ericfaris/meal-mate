@@ -66,7 +66,7 @@ const userSchema = new Schema<IUser>(
     role: {
       type: String,
       enum: ['admin', 'member'],
-      default: 'member',
+      default: 'admin',
     },
     authProvider: {
       type: String,

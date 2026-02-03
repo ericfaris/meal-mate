@@ -127,7 +127,7 @@ async function findOrCreateGoogleUser(payload: TokenPayload): Promise<IUser> {
     providerId: googleId,
     emailVerified: email_verified || false,
     profilePicture: picture,
-    role: 'member',
+    role: 'admin',
     lastLoginAt: new Date(),
   });
 
