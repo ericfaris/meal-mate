@@ -134,7 +134,7 @@ recipeSchema.virtual('totalTime').get(function() {
   userId: ObjectId (ref: User, required, indexed),
   date: string (YYYY-MM-DD format, required),
   recipeId?: ObjectId (ref: Recipe),
-  label?: string ("Eating Out", "TBD", custom),
+  label?: string ("Eating Out", "Leftovers", "TBD", custom),
   isConfirmed: boolean (default: false),
   createdAt: Date (auto),
   updatedAt: Date (auto)

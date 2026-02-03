@@ -278,7 +278,6 @@ Response (201):
   "ingredientsText": "...",
   "directionsText": "...",
   "imageUrl": "...",
-  "complexity": "medium",
   ...
 }
 
@@ -287,6 +286,47 @@ Error (400):
   "message": "Failed to import recipe from this URL"
 }
 ```
+
+#### Import Recipe from Photo (Admin-only)
+```
+POST /api/recipes/import-photo
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+Request Body:
+- image: File (JPEG, PNG, GIF, WebP)
+
+Response (200):
+{
+  "title": "Chocolate Chip Cookies",
+  "ingredientsText": "2 cups flour\n1 cup sugar\n...",
+  "directionsText": "1. Preheat oven to 350°F\n2. Mix dry ingredients\n...",
+  "prepTime": 15,
+  "cookTime": 12,
+  "servings": 24,
+  "tags": ["dessert", "baking", "cookies"]
+}
+
+Error (403):
+{
+  "error": "Only household admins can import recipes"
+}
+
+Error (400):
+{
+  "error": "No image file provided"
+}
+
+Error (500):
+{
+  "error": "AI service is not configured"
+}
+
+Note: Requires ANTHROPIC_API_KEY environment variable
+Note: Admin role check enforced to prevent API quota abuse
+Note: Response is for manual review - user must save manually
+```
+
 
 ### Plan Endpoints (`/api/plans`)
 

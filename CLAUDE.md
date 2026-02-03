@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-01-28*
+*Last Updated: 2026-02-03*
 
 ---
 
@@ -9,14 +9,15 @@
 **Meal Mate** is a React Native mobile application for intelligent weekly meal planning with household collaboration. It helps users create, manage, and organize recipes while providing AI-powered meal suggestions based on preferences and constraints. Users can create households to share recipes and meal plans with family members.
 
 ### Core Features
-- 🍽️ Recipe management with URL import
-- 🤖 Smart weekly meal suggestions
-- 📅 Flexible meal planning (past, present, future)
+- 🍽️ Recipe management with URL import and photo import (AI-powered)
+- 🤖 Smart weekly meal suggestions (optional AI enhancement)
+- 📅 Flexible meal planning (past, present, future) with Leftovers option
 - 👥 **Household collaboration** - Share recipes and plans with family
 - 🔐 Secure authentication (Email/Password + Google OAuth)
 - 📱 Native mobile app (iOS/Android via Expo)
 - 🔗 Deep linking for household invitations
 - 🔔 **Push notifications** - Admin alerts for recipe submissions
+- 🛒 **Grocery Lists** - AI-powered shopping lists with store layouts
 
 ---
 
@@ -110,10 +111,11 @@ meal-mate/
 
 ### Recipe
 - User-owned recipes with ingredients, directions, images
+- Import via URL or photo (Claude Vision API for photo extraction)
 - Tags, complexity (simple/medium/complex), dietary flags
 - Tracks `lastUsedDate` for suggestion algorithm
 - `planCount` computed via aggregation
-- Household sharing (admins can view all household recipes)
+- Household sharing (admins own recipes, members can edit them)
 
 ### RecipeSubmission
 - Member-submitted recipe URLs for admin approval
@@ -124,7 +126,7 @@ meal-mate/
 ### Plan
 - One plan per user per date (unique index)
 - Date stored as YYYY-MM-DD string (not Date object)
-- Can reference a Recipe OR have a text label ("Eating Out")
+- Can reference a Recipe OR have a text label ("Eating Out", "Leftovers", custom)
 - Confirmed plans update recipe's `lastUsedDate`
 - Household plans visible to all members
 
@@ -163,11 +165,12 @@ POST   /api/auth/google          # Google OAuth
 
 ### Recipes
 ```
-GET    /api/recipes              # List (search, tags)
-POST   /api/recipes              # Create
-PUT    /api/recipes/:id          # Update
-DELETE /api/recipes/:id          # Delete
-POST   /api/recipes/import       # Import from URL
+GET    /api/recipes                  # List (search, tags)
+POST   /api/recipes                  # Create
+PUT    /api/recipes/:id              # Update (admin-owned, member-editable)
+DELETE /api/recipes/:id              # Delete (admin-only)
+POST   /api/recipes/import           # Import from URL
+POST   /api/recipes/import-photo     # Import from photo (Claude Vision, admin-only)
 ```
 
 ### Plans
@@ -272,14 +275,21 @@ Generates intelligent meal suggestions with constraints:
 - Household-aware: considers all household recipes for suggestions
 
 ### Recipe Import
-**Location**: `backend/src/controllers/recipeImport.ts`
+**Location**: `backend/src/controllers/recipeImport.ts`, `backend/src/controllers/recipePhotoImport.ts`
 
+**URL Import**:
 1. Try `recipe-scraper` library (primary)
 2. Fall back to custom Cheerio parser
-3. Auto-detect complexity:
-   - Simple: ≤5 ingredients AND ≤20 min cook
-   - Complex: >10 ingredients OR >60 min cook
-   - Medium: everything else
+3. HTML entity decoding for special characters
+4. No auto-complexity detection (user sets manually)
+
+**Photo Import** (Admin-only):
+1. Uses Claude Vision API (claude-sonnet-4-20250514)
+2. Accepts uploaded image (JPEG, PNG, GIF, WebP)
+3. Extracts: title, ingredients, directions, prep/cook time, servings, tags
+4. Returns JSON structure for manual review before saving
+5. Requires ANTHROPIC_API_KEY environment variable
+6. Admin-only feature to prevent API quota abuse
 
 ---
 
@@ -290,8 +300,8 @@ The project uses a **single source of truth** for versioning across all platform
 ### Version File (`version.json`)
 ```json
 {
-  "version": "1.0.0",
-  "buildNumber": 1
+  "version": "0.12.5",
+  "buildNumber": 148
 }
 ```
 
@@ -299,7 +309,7 @@ The project uses a **single source of truth** for versioning across all platform
 
 ```
 version.json (source of truth)
-    ├── GitHub Actions → Docker Image Tags (v1.0.0, latest)
+    ├── GitHub Actions → Docker Image Tags (v0.12.5, latest)
     │   └── Backend ENV: APP_VERSION, BUILD_NUMBER
     │       └── GET /api/version endpoint
     │
@@ -312,17 +322,17 @@ version.json (source of truth)
 ### Bumping Versions
 
 ```bash
-# Bump patch version (1.0.0 → 1.0.1)
+# Bump patch version (0.12.5 → 0.12.6)
 node scripts/bump-version.js patch
 
-# Bump minor version (1.0.0 → 1.1.0)
+# Bump minor version (0.12.5 → 0.13.0)
 node scripts/bump-version.js minor
 
-# Bump major version (1.0.0 → 2.0.0)
+# Bump major version (0.12.5 → 1.0.0)
 node scripts/bump-version.js major
 
 # Set specific version
-node scripts/bump-version.js --set 2.0.0
+node scripts/bump-version.js --set 1.0.0
 ```
 
 ### Version Visibility
@@ -330,8 +340,8 @@ node scripts/bump-version.js --set 2.0.0
 | Platform | Where to Check |
 |----------|----------------|
 | **Backend API** | `GET /api/version` returns `{ version, buildNumber, environment }` |
-| **Docker Image** | Tagged as `user/meal-mate-backend:1.0.0` |
-| **Android App** | Settings screen shows "Version 1.0.0 (1)" |
+| **Docker Image** | Tagged as `user/meal-mate-backend:0.12.5` |
+| **Android App** | Settings screen shows "Version 0.12.5 (148)" |
 | **Railway** | Pulls versioned Docker image |
 
 ### Release Workflow
@@ -580,6 +590,23 @@ Recent changes:
   - One-tap navigation to Household screen for review
   - Dynamic text showing submission count with proper pluralization
   - Positioned prominently after greeting for high visibility
+- **📸 Recipe Photo Import** - AI-powered recipe extraction from photos
+  - Upload photo of recipe card, cookbook page, or screenshot
+  - Claude Vision API extracts all recipe details automatically
+  - Admin-only feature (requires ANTHROPIC_API_KEY)
+  - Four import methods: URL, Browse Web, Photo, Manual (tabs in RecipeEntryScreen)
+- **✏️ Member Recipe Editing** - Household members can update admin recipes
+  - Members can edit existing recipes (title, ingredients, directions, etc.)
+  - Only admins can delete recipes
+  - Household-shared recipe pool maintained by admin, editable by all
+- **🍴 Leftovers Plan Option** - Quick planning for leftover meals
+  - "Leftovers" appears alongside "Eating Out" as a label option
+  - No recipe required, just mark the day as using leftovers
+  - Helps track non-recipe meals in weekly planning
+- **🖼️ Image Caching** - Migrated from React Native Image to expo-image
+  - Automatic image caching for faster load times
+  - Reduced data usage on repeated recipe views
+  - Better performance and memory management
 - **📲 Push Notifications** - Native Android/iOS push notifications via Expo
   - Admins receive push notifications when members submit recipes
   - Uses Expo Push Notifications service (works with EAS builds)
@@ -624,15 +651,17 @@ Recent changes:
 
 ## 📋 Future Roadmap
 
-- [ ] AI-powered suggestions (Anthropic Claude API)
+- [x] AI-powered suggestions (completed - optional Claude API integration)
 - [x] Grocery list generation from meal plans (completed)
 - [x] Push notifications for recipe submissions (completed)
+- [x] Recipe photo import with AI (completed)
 - [ ] Push notifications for meal reminders
 - [ ] Apple OAuth refinement and testing
 - [ ] EAS Build for App Store submission
 - [ ] Household analytics and insights
 - [ ] Recipe sharing beyond households
 - [ ] Meal plan templates and presets
+- [ ] Recipe ratings and favorites
 
 ---
 

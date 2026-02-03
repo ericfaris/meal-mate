@@ -14,6 +14,7 @@ paths:
 - **React Navigation** (Bottom tabs + Stack navigation)
 - **TypeScript** for type safety
 - **Axios** for HTTP requests
+- **expo-image** for image display with automatic caching
 
 ## Project Structure
 
@@ -90,7 +91,7 @@ interface Plan {
   _id: string;
   date: string; // YYYY-MM-DD format
   recipeId?: Recipe;
-  label?: string; // "Eating Out", "TBD"
+  label?: string; // "Eating Out", "Leftovers", "TBD", custom
   isConfirmed: boolean;
 }
 
@@ -370,10 +371,16 @@ export default function MyScreen({ navigation, route }) {
 
 **RecipeEntryScreen**:
 - Create/Edit mode support
+- **Four import methods via tabs**:
+  - URL: Import from recipe website
+  - Browse Web: Search and import recipes
+  - Photo: AI-powered extraction from images (admin-only)
+  - Manual: Enter recipe details manually
 - Form validation (title required)
 - Image picker integration
 - Tag management
-- Complexity auto-detection
+- Photo import uses Claude Vision API
+- Admin-only restriction on photo import tab
 
 ## Navigation Best Practices
 
@@ -451,10 +458,12 @@ const styles = StyleSheet.create({
 - Mark as completed after user acknowledges
 
 ### Image Handling:
+- Use `expo-image` for displaying images (automatic caching)
 - Use `expo-image-picker` for selecting images
 - Support camera and gallery
 - Handle permissions properly
-- Compress images before upload (if needed)
+- Photo import for recipes (multipart/form-data upload)
+- Admin-only access to photo import feature
 
 ## API Integration
 
@@ -665,9 +674,9 @@ Use `production` profile and follow respective app store guidelines (Google Play
 
 Key settings in [app.json](../frontend/app.json):
 
-- `version`: App version number (1.0.0)
-- `expo.android.versionCode`: Build number (auto-incremented by EAS)
-- `expo.ios.buildNumber`: Build number (auto-incremented by EAS)
+- `version`: App version number (0.12.5)
+- `expo.android.versionCode`: Build number (148, auto-incremented by EAS)
+- `expo.ios.buildNumber`: Build number (148, auto-incremented by EAS)
 - `expo.android.package`: Android package name
 - `expo.ios.bundleIdentifier`: iOS bundle identifier
 

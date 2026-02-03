@@ -284,9 +284,9 @@ export const markRecipeAsUsed = async (recipeId: string, date: string) => {
 
 **Called when**: User confirms a plan with a recipe
 
-### Recipe Import (`controllers/recipeImport.ts`)
+### Recipe Import (`controllers/recipeImport.ts`, `controllers/recipePhotoImport.ts`)
 
-**Strategy**:
+**URL Import Strategy**:
 1. Try `recipe-scraper` library (primary method)
 2. Fall back to custom Cheerio parser
 3. **HTML entity decoding** for all text fields (titles, ingredients, directions, notes)
@@ -302,6 +302,26 @@ All imported recipe text fields are decoded to handle special characters:
 - Special chars: `&ndash;` → `–`, `&hellip;` → `…`
 
 This ensures recipes display correctly regardless of source encoding.
+
+**Photo Import** (Admin-only):
+```typescript
+// POST /api/recipes/import-photo
+// Requires: multipart/form-data with image file
+// Admin role check enforced
+
+1. Validate user is admin (prevents API quota abuse)
+2. Accept image upload (JPEG, PNG, GIF, WebP)
+3. Convert to base64 and send to Claude Vision API
+4. Extract recipe data from image using structured prompt
+5. Return JSON for manual review before saving
+```
+
+**Claude Vision Integration**:
+- Model: `claude-sonnet-4-20250514`
+- Extracts: title, ingredients, directions, prep/cook time, servings, tags
+- Requires `ANTHROPIC_API_KEY` environment variable
+- Returns structured JSON or error message if not a recipe
+- Frontend displays extracted data for user confirmation before save
 
 ## Database Queries
 
