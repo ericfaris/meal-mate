@@ -9,6 +9,28 @@ import {
 } from './ingredientParserService';
 
 /**
+ * Build query that checks access for household members (includes legacy lists
+ * created before the householdId field was added to grocery lists).
+ */
+async function buildAccessQuery(
+  userId: string,
+  householdId?: mongoose.Types.ObjectId
+): Promise<any> {
+  if (householdId) {
+    const members = await User.find({ householdId }).select('_id');
+    const memberIds = members.map((m) => m._id);
+
+    return {
+      $or: [
+        { userId: { $in: memberIds } },  // Legacy lists from household members
+        { householdId },                  // New lists with explicit householdId
+      ],
+    };
+  }
+  return { userId };
+}
+
+/**
  * Create a grocery list from planned meals in a date range.
  */
 export async function createFromPlans(
@@ -90,7 +112,8 @@ export async function createFromPlans(
 
 /**
  * Get a single grocery list.
- * If user is in a household, they can access any list in that household.
+ * If user is in a household, they can access any list in that household
+ * (including legacy lists created before householdId field was added).
  */
 export async function getList(
   listId: string,
@@ -99,9 +122,16 @@ export async function getList(
 ): Promise<IGroceryList | null> {
   // If user is in a household, allow access to any household list
   if (householdId) {
+    // Get all household member IDs to include legacy lists
+    const members = await User.find({ householdId }).select('_id');
+    const memberIds = members.map((m) => m._id);
+
     return GroceryList.findOne({
       _id: listId,
-      $or: [{ userId }, { householdId }],
+      $or: [
+        { userId: { $in: memberIds } },  // Legacy lists from household members
+        { householdId },                  // New lists with explicit householdId
+      ],
     });
   }
   return GroceryList.findOne({ _id: listId, userId });
@@ -109,7 +139,8 @@ export async function getList(
 
 /**
  * Get all grocery lists.
- * If user is in a household, returns all household lists.
+ * If user is in a household, returns all household lists (including legacy lists
+ * created before householdId field was added).
  */
 export async function getAllLists(
   userId: string,
@@ -120,7 +151,16 @@ export async function getAllLists(
 
   // If user is in a household, show all household lists
   if (householdId) {
-    query = { $or: [{ userId }, { householdId }] };
+    // Get all household member IDs to include legacy lists (created before householdId field)
+    const members = await User.find({ householdId }).select('_id');
+    const memberIds = members.map((m) => m._id);
+
+    query = {
+      $or: [
+        { userId: { $in: memberIds } },  // Lists from any household member (legacy support)
+        { householdId },                  // Lists with explicit householdId (new lists)
+      ],
+    };
   } else {
     query = { userId };
   }
@@ -131,7 +171,7 @@ export async function getAllLists(
 
 /**
  * Update a grocery list (name or status).
- * Household members can update any household list.
+ * Household members can update any household list (including legacy lists).
  */
 export async function updateList(
   listId: string,
@@ -139,12 +179,8 @@ export async function updateList(
   updates: { name?: string; status?: string },
   householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
-  const query: any = { _id: listId };
-  if (householdId) {
-    query.$or = [{ userId }, { householdId }];
-  } else {
-    query.userId = userId;
-  }
+  const accessQuery = await buildAccessQuery(userId, householdId);
+  const query = { _id: listId, ...accessQuery };
 
   return GroceryList.findOneAndUpdate(
     query,
@@ -155,7 +191,7 @@ export async function updateList(
 
 /**
  * Update a grocery item (check/uncheck, edit quantity/name).
- * Household members can update items in any household list.
+ * Household members can update items in any household list (including legacy lists).
  */
 export async function updateItem(
   listId: string,
@@ -169,12 +205,8 @@ export async function updateItem(
   if (updates.quantity !== undefined) setFields[`items.${itemIndex}.quantity`] = updates.quantity;
   if (updates.name !== undefined) setFields[`items.${itemIndex}.name`] = updates.name;
 
-  const query: any = { _id: listId };
-  if (householdId) {
-    query.$or = [{ userId }, { householdId }];
-  } else {
-    query.userId = userId;
-  }
+  const accessQuery = await buildAccessQuery(userId, householdId);
+  const query = { _id: listId, ...accessQuery };
 
   return GroceryList.findOneAndUpdate(
     query,
@@ -186,7 +218,7 @@ export async function updateItem(
 /**
  * Add a custom item to a grocery list.
  * Tracks who added the item for notification purposes.
- * Household members can add items to any household list.
+ * Household members can add items to any household list (including legacy lists).
  */
 export async function addCustomItem(
   listId: string,
@@ -194,12 +226,8 @@ export async function addCustomItem(
   item: { name: string; quantity?: string; category?: string },
   householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
-  const query: any = { _id: listId };
-  if (householdId) {
-    query.$or = [{ userId }, { householdId }];
-  } else {
-    query.userId = userId;
-  }
+  const accessQuery = await buildAccessQuery(userId, householdId);
+  const query = { _id: listId, ...accessQuery };
 
   return GroceryList.findOneAndUpdate(
     query,
@@ -224,7 +252,7 @@ export async function addCustomItem(
 
 /**
  * Remove an item from a grocery list.
- * Household members can remove items from any household list.
+ * Household members can remove items from any household list (including legacy lists).
  */
 export async function removeItem(
   listId: string,
@@ -232,12 +260,8 @@ export async function removeItem(
   userId: string,
   householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
-  const query: any = { _id: listId };
-  if (householdId) {
-    query.$or = [{ userId }, { householdId }];
-  } else {
-    query.userId = userId;
-  }
+  const accessQuery = await buildAccessQuery(userId, householdId);
+  const query = { _id: listId, ...accessQuery };
 
   const list = await GroceryList.findOne(query);
   if (!list) return null;
