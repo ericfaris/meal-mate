@@ -64,6 +64,9 @@ export async function createFromPlans(
   const listName = name || `${formatShort(startDate)} – ${formatShort(endDate)}`;
   const groceryList = new GroceryList({
     userId,
+    // Set householdId if user is in a household (enables shared access)
+    householdId: user.householdId || undefined,
+    createdBy: userId,
     name: listName,
     status: 'active',
     startDate,
@@ -77,6 +80,7 @@ export async function createFromPlans(
       recipeNames: item.recipeNames,
       isChecked: false,
       originalTexts: item.originalTexts,
+      // Items from initial creation don't need addedBy tracking
     })),
   });
 
@@ -84,59 +88,121 @@ export async function createFromPlans(
   return groceryList;
 }
 
+/**
+ * Get a single grocery list.
+ * If user is in a household, they can access any list in that household.
+ */
 export async function getList(
   listId: string,
-  userId: string
+  userId: string,
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
+  // If user is in a household, allow access to any household list
+  if (householdId) {
+    return GroceryList.findOne({
+      _id: listId,
+      $or: [{ userId }, { householdId }],
+    });
+  }
   return GroceryList.findOne({ _id: listId, userId });
 }
 
+/**
+ * Get all grocery lists.
+ * If user is in a household, returns all household lists.
+ */
 export async function getAllLists(
   userId: string,
-  status?: string
+  status?: string,
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList[]> {
-  const query: any = { userId };
+  let query: any;
+
+  // If user is in a household, show all household lists
+  if (householdId) {
+    query = { $or: [{ userId }, { householdId }] };
+  } else {
+    query = { userId };
+  }
+
   if (status) query.status = status;
   return GroceryList.find(query).sort({ createdAt: -1 });
 }
 
+/**
+ * Update a grocery list (name or status).
+ * Household members can update any household list.
+ */
 export async function updateList(
   listId: string,
   userId: string,
-  updates: { name?: string; status?: string }
+  updates: { name?: string; status?: string },
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
+  const query: any = { _id: listId };
+  if (householdId) {
+    query.$or = [{ userId }, { householdId }];
+  } else {
+    query.userId = userId;
+  }
+
   return GroceryList.findOneAndUpdate(
-    { _id: listId, userId },
+    query,
     { $set: updates },
     { new: true, runValidators: true }
   );
 }
 
+/**
+ * Update a grocery item (check/uncheck, edit quantity/name).
+ * Household members can update items in any household list.
+ */
 export async function updateItem(
   listId: string,
   itemIndex: number,
   userId: string,
-  updates: { isChecked?: boolean; quantity?: string; name?: string }
+  updates: { isChecked?: boolean; quantity?: string; name?: string },
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
   const setFields: any = {};
   if (updates.isChecked !== undefined) setFields[`items.${itemIndex}.isChecked`] = updates.isChecked;
   if (updates.quantity !== undefined) setFields[`items.${itemIndex}.quantity`] = updates.quantity;
   if (updates.name !== undefined) setFields[`items.${itemIndex}.name`] = updates.name;
 
+  const query: any = { _id: listId };
+  if (householdId) {
+    query.$or = [{ userId }, { householdId }];
+  } else {
+    query.userId = userId;
+  }
+
   return GroceryList.findOneAndUpdate(
-    { _id: listId, userId },
+    query,
     { $set: setFields },
     { new: true }
   );
 }
 
+/**
+ * Add a custom item to a grocery list.
+ * Tracks who added the item for notification purposes.
+ * Household members can add items to any household list.
+ */
 export async function addCustomItem(
   listId: string,
   userId: string,
-  item: { name: string; quantity?: string; category?: string }
+  item: { name: string; quantity?: string; category?: string },
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
+  const query: any = { _id: listId };
+  if (householdId) {
+    query.$or = [{ userId }, { householdId }];
+  } else {
+    query.userId = userId;
+  }
+
   return GroceryList.findOneAndUpdate(
-    { _id: listId, userId },
+    query,
     {
       $push: {
         items: {
@@ -147,6 +213,8 @@ export async function addCustomItem(
           recipeNames: [],
           isChecked: false,
           originalTexts: [],
+          addedBy: new mongoose.Types.ObjectId(userId),
+          addedAt: new Date(),
         },
       },
     },
@@ -154,12 +222,24 @@ export async function addCustomItem(
   );
 }
 
+/**
+ * Remove an item from a grocery list.
+ * Household members can remove items from any household list.
+ */
 export async function removeItem(
   listId: string,
   itemIndex: number,
-  userId: string
+  userId: string,
+  householdId?: mongoose.Types.ObjectId
 ): Promise<IGroceryList | null> {
-  const list = await GroceryList.findOne({ _id: listId, userId });
+  const query: any = { _id: listId };
+  if (householdId) {
+    query.$or = [{ userId }, { householdId }];
+  } else {
+    query.userId = userId;
+  }
+
+  const list = await GroceryList.findOne(query);
   if (!list) return null;
 
   list.items.splice(itemIndex, 1);
@@ -167,10 +247,22 @@ export async function removeItem(
   return list;
 }
 
+/**
+ * Delete a grocery list.
+ * Only the creator (admin) can delete lists - enforced at controller level.
+ * Falls back to userId for backwards compatibility with lists created before createdBy was added.
+ */
 export async function deleteList(
   listId: string,
   userId: string
 ): Promise<boolean> {
-  const result = await GroceryList.findOneAndDelete({ _id: listId, userId });
+  // Try to delete by createdBy first, then fall back to userId for older lists
+  const result = await GroceryList.findOneAndDelete({
+    _id: listId,
+    $or: [
+      { createdBy: userId },
+      { createdBy: { $exists: false }, userId: userId }
+    ]
+  });
   return !!result;
 }

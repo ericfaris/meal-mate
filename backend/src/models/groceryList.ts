@@ -8,10 +8,17 @@ export interface IGroceryItem {
   recipeNames: string[];
   isChecked: boolean;
   originalTexts: string[];
+  // Track who added each item (for notification purposes)
+  addedBy?: mongoose.Types.ObjectId;
+  addedAt?: Date;
 }
 
 export interface IGroceryList extends Document {
   userId: mongoose.Types.ObjectId;
+  // Household support: lists can be shared across household members
+  householdId?: mongoose.Types.ObjectId;
+  // Track who created the list (optional for backwards compatibility)
+  createdBy?: mongoose.Types.ObjectId;
   name: string;
   status: 'active' | 'archived';
   startDate: string;
@@ -35,6 +42,9 @@ const groceryItemSchema = new Schema<IGroceryItem>(
     recipeNames: [{ type: String }],
     isChecked: { type: Boolean, default: false },
     originalTexts: [{ type: String }],
+    // Track who added each item (for member notification purposes)
+    addedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    addedAt: { type: Date },
   },
   { _id: false }
 );
@@ -46,6 +56,18 @@ const groceryListSchema = new Schema<IGroceryList>(
       ref: 'User',
       required: true,
       index: true,
+    },
+    // Household support: lists can be shared across household members
+    householdId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Household',
+      index: true,
+    },
+    // Track who created the list (for permission checks)
+    // Not required for backwards compatibility with existing lists
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
     name: {
       type: String,
@@ -77,5 +99,8 @@ const groceryListSchema = new Schema<IGroceryList>(
 
 groceryListSchema.index({ userId: 1, status: 1 });
 groceryListSchema.index({ userId: 1, createdAt: -1 });
+// Household-scoped queries for shared grocery lists
+groceryListSchema.index({ householdId: 1, status: 1 });
+groceryListSchema.index({ householdId: 1, createdAt: -1 });
 
 export default mongoose.model<IGroceryList>('GroceryList', groceryListSchema);

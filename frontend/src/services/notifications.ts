@@ -63,7 +63,7 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
 };
 
 /**
- * Setup Android notification channel for recipe submissions
+ * Setup Android notification channels
  */
 export const setupNotificationChannels = async (): Promise<void> => {
   if (Platform.OS === 'android') {
@@ -73,6 +73,14 @@ export const setupNotificationChannels = async (): Promise<void> => {
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#4A90A4',
+    });
+
+    await Notifications.setNotificationChannelAsync('grocery', {
+      name: 'Grocery List Updates',
+      description: 'Notifications when household members add items to grocery lists',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#4CAF50',
     });
 
     await Notifications.setNotificationChannelAsync('default', {

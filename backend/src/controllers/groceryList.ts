@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as groceryListService from '../services/groceryListService';
 import Staple from '../models/staple';
+import { notifyHouseholdAdminsOfGroceryItems } from '../services/notificationService';
 
 // POST /api/grocery-lists - Create grocery list from plans
 export const createGroceryList = async (req: Request, res: Response): Promise<void> => {
@@ -36,7 +37,8 @@ export const getGroceryLists = async (req: Request, res: Response): Promise<void
   try {
     const userId = req.userId!;
     const { status } = req.query;
-    const lists = await groceryListService.getAllLists(userId, status as string | undefined);
+    const householdId = req.user?.householdId;
+    const lists = await groceryListService.getAllLists(userId, status as string | undefined, householdId);
     res.json(lists);
   } catch (error) {
     console.error('Error fetching grocery lists:', error);
@@ -47,7 +49,8 @@ export const getGroceryLists = async (req: Request, res: Response): Promise<void
 // GET /api/grocery-lists/:id - Get single grocery list
 export const getGroceryList = async (req: Request, res: Response): Promise<void> => {
   try {
-    const list = await groceryListService.getList(req.params.id, req.userId!);
+    const householdId = req.user?.householdId;
+    const list = await groceryListService.getList(req.params.id, req.userId!, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;
@@ -63,7 +66,8 @@ export const getGroceryList = async (req: Request, res: Response): Promise<void>
 export const updateGroceryList = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, status } = req.body;
-    const list = await groceryListService.updateList(req.params.id, req.userId!, { name, status });
+    const householdId = req.user?.householdId;
+    const list = await groceryListService.updateList(req.params.id, req.userId!, { name, status }, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;
@@ -85,11 +89,12 @@ export const updateGroceryItem = async (req: Request, res: Response): Promise<vo
     }
 
     const { isChecked, quantity, name } = req.body;
+    const householdId = req.user?.householdId;
     const list = await groceryListService.updateItem(req.params.id, itemIndex, req.userId!, {
       isChecked,
       quantity,
       name,
-    });
+    }, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;
@@ -110,11 +115,14 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const user = req.user!;
+    const householdId = user.householdId;
+
     const list = await groceryListService.addCustomItem(req.params.id, req.userId!, {
       name,
       quantity,
       category,
-    });
+    }, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;
@@ -141,6 +149,21 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
       console.error('Auto-save staple failed (non-blocking):', stapleErr);
     }
 
+    // Notify household admins if a member added items
+    if (householdId && user.role === 'member') {
+      try {
+        await notifyHouseholdAdminsOfGroceryItems(
+          householdId,
+          list._id.toString(),
+          list.name,
+          user.name,
+          [name.trim()]
+        );
+      } catch (notifyErr) {
+        console.error('Notification failed (non-blocking):', notifyErr);
+      }
+    }
+
     res.json(list);
   } catch (error) {
     console.error('Error adding grocery item:', error);
@@ -157,7 +180,8 @@ export const removeGroceryItem = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const list = await groceryListService.removeItem(req.params.id, itemIndex, req.userId!);
+    const householdId = req.user?.householdId;
+    const list = await groceryListService.removeItem(req.params.id, itemIndex, req.userId!, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;

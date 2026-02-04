@@ -39,9 +39,21 @@ function AppContent() {
     if (!isAuthenticated) return;
 
     const subscription = addNotificationResponseListener((data) => {
-      if (data?.screen === 'Household' && navigationRef.current) {
-        // Navigate to Household screen when notification is tapped
+      if (!navigationRef.current) return;
+
+      // Handle recipe submission notifications
+      if (data?.screen === 'Household' || data?.type === 'recipe_submission') {
         navigationRef.current.navigate('Main', { screen: 'Household' });
+      }
+      // Handle grocery item added notifications
+      else if (data?.type === 'grocery_item_added' && data?.groceryListId) {
+        navigationRef.current.navigate('Main', {
+          screen: 'GroceryTab',
+          params: {
+            screen: 'GroceryStoreMode',
+            params: { listId: data.groceryListId },
+          },
+        });
       }
     });
 
@@ -76,6 +88,11 @@ function AppContent() {
             Main: {
               screens: {
                 Settings: 'join/:token',
+                GroceryTab: {
+                  screens: {
+                    GroceryStoreMode: 'grocery/:listId',
+                  },
+                },
               },
             },
           },

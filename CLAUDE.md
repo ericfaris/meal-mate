@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-02-03*
+*Last Updated: 2026-02-04*
 
 ---
 
@@ -132,11 +132,15 @@ meal-mate/
 - Household plans visible to all members
 
 ### GroceryList
-- User-owned grocery lists generated from meal plans
+- **Household-shared** grocery lists generated from meal plans
+- Optional `householdId` field enables shared access within households
+- `createdBy` tracks who created the list (for permission checks)
+- Items track `addedBy` and `addedAt` for member activity
 - Embedded items array with name, quantity, category, recipe sources
 - Categories: Produce, Meat & Seafood, Dairy & Eggs, Pantry, Frozen, Bakery, Household, Other
 - AI-powered ingredient parsing with regex fallback
 - Status: active/archived
+- **Permissions**: Only admins can create/delete lists; members can view and add items
 
 ### Store
 - User-owned store layout configurations for grocery shopping
@@ -551,9 +555,17 @@ const recipes = await Recipe.find({
 
 ## 🎯 Recent Development
 
-Current branch: `main`
+Current branch: `grocery-list-multiplayer`
 
 Recent changes:
+- **🛒 Household Grocery Lists** - Shared grocery lists within households
+  - Only admins can create/delete grocery lists; members can view and add items
+  - Items track who added them (`addedBy`, `addedAt` fields)
+  - Push notifications sent to admins when members add items
+  - Deep linking to specific grocery list from notification tap
+  - `householdId` field on GroceryList enables shared access
+  - Role-based UI hides create button for members
+  - New `requireAdminIfInHousehold` middleware for flexible permission checks
 - **🔢 Auto-Versioning System** - Unified versioning across all platforms
   - Single source of truth in `version.json`
   - Version bump script (`scripts/bump-version.js`)

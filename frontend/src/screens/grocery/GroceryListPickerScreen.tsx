@@ -16,6 +16,7 @@ import { planApi } from '../../services/api/plans';
 import { groceryListApi } from '../../services/api/groceryLists';
 import { getTodayString, addDays, parseDate, dateToString } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { useAuth } from '../../contexts/AuthContext';
 
 type Props = {
   navigation: any;
@@ -39,6 +40,7 @@ function shortLabel(dateStr: string): { weekday: string; monthDay: string } {
 }
 
 export default function GroceryListPickerScreen({ navigation }: Props) {
+  const { user } = useAuth();
   const today = getTodayString();
   // Show 21 days of selectable dates (3 weeks ahead)
   const selectableDates = useMemo(() => buildDateRange(today, 21), [today]);
@@ -50,6 +52,9 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const { width } = useResponsive();
+
+  // Check if user can create grocery lists (admin or not in household)
+  const canCreateList = !user?.householdId || user?.role === 'admin';
 
   const contentMaxWidth = maxContentWidth.default;
   const contentWidth = width > contentMaxWidth + 96 ? contentMaxWidth : '100%';
@@ -230,20 +235,29 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
             ))}
           </View>
 
-          <TouchableOpacity
-            style={[styles.generateButton, plans.length === 0 && styles.generateButtonDisabled]}
-            onPress={handleGenerate}
-            disabled={generating || plans.length === 0}
-          >
-            {generating ? (
-              <ActivityIndicator size="small" color={colors.textOnPrimary} />
-            ) : (
-              <>
-                <Ionicons name="cart" size={20} color={colors.textOnPrimary} />
-                <Text style={styles.generateButtonText}>Generate List</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {canCreateList ? (
+            <TouchableOpacity
+              style={[styles.generateButton, plans.length === 0 && styles.generateButtonDisabled]}
+              onPress={handleGenerate}
+              disabled={generating || plans.length === 0}
+            >
+              {generating ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <>
+                  <Ionicons name="cart" size={20} color={colors.textOnPrimary} />
+                  <Text style={styles.generateButtonText}>Generate List</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.memberNotice}>
+              <Ionicons name="information-circle-outline" size={20} color={colors.textMuted} />
+              <Text style={styles.memberNoticeText}>
+                Only household admins can create grocery lists. You can view and add items to existing lists.
+              </Text>
+            </View>
+          )}
         </>
       )}
 
@@ -429,5 +443,19 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     color: colors.primary,
     fontWeight: typography.weights.medium,
+  },
+  memberNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.secondaryLight,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+  },
+  memberNoticeText: {
+    flex: 1,
+    fontSize: typography.sizes.small,
+    color: colors.textMuted,
+    lineHeight: 20,
   },
 });

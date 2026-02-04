@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import Staple from '../models/staple';
 import GroceryList from '../models/groceryList';
+import { notifyHouseholdAdminsOfGroceryItems } from '../services/notificationService';
 
 // GET /api/staples
 export const getStaples = async (req: Request, res: Response): Promise<void> => {
@@ -79,7 +81,18 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
       return;
     }
 
-    const list = await GroceryList.findOne({ _id: req.params.id, userId: req.userId });
+    const user = req.user!;
+    const householdId = user.householdId;
+
+    // Build query for household-aware access
+    const listQuery: any = { _id: req.params.id };
+    if (householdId) {
+      listQuery.$or = [{ userId: req.userId }, { householdId }];
+    } else {
+      listQuery.userId = req.userId;
+    }
+
+    const list = await GroceryList.findOne(listQuery);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;
@@ -91,6 +104,7 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
       return;
     }
 
+    const addedItemNames: string[] = [];
     for (const staple of staples) {
       list.items.push({
         name: staple.name,
@@ -100,7 +114,10 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
         recipeNames: [],
         isChecked: false,
         originalTexts: [],
+        addedBy: new mongoose.Types.ObjectId(req.userId!),
+        addedAt: new Date(),
       });
+      addedItemNames.push(staple.name);
 
       // Update staple usage
       await Staple.updateOne(
@@ -110,6 +127,22 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
     }
 
     await list.save();
+
+    // Notify household admins if a member added staples
+    if (householdId && user.role === 'member') {
+      try {
+        await notifyHouseholdAdminsOfGroceryItems(
+          householdId,
+          list._id.toString(),
+          list.name,
+          user.name,
+          addedItemNames
+        );
+      } catch (notifyErr) {
+        console.error('Notification failed (non-blocking):', notifyErr);
+      }
+    }
+
     res.json(list);
   } catch (error) {
     console.error('Error adding staples to grocery list:', error);
