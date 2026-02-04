@@ -14,17 +14,22 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { GroceryList } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { useAuth } from '../../contexts/AuthContext';
 
 type Props = {
   navigation: any;
 };
 
 export default function GroceryListHistoryScreen({ navigation }: Props) {
+  const { user } = useAuth();
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [loading, setLoading] = useState(true);
   const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
+
+  // Only admins (or users not in a household) can delete lists
+  const canDelete = !user?.householdId || user?.role === 'admin';
 
   const loadLists = useCallback(async () => {
     try {
@@ -44,6 +49,32 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
     }, [loadLists])
   );
 
+  const handleArchive = async (list: GroceryList) => {
+    const newStatus = list.status === 'archived' ? 'active' : 'archived';
+    const action = newStatus === 'archived' ? 'Archive' : 'Restore';
+
+    Alert.alert(
+      `${action} List`,
+      `${action} "${list.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: action,
+          onPress: async () => {
+            try {
+              await groceryListApi.update(list._id, { status: newStatus });
+              setLists((prev) =>
+                prev.map((l) => (l._id === list._id ? { ...l, status: newStatus } : l))
+              );
+            } catch {
+              Alert.alert('Error', `Failed to ${action.toLowerCase()} list`);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleDelete = (id: string) => {
     Alert.alert('Delete List', 'Are you sure you want to delete this grocery list?', [
       { text: 'Cancel', style: 'cancel' },
@@ -60,6 +91,28 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
         },
       },
     ]);
+  };
+
+  const handleLongPress = (list: GroceryList) => {
+    const isArchived = list.status === 'archived';
+    const archiveOption = {
+      text: isArchived ? 'Restore' : 'Archive',
+      onPress: () => handleArchive(list),
+    };
+
+    const options: any[] = [archiveOption];
+
+    if (canDelete) {
+      options.push({
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDelete(list._id),
+      });
+    }
+
+    options.push({ text: 'Cancel', style: 'cancel' });
+
+    Alert.alert('List Options', list.name, options);
   };
 
   const getCompletionPercent = (list: GroceryList) => {
@@ -110,7 +163,7 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
             <TouchableOpacity
               style={styles.listCard}
               onPress={() => navigation.navigate('GroceryStoreMode', { listId: item._id })}
-              onLongPress={() => handleDelete(item._id)}
+              onLongPress={() => handleLongPress(item)}
             >
               <View style={styles.listCardHeader}>
                 <Text style={styles.listName} numberOfLines={1}>
