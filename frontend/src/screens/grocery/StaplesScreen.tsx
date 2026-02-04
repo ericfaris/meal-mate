@@ -17,6 +17,7 @@ import { Staple } from '../../types';
 import { staplesApi } from '../../services/api/staples';
 import AddStapleModal from '../../components/AddStapleModal';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { useAuth } from '../../contexts/AuthContext';
 
 type Props = {
   navigation: any;
@@ -46,6 +47,7 @@ const CATEGORY_ORDER = [
 ];
 
 export default function StaplesScreen({ navigation, route }: Props) {
+  const { user } = useAuth();
   const listId = route.params?.listId;
   const [staples, setStaples] = useState<Staple[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,9 @@ export default function StaplesScreen({ navigation, route }: Props) {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [adding, setAdding] = useState(false);
   const contentMaxWidth = maxContentWidth.default;
+
+  // Only admins (or users not in a household) can delete staples
+  const canDelete = !user?.householdId || user?.role === 'admin';
 
   const loadStaples = useCallback(async () => {
     try {
@@ -244,7 +249,7 @@ export default function StaplesScreen({ navigation, route }: Props) {
             <TouchableOpacity
               style={styles.itemRow}
               onPress={() => (listId ? handleToggleSelect(item._id) : null)}
-              onLongPress={() => handleDeleteStaple(item)}
+              onLongPress={canDelete ? () => handleDeleteStaple(item) : undefined}
             >
               {listId ? (
                 <Ionicons

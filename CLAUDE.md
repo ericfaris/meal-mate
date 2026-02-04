@@ -150,11 +150,14 @@ meal-mate/
 - Store Mode reorders categories to match selected store's physical layout
 
 ### Staple
-- User-owned "My Staples" list of frequently purchased items
+- **Household-shared** "My Staples" list of frequently purchased items
 - Auto-saved when users add custom items to grocery lists (passive history)
-- Fields: name, quantity, category, usageCount, lastUsedAt
+- Fields: name, quantity, category, usageCount, lastUsedAt, `householdId`, `addedBy`
+- Optional `householdId` field enables shared access within households
+- `addedBy` tracks who added the staple
 - Unique compound index on userId + name (case-insensitive upsert)
 - Bulk-add staples to any grocery list in one tap
+- **Permissions**: Only admins can delete staples; members can view and add
 
 ---
 

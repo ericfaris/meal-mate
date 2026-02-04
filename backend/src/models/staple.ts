@@ -2,6 +2,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IStaple extends Document {
   userId: mongoose.Types.ObjectId;
+  // Household support: staples can be shared across household members
+  householdId?: mongoose.Types.ObjectId;
+  // Track who added the staple (for display and legacy support)
+  addedBy?: mongoose.Types.ObjectId;
   name: string;
   quantity: string;
   category:
@@ -27,6 +31,17 @@ const stapleSchema = new Schema<IStaple>(
       required: true,
       index: true,
     },
+    // Household support: staples can be shared across household members
+    householdId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Household',
+      index: true,
+    },
+    // Track who added the staple
+    addedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     name: { type: String, required: true, trim: true },
     quantity: { type: String, default: '' },
     category: {
@@ -49,6 +64,11 @@ const stapleSchema = new Schema<IStaple>(
   { timestamps: true }
 );
 
-stapleSchema.index({ userId: 1, name: 1 }, { unique: true });
+// Unique constraint: one staple per name per user (for personal staples)
+// or one staple per name per household (for shared staples)
+stapleSchema.index({ userId: 1, name: 1 }, { unique: true, sparse: true });
+stapleSchema.index({ householdId: 1, name: 1 }, { unique: true, sparse: true });
+// For querying household staples
+stapleSchema.index({ householdId: 1, usageCount: -1 });
 
 export default mongoose.model<IStaple>('Staple', stapleSchema);

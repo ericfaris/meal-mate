@@ -6,13 +6,15 @@ import {
   clearStaples,
   addStaplesToGroceryList,
 } from '../controllers/staples';
+import { requireAdminIfInHousehold } from '../middleware/auth';
 
 const router = Router();
 
 router.get('/', getStaples);
 router.post('/', upsertStaple);
-router.delete('/:id', deleteStaple);
-router.delete('/', clearStaples);
+// Only admins can delete staples if in a household
+router.delete('/:id', requireAdminIfInHousehold, deleteStaple);
+router.delete('/', requireAdminIfInHousehold, clearStaples);
 
 export default router;
 
