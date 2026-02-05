@@ -427,12 +427,13 @@ const styles = StyleSheet.create({
   },
   storeChipsContent: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     gap: spacing.xs,
   },
   storeChip: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -446,12 +447,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   storeChipImage: {
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     borderRadius: borderRadius.sm,
   },
   storeChipInitial: {
-    fontSize: typography.sizes.body,
+    fontSize: typography.sizes.h3,
     fontWeight: typography.weights.bold,
     color: colors.textMuted,
   },
@@ -470,9 +471,10 @@ const styles = StyleSheet.create({
   storeChipManage: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
+    height: 44,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
     borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: colors.primaryLight,
