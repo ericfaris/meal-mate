@@ -135,45 +135,49 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
               const isExpanded = expandedStoreId === store._id;
               return (
                 <View key={store._id} style={styles.storeCard}>
-                  <TouchableOpacity
-                    style={styles.storeRow}
-                    onPress={() => setExpandedStoreId(isExpanded ? null : store._id)}
-                  >
-                    <Ionicons
-                      name={isExpanded ? 'chevron-down' : 'chevron-forward'}
-                      size={18}
-                      color={colors.textMuted}
-                    />
-                    {(() => {
-                      const bundledAsset = getStoreAsset(store.name);
-                      if (bundledAsset) {
-                        return <Image source={bundledAsset} style={styles.storeImage} />;
-                      } else if (store.imageUrl) {
-                        return <Image source={{ uri: store.imageUrl }} style={styles.storeImage} />;
-                      } else {
-                        return (
-                          <View style={styles.storeImagePlaceholder}>
-                            <Text style={styles.storeImageInitial}>{store.name.charAt(0).toUpperCase()}</Text>
-                          </View>
-                        );
-                      }
-                    })()}
-                    <Text style={styles.storeName}>{store.name}</Text>
-                    {!getStoreAsset(store.name) && (
-                      <TouchableOpacity
-                        onPress={() => setImagePickerStore(store)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Ionicons name="image-outline" size={18} color={colors.primary} />
-                      </TouchableOpacity>
-                    )}
+                  <View style={styles.storeRow}>
                     <TouchableOpacity
-                      onPress={() => handleDeleteStore(store)}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.storeRowMain}
+                      onPress={() => setExpandedStoreId(isExpanded ? null : store._id)}
                     >
-                      <Ionicons name="trash-outline" size={18} color={colors.error} />
+                      <Ionicons
+                        name={isExpanded ? 'chevron-down' : 'chevron-forward'}
+                        size={18}
+                        color={colors.textMuted}
+                      />
+                      {(() => {
+                        const bundledAsset = getStoreAsset(store.name);
+                        if (bundledAsset) {
+                          return <Image source={bundledAsset} style={styles.storeImage} />;
+                        } else if (store.imageUrl) {
+                          return <Image source={{ uri: store.imageUrl }} style={styles.storeImage} />;
+                        } else {
+                          return (
+                            <View style={styles.storeImagePlaceholder}>
+                              <Text style={styles.storeImageInitial}>{store.name.charAt(0).toUpperCase()}</Text>
+                            </View>
+                          );
+                        }
+                      })()}
+                      <Text style={styles.storeName}>{store.name}</Text>
                     </TouchableOpacity>
-                  </TouchableOpacity>
+                    <View style={styles.storeActions}>
+                      {!getStoreAsset(store.name) && (
+                        <TouchableOpacity
+                          style={styles.storeActionBtn}
+                          onPress={() => setImagePickerStore(store)}
+                        >
+                          <Ionicons name="image-outline" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={styles.storeActionBtn}
+                        onPress={() => handleDeleteStore(store)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
 
                   {isExpanded && (
                     <View style={styles.categoryList}>
@@ -300,8 +304,22 @@ const styles = StyleSheet.create({
   storeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: spacing.sm,
+  },
+  storeRowMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  storeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  storeActionBtn: {
+    padding: spacing.sm,
   },
   storeImage: {
     width: 28,
