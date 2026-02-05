@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   SectionList,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
@@ -185,7 +186,19 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
   return (
     <View style={styles.container}>
       {/* Store selector */}
-      <View style={[styles.storeChipsContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.storeChipsContent}
+        style={[styles.storeChipsContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}
+      >
+        <TouchableOpacity
+          style={styles.storeChipManage}
+          onPress={() => setManageStoresVisible(true)}
+        >
+          <Ionicons name="settings-outline" size={14} color={colors.primary} />
+          <Text style={styles.storeChipManageText}>Manage</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.storeChip, !selectedStore && styles.storeChipActive]}
           onPress={() => handleSelectStore(null)}
@@ -203,14 +216,7 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity
-          style={styles.storeChipManage}
-          onPress={() => setManageStoresVisible(true)}
-        >
-          <Ionicons name="settings-outline" size={14} color={colors.primary} />
-          <Text style={styles.storeChipManageText}>Manage</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Search */}
       <View style={[styles.searchContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
@@ -403,11 +409,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   storeChipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xs,
+  },
+  storeChipsContent: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
     gap: spacing.xs,
   },
   storeChip: {

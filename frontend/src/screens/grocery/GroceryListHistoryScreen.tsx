@@ -97,35 +97,6 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
     });
   };
 
-  const handleLongPress = (list: GroceryList) => {
-    const isArchived = list.status === 'archived';
-
-    const options: any[] = [
-      {
-        text: isArchived ? 'Restore' : 'Archive',
-        icon: isArchived ? 'refresh-outline' : 'archive-outline',
-        onPress: () => handleArchive(list),
-      },
-    ];
-
-    if (canDelete) {
-      options.push({
-        text: 'Delete',
-        icon: 'trash-outline',
-        style: 'destructive',
-        onPress: () => handleDelete(list._id),
-      });
-    }
-
-    options.push({ text: 'Cancel', style: 'cancel' });
-
-    alertManager.showActionSheet({
-      title: 'List Options',
-      message: list.name,
-      options,
-    });
-  };
-
   const getCompletionPercent = (list: GroceryList) => {
     if (list.items.length === 0) return 0;
     return Math.round(
@@ -170,21 +141,43 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
         }
         renderItem={({ item }) => {
           const percent = getCompletionPercent(item);
+          const isArchived = item.status === 'archived';
           return (
             <TouchableOpacity
               style={styles.listCard}
               onPress={() => navigation.navigate('GroceryStoreMode', { listId: item._id })}
-              onLongPress={() => handleLongPress(item)}
             >
               <View style={styles.listCardHeader}>
                 <Text style={styles.listName} numberOfLines={1}>
                   {item.name}
                 </Text>
-                {item.status === 'archived' && (
+                {isArchived && (
                   <View style={styles.archivedBadge}>
                     <Text style={styles.archivedText}>Archived</Text>
                   </View>
                 )}
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleArchive(item)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={isArchived ? 'refresh-outline' : 'archive-outline'}
+                      size={20}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                  {canDelete && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleDelete(item._id)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
               <Text style={styles.listDateRange}>
                 {formatDateRange(item.startDate, item.endDate)}
@@ -243,6 +236,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  actionButton: {
+    padding: spacing.xs,
   },
   listName: {
     flex: 1,
