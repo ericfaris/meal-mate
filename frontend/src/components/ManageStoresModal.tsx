@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   Modal,
-  Pressable,
   TouchableOpacity,
+  Pressable,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -15,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../theme';
 import { Store } from '../types';
 import { storesApi } from '../services/api/stores';
-import { alertManager } from '../utils/alertUtils';
 import { getStoreAsset } from '../utils/storeAssets';
 import ImagePickerModal from './ImagePickerModal';
 
@@ -43,6 +42,9 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
   const [newStoreName, setNewStoreName] = useState('');
   const [saving, setSaving] = useState(false);
   const [imagePickerStore, setImagePickerStore] = useState<Store | null>(null);
+  const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleAddStore = async () => {
     if (!newStoreName.trim()) return;
@@ -53,36 +55,30 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
       setNewStoreName('');
       setAddingStore(false);
     } catch (error: any) {
-      alertManager.showError({
-        title: 'Error',
-        message: error.response?.data?.error || 'Failed to create store',
-      });
+      setErrorMessage(error.response?.data?.error || 'Failed to create store');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteStore = (store: Store) => {
-    alertManager.showConfirm({
-      title: 'Delete Store',
-      message: `Delete "${store.name}"?`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      confirmStyle: 'destructive',
-      icon: 'trash-outline',
-      onConfirm: async () => {
-        try {
-          await storesApi.delete(store._id);
-          onStoresChanged(stores.filter((s) => s._id !== store._id));
-          if (expandedStoreId === store._id) setExpandedStoreId(null);
-        } catch {
-          alertManager.showError({
-            title: 'Error',
-            message: 'Failed to delete store',
-          });
-        }
-      },
-    });
+    setStoreToDelete(store);
+  };
+
+  const confirmDelete = async () => {
+    if (!storeToDelete) return;
+    try {
+      setDeleting(true);
+      await storesApi.delete(storeToDelete._id);
+      if (expandedStoreId === storeToDelete._id) setExpandedStoreId(null);
+      const freshStores = await storesApi.getAll();
+      onStoresChanged(freshStores);
+      setStoreToDelete(null);
+    } catch {
+      setErrorMessage('Failed to delete store');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSelectImage = async (imageUrl: string) => {
@@ -91,10 +87,7 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
       const updated = await storesApi.update(imagePickerStore._id, { imageUrl });
       onStoresChanged(stores.map((s) => (s._id === imagePickerStore._id ? updated : s)));
     } catch {
-      alertManager.showError({
-        title: 'Error',
-        message: 'Failed to update store image',
-      });
+      setErrorMessage('Failed to update store image');
     }
     setImagePickerStore(null);
   };
@@ -121,8 +114,8 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.content} onPress={() => {}}>
+      <View style={styles.overlay}>
+        <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Manage Stores</Text>
             <TouchableOpacity onPress={onClose}>
@@ -162,20 +155,21 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
                       <Text style={styles.storeName}>{store.name}</Text>
                     </TouchableOpacity>
                     <View style={styles.storeActions}>
-                      {!getStoreAsset(store.name) && (
-                        <TouchableOpacity
-                          style={styles.storeActionBtn}
-                          onPress={() => setImagePickerStore(store)}
-                        >
-                          <Ionicons name="image-outline" size={18} color={colors.primary} />
-                        </TouchableOpacity>
-                      )}
-                      <TouchableOpacity
+                      <Pressable
                         style={styles.storeActionBtn}
                         onPress={() => handleDeleteStore(store)}
                       >
                         <Ionicons name="trash-outline" size={18} color={colors.error} />
-                      </TouchableOpacity>
+                      </Pressable>
+                      {!getStoreAsset(store.name) && (
+                        <Pressable
+                          style={styles.storeActionBtn}
+                          onPress={() => setImagePickerStore(store)}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                          <Ionicons name="image-outline" size={18} color={colors.primary} />
+                        </Pressable>
+                      )}
                     </View>
                   </View>
 
@@ -248,16 +242,66 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
               </TouchableOpacity>
             )}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
 
-      {/* Image picker modal */}
-      <ImagePickerModal
-        visible={!!imagePickerStore}
-        recipeTitle={imagePickerStore ? `${imagePickerStore.name} store logo` : ''}
-        onClose={() => setImagePickerStore(null)}
-        onSelectImage={handleSelectImage}
-      />
+      {/* Delete confirmation overlay */}
+      {storeToDelete && (
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Ionicons name="trash-outline" size={32} color={colors.error} style={{ marginBottom: spacing.sm }} />
+            <Text style={styles.confirmTitle}>Delete Store</Text>
+            <Text style={styles.confirmMessage}>Delete "{storeToDelete.name}"?</Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={styles.confirmCancelBtn}
+                onPress={() => setStoreToDelete(null)}
+                disabled={deleting}
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmDeleteBtn}
+                onPress={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Text style={styles.confirmDeleteText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Error message overlay */}
+      {errorMessage && (
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <Ionicons name="alert-circle" size={32} color={colors.error} style={{ marginBottom: spacing.sm }} />
+            <Text style={styles.confirmTitle}>Error</Text>
+            <Text style={styles.confirmMessage}>{errorMessage}</Text>
+            <TouchableOpacity
+              style={[styles.confirmDeleteBtn, { flex: 0, paddingHorizontal: spacing.xl }]}
+              onPress={() => setErrorMessage(null)}
+            >
+              <Text style={styles.confirmDeleteText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Image picker modal - only render when needed */}
+      {imagePickerStore && (
+        <ImagePickerModal
+          visible={true}
+          recipeTitle={`${imagePickerStore.name} store logo`}
+          onClose={() => setImagePickerStore(null)}
+          onSelectImage={handleSelectImage}
+        />
+      )}
     </Modal>
   );
 }
@@ -320,6 +364,7 @@ const styles = StyleSheet.create({
   },
   storeActionBtn: {
     padding: spacing.sm,
+    cursor: 'pointer',
   },
   storeImage: {
     width: 28,
@@ -433,5 +478,61 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.semibold,
     color: colors.primary,
+  },
+  confirmOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  confirmBox: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    width: '80%',
+    maxWidth: 300,
+    alignItems: 'center',
+  },
+  confirmTitle: {
+    fontSize: typography.sizes.h3,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  confirmMessage: {
+    fontSize: typography.sizes.body,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    width: '100%',
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  confirmCancelText: {
+    fontSize: typography.sizes.body,
+    color: colors.textLight,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+  },
+  confirmDeleteText: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold,
+    color: colors.white,
   },
 });
