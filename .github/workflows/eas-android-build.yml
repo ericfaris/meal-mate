@@ -20,6 +20,8 @@ on:
 
 jobs:
   build:
+    # Temporarily disabled - remove this line to re-enable
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
