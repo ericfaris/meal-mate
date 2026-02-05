@@ -6,6 +6,7 @@ export interface IStore extends Document {
   categoryOrder: string[];
   isDefault: boolean;
   imageUrl?: string;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +26,7 @@ const storeSchema = new Schema<IStore>(
     },
     isDefault: { type: Boolean, default: false },
     imageUrl: { type: String },
+    sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

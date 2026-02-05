@@ -20,4 +20,9 @@ export const storesApi = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`${API_ENDPOINTS.stores}/${id}`);
   },
+
+  reorder: async (storeIds: string[]): Promise<Store[]> => {
+    const response = await apiClient.put(`${API_ENDPOINTS.stores}/reorder`, { storeIds });
+    return response.data;
+  },
 };

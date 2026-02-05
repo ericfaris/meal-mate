@@ -54,6 +54,7 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [manageStoresVisible, setManageStoresVisible] = useState(false);
+  const [reorderingStore, setReorderingStore] = useState<Store | null>(null);
   const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
@@ -150,11 +151,49 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
   };
 
   const handleSelectStore = async (store: Store | null) => {
+    // If in reorder mode, handle the move
+    if (reorderingStore && store) {
+      handleMoveStore(store);
+      return;
+    }
     setSelectedStore(store);
     // Fire-and-forget: mark as default
     if (store) {
       storesApi.update(store._id, { isDefault: true }).catch(() => {});
     }
+  };
+
+  const handleLongPressStore = (store: Store) => {
+    setReorderingStore(store);
+  };
+
+  const handleMoveStore = async (targetStore: Store) => {
+    if (!reorderingStore || reorderingStore._id === targetStore._id) {
+      setReorderingStore(null);
+      return;
+    }
+
+    // Reorder: move reorderingStore to targetStore's position
+    const newOrder = stores.filter((s) => s._id !== reorderingStore._id);
+    const targetIndex = newOrder.findIndex((s) => s._id === targetStore._id);
+    newOrder.splice(targetIndex, 0, reorderingStore);
+
+    // Optimistic update
+    setStores(newOrder);
+    setReorderingStore(null);
+
+    // Persist to backend
+    try {
+      const storeIds = newOrder.map((s) => s._id);
+      await storesApi.reorder(storeIds);
+    } catch {
+      // Revert on failure
+      loadStores();
+    }
+  };
+
+  const cancelReorder = () => {
+    setReorderingStore(null);
   };
 
   const activeCategoryOrder = selectedStore?.categoryOrder ?? CATEGORY_ORDER;
@@ -194,27 +233,47 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         contentContainerStyle={styles.storeChipsContent}
         style={[styles.storeChipsContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}
       >
+        {!reorderingStore && (
+          <TouchableOpacity
+            style={styles.storeChipManage}
+            onPress={() => setManageStoresVisible(true)}
+          >
+            <Ionicons name="settings-outline" size={14} color={colors.primary} />
+            <Text style={styles.storeChipManageText}>Manage</Text>
+          </TouchableOpacity>
+        )}
+        {reorderingStore && (
+          <TouchableOpacity
+            style={styles.storeChipCancel}
+            onPress={cancelReorder}
+          >
+            <Ionicons name="close" size={16} color={colors.error} />
+            <Text style={styles.storeChipCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
-          style={styles.storeChipManage}
-          onPress={() => setManageStoresVisible(true)}
+          style={[styles.storeChip, !selectedStore && !reorderingStore && styles.storeChipActive]}
+          onPress={() => reorderingStore ? cancelReorder() : handleSelectStore(null)}
         >
-          <Ionicons name="settings-outline" size={14} color={colors.primary} />
-          <Text style={styles.storeChipManageText}>Manage</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.storeChip, !selectedStore && styles.storeChipActive]}
-          onPress={() => handleSelectStore(null)}
-        >
-          <Text style={[styles.storeChipText, !selectedStore && styles.storeChipTextActive]}>All</Text>
+          <Text style={[styles.storeChipText, !selectedStore && !reorderingStore && styles.storeChipTextActive]}>All</Text>
         </TouchableOpacity>
         {stores.map((store) => {
           const bundledAsset = getStoreAsset(store.name);
           const isActive = selectedStore?._id === store._id;
+          const isBeingMoved = reorderingStore?._id === store._id;
+          const isDropTarget = reorderingStore && !isBeingMoved;
           return (
             <TouchableOpacity
               key={store._id}
-              style={[styles.storeChip, isActive && styles.storeChipActive]}
-              onPress={() => handleSelectStore(store)}
+              style={[
+                styles.storeChip,
+                isActive && !reorderingStore && styles.storeChipActive,
+                isBeingMoved && styles.storeChipMoving,
+                isDropTarget && styles.storeChipDropTarget,
+              ]}
+              onPress={() => reorderingStore ? handleMoveStore(store) : handleSelectStore(store)}
+              onLongPress={() => handleLongPressStore(store)}
+              delayLongPress={300}
               accessibilityLabel={store.name}
             >
               {bundledAsset ? (
@@ -445,6 +504,33 @@ const styles = StyleSheet.create({
   storeChipActive: {
     borderColor: colors.primary,
     borderWidth: 2,
+  },
+  storeChipMoving: {
+    borderColor: colors.secondary,
+    borderWidth: 2,
+    opacity: 0.7,
+    transform: [{ scale: 1.1 }],
+  },
+  storeChipDropTarget: {
+    borderColor: colors.primaryLight,
+    borderStyle: 'dashed',
+  },
+  storeChipCancel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    height: 44,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.error,
+    backgroundColor: colors.white,
+  },
+  storeChipCancelText: {
+    fontSize: typography.sizes.small,
+    color: colors.error,
+    fontWeight: typography.weights.medium,
   },
   storeChipImage: {
     width: 32,

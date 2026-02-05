@@ -120,6 +120,7 @@ export interface Store {
   categoryOrder: string[];
   isDefault: boolean;
   imageUrl?: string;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }

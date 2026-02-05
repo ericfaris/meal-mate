@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { getStores, createStore, updateStore, deleteStore } from '../controllers/stores';
+import { getStores, createStore, updateStore, deleteStore, reorderStores } from '../controllers/stores';
 
 const router = Router();
 
 router.get('/', getStores);
 router.post('/', createStore);
+router.put('/reorder', reorderStores);
 router.put('/:id', updateStore);
 router.delete('/:id', deleteStore);
 

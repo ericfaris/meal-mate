@@ -2,26 +2,26 @@ import { Request, Response } from 'express';
 import Store from '../models/store';
 
 const DEFAULT_STORES = [
-  { name: 'Aldi', categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Pantry', 'Frozen', 'Household', 'Other'] },
-  { name: 'Costco', categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
-  { name: 'Kroger', categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Frozen', 'Pantry', 'Household', 'Other'] },
-  { name: 'Meijer', categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Frozen', 'Pantry', 'Household', 'Other'] },
-  { name: "Sam's Club", categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
-  { name: "Trader Joe's", categoryOrder: ['Produce', 'Dairy & Eggs', 'Meat & Seafood', 'Bakery', 'Frozen', 'Pantry', 'Household', 'Other'] },
-  { name: 'Walmart', categoryOrder: ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery', 'Frozen', 'Pantry', 'Household', 'Other'] },
-  { name: 'Whole Foods', categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
+  { name: 'Aldi', sortOrder: 0, categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Pantry', 'Frozen', 'Household', 'Other'] },
+  { name: 'Costco', sortOrder: 1, categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
+  { name: 'Kroger', sortOrder: 2, categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Frozen', 'Pantry', 'Household', 'Other'] },
+  { name: 'Meijer', sortOrder: 3, categoryOrder: ['Produce', 'Bakery', 'Dairy & Eggs', 'Meat & Seafood', 'Frozen', 'Pantry', 'Household', 'Other'] },
+  { name: "Sam's Club", sortOrder: 4, categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
+  { name: "Trader Joe's", sortOrder: 5, categoryOrder: ['Produce', 'Dairy & Eggs', 'Meat & Seafood', 'Bakery', 'Frozen', 'Pantry', 'Household', 'Other'] },
+  { name: 'Walmart', sortOrder: 6, categoryOrder: ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Bakery', 'Frozen', 'Pantry', 'Household', 'Other'] },
+  { name: 'Whole Foods', sortOrder: 7, categoryOrder: ['Produce', 'Bakery', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Household', 'Other'] },
 ];
 
 // GET /api/stores
 export const getStores = async (req: Request, res: Response): Promise<void> => {
   try {
-    let stores = await Store.find({ userId: req.userId }).sort({ name: 1 });
+    let stores = await Store.find({ userId: req.userId }).sort({ sortOrder: 1, name: 1 });
 
     // Seed defaults on first access
     if (stores.length === 0) {
       const docs = DEFAULT_STORES.map((s) => ({ ...s, userId: req.userId })) as any[];
       await Store.insertMany(docs);
-      stores = await Store.find({ userId: req.userId }).sort({ name: 1 });
+      stores = await Store.find({ userId: req.userId }).sort({ sortOrder: 1, name: 1 });
     }
 
     res.json(stores);
@@ -40,11 +40,16 @@ export const createStore = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // Get max sortOrder to place new store at end
+    const maxStore = await Store.findOne({ userId: req.userId }).sort({ sortOrder: -1 });
+    const sortOrder = maxStore ? maxStore.sortOrder + 1 : 0;
+
     const store = await Store.create({
       userId: req.userId,
       name: name.trim(),
       categoryOrder: categoryOrder || ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Household', 'Other'],
       imageUrl: imageUrl || undefined,
+      sortOrder,
     });
 
     res.status(201).json(store);
@@ -107,5 +112,29 @@ export const deleteStore = async (req: Request, res: Response): Promise<void> =>
   } catch (error) {
     console.error('Error deleting store:', error);
     res.status(500).json({ error: 'Failed to delete store' });
+  }
+};
+
+// PUT /api/stores/reorder
+export const reorderStores = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { storeIds } = req.body;
+    if (!Array.isArray(storeIds)) {
+      res.status(400).json({ error: 'storeIds must be an array' });
+      return;
+    }
+
+    // Update each store's sortOrder based on position in array
+    const updates = storeIds.map((id: string, index: number) =>
+      Store.updateOne({ _id: id, userId: req.userId }, { $set: { sortOrder: index } })
+    );
+    await Promise.all(updates);
+
+    // Return updated stores
+    const stores = await Store.find({ userId: req.userId }).sort({ sortOrder: 1, name: 1 });
+    res.json(stores);
+  } catch (error) {
+    console.error('Error reordering stores:', error);
+    res.status(500).json({ error: 'Failed to reorder stores' });
   }
 };
