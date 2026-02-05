@@ -12,8 +12,10 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
+import { getStoreAsset } from '../../utils/storeAssets';
 import { GroceryList, GroceryItem, Store } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
 import { storesApi } from '../../services/api/stores';
@@ -205,17 +207,28 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         >
           <Text style={[styles.storeChipText, !selectedStore && styles.storeChipTextActive]}>All</Text>
         </TouchableOpacity>
-        {stores.map((store) => (
-          <TouchableOpacity
-            key={store._id}
-            style={[styles.storeChip, selectedStore?._id === store._id && styles.storeChipActive]}
-            onPress={() => handleSelectStore(store)}
-          >
-            <Text style={[styles.storeChipText, selectedStore?._id === store._id && styles.storeChipTextActive]}>
-              {store.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {stores.map((store) => {
+          const bundledAsset = getStoreAsset(store.name);
+          const isActive = selectedStore?._id === store._id;
+          return (
+            <TouchableOpacity
+              key={store._id}
+              style={[styles.storeChip, isActive && styles.storeChipActive]}
+              onPress={() => handleSelectStore(store)}
+              accessibilityLabel={store.name}
+            >
+              {bundledAsset ? (
+                <Image source={bundledAsset} style={styles.storeChipImage} />
+              ) : store.imageUrl ? (
+                <Image source={{ uri: store.imageUrl }} style={styles.storeChipImage} />
+              ) : (
+                <Text style={[styles.storeChipInitial, isActive && styles.storeChipInitialActive]}>
+                  {store.name.charAt(0).toUpperCase()}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Search */}
@@ -418,21 +431,38 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   storeChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: borderRadius.full,
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   storeChipActive: {
-    backgroundColor: colors.primary,
     borderColor: colors.primary,
+    borderWidth: 2,
+  },
+  storeChipImage: {
+    width: 24,
+    height: 24,
+    borderRadius: borderRadius.sm,
+  },
+  storeChipInitial: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
+    color: colors.textMuted,
+  },
+  storeChipInitialActive: {
+    color: colors.primary,
   },
   storeChipText: {
     fontSize: typography.sizes.small,
     color: colors.text,
     fontWeight: typography.weights.medium,
+    textAlign: 'center',
   },
   storeChipTextActive: {
     color: colors.textOnPrimary,

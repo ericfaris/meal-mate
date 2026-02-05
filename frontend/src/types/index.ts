@@ -119,6 +119,7 @@ export interface Store {
   name: string;
   categoryOrder: string[];
   isDefault: boolean;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

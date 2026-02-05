@@ -5,6 +5,7 @@ export interface IStore extends Document {
   name: string;
   categoryOrder: string[];
   isDefault: boolean;
+  imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ const storeSchema = new Schema<IStore>(
       default: ['Produce', 'Meat & Seafood', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Bakery', 'Household', 'Other'],
     },
     isDefault: { type: Boolean, default: false },
+    imageUrl: { type: String },
   },
   { timestamps: true }
 );

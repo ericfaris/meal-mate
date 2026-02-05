@@ -10,11 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../theme';
 import { Store } from '../types';
 import { storesApi } from '../services/api/stores';
 import { alertManager } from '../utils/alertUtils';
+import { getStoreAsset } from '../utils/storeAssets';
+import ImagePickerModal from './ImagePickerModal';
 
 type Props = {
   visible: boolean;
@@ -39,6 +42,7 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
   const [addingStore, setAddingStore] = useState(false);
   const [newStoreName, setNewStoreName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [imagePickerStore, setImagePickerStore] = useState<Store | null>(null);
 
   const handleAddStore = async () => {
     if (!newStoreName.trim()) return;
@@ -79,6 +83,20 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
         }
       },
     });
+  };
+
+  const handleSelectImage = async (imageUrl: string) => {
+    if (!imagePickerStore) return;
+    try {
+      const updated = await storesApi.update(imagePickerStore._id, { imageUrl });
+      onStoresChanged(stores.map((s) => (s._id === imagePickerStore._id ? updated : s)));
+    } catch {
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to update store image',
+      });
+    }
+    setImagePickerStore(null);
   };
 
   const handleMoveCategory = async (store: Store, index: number, direction: 'up' | 'down') => {
@@ -126,7 +144,29 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
                       size={18}
                       color={colors.textMuted}
                     />
+                    {(() => {
+                      const bundledAsset = getStoreAsset(store.name);
+                      if (bundledAsset) {
+                        return <Image source={bundledAsset} style={styles.storeImage} />;
+                      } else if (store.imageUrl) {
+                        return <Image source={{ uri: store.imageUrl }} style={styles.storeImage} />;
+                      } else {
+                        return (
+                          <View style={styles.storeImagePlaceholder}>
+                            <Text style={styles.storeImageInitial}>{store.name.charAt(0).toUpperCase()}</Text>
+                          </View>
+                        );
+                      }
+                    })()}
                     <Text style={styles.storeName}>{store.name}</Text>
+                    {!getStoreAsset(store.name) && (
+                      <TouchableOpacity
+                        onPress={() => setImagePickerStore(store)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="image-outline" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                       onPress={() => handleDeleteStore(store)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -206,6 +246,14 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
           </ScrollView>
         </Pressable>
       </Pressable>
+
+      {/* Image picker modal */}
+      <ImagePickerModal
+        visible={!!imagePickerStore}
+        recipeTitle={imagePickerStore ? `${imagePickerStore.name} store logo` : ''}
+        onClose={() => setImagePickerStore(null)}
+        onSelectImage={handleSelectImage}
+      />
     </Modal>
   );
 }
@@ -254,6 +302,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  storeImage: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.sm,
+  },
+  storeImagePlaceholder: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storeImageInitial: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.bold,
+    color: colors.textMuted,
   },
   storeName: {
     flex: 1,

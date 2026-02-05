@@ -7,12 +7,12 @@ export const storesApi = {
     return response.data;
   },
 
-  create: async (data: { name: string; categoryOrder?: string[] }): Promise<Store> => {
+  create: async (data: { name: string; categoryOrder?: string[]; imageUrl?: string }): Promise<Store> => {
     const response = await apiClient.post(API_ENDPOINTS.stores, data);
     return response.data;
   },
 
-  update: async (id: string, data: { name?: string; categoryOrder?: string[]; isDefault?: boolean }): Promise<Store> => {
+  update: async (id: string, data: { name?: string; categoryOrder?: string[]; isDefault?: boolean; imageUrl?: string }): Promise<Store> => {
     const response = await apiClient.put(`${API_ENDPOINTS.stores}/${id}`, data);
     return response.data;
   },
