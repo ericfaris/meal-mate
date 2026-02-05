@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,6 +16,7 @@ import { groceryListApi } from '../../services/api/groceryLists';
 import { getTodayString, addDays, parseDate, dateToString } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
+import { alertManager } from '../../utils/alertUtils';
 
 type Props = {
   navigation: any;
@@ -108,7 +108,12 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
 
   const handleGenerate = async () => {
     if (plans.length === 0) {
-      Alert.alert('No Plans', 'There are no planned meals in this range. Plan some meals first!');
+      alertManager.showInfo({
+        title: 'No Plans',
+        message: 'There are no planned meals in this range. Plan some meals first!',
+        icon: 'calendar-outline',
+        iconColor: colors.warning,
+      });
       return;
     }
     try {
@@ -116,7 +121,10 @@ export default function GroceryListPickerScreen({ navigation }: Props) {
       const list = await groceryListApi.create({ startDate, endDate });
       navigation.navigate('GroceryStoreMode', { listId: list._id });
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to generate grocery list');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.error || 'Failed to generate grocery list',
+      });
     } finally {
       setGenerating(false);
     }

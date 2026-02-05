@@ -541,6 +541,27 @@ const recipes = await Recipe.find({
 });
 ```
 
+### Alerts and Modals (Frontend)
+**NEVER use React Native's native Alert.alert() - use custom alertManager instead**
+```typescript
+// ❌ WRONG - Native Android alerts have terrible UX
+Alert.alert('Error', 'Something went wrong');
+
+// ✅ CORRECT - Custom modal system
+alertManager.showError({ title: 'Error', message: 'Something went wrong' });
+alertManager.showSuccess({ title: 'Success', message: 'Recipe saved!' });
+alertManager.showConfirm({
+  title: 'Delete',
+  message: 'Are you sure?',
+  confirmStyle: 'destructive',
+  onConfirm: handleDelete,
+});
+alertManager.showInfo({ title: 'Info', message: 'No plans found', icon: 'calendar-outline' });
+alertManager.showActionSheet({ options: [...] });
+```
+**Why**: Native Android alerts provide poor UX. Custom modals are animated, consistent, and cross-platform.
+**Location**: `frontend/src/utils/alertUtils.ts` + modal components in `frontend/src/components/`
+
 ### Android HTTP Cleartext Traffic
 **Enable HTTP for local development builds**
 ```json
@@ -561,6 +582,11 @@ const recipes = await Recipe.find({
 Current branch: `grocery-list-multiplayer`
 
 Recent changes:
+- **🎨 Custom Alert System** - Replaced all native Alert.alert with custom React Native modals
+  - New modal components: ConfirmModal, InfoModal, ActionSheetModal
+  - Centralized `alertManager` API for consistent alert handling
+  - Animated modals with icons for better UX across all platforms
+  - Never use native Android alerts again (documented in Critical Patterns)
 - **🛒 Household Grocery Lists** - Shared grocery lists within households
   - Only admins can create/delete grocery lists; members can view and add items
   - Items track who added them (`addedBy`, `addedAt` fields)

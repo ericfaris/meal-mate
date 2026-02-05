@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +17,7 @@ import { staplesApi } from '../../services/api/staples';
 import AddStapleModal from '../../components/AddStapleModal';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
+import { alertManager } from '../../utils/alertUtils';
 
 type Props = {
   navigation: any;
@@ -67,7 +67,10 @@ export default function StaplesScreen({ navigation, route }: Props) {
       const data = await staplesApi.getAll();
       setStaples(data);
     } catch {
-      Alert.alert('Error', 'Failed to load staples');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to load staples',
+      });
     } finally {
       setLoading(false);
     }
@@ -94,31 +97,38 @@ export default function StaplesScreen({ navigation, route }: Props) {
       setAddModalVisible(false);
       loadStaples();
     } catch {
-      Alert.alert('Error', 'Failed to add staple');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to add staple',
+      });
     }
   };
 
   const handleDeleteStaple = (staple: Staple) => {
-    Alert.alert('Delete Staple', `Remove "${staple.name}" from your staples?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await staplesApi.delete(staple._id);
-            setSelectedIds((prev) => {
-              const next = new Set(prev);
-              next.delete(staple._id);
-              return next;
-            });
-            loadStaples();
-          } catch {
-            Alert.alert('Error', 'Failed to delete staple');
-          }
-        },
+    alertManager.showConfirm({
+      title: 'Delete Staple',
+      message: `Remove "${staple.name}" from your staples?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'trash-outline',
+      onConfirm: async () => {
+        try {
+          await staplesApi.delete(staple._id);
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(staple._id);
+            return next;
+          });
+          loadStaples();
+        } catch {
+          alertManager.showError({
+            title: 'Error',
+            message: 'Failed to delete staple',
+          });
+        }
       },
-    ]);
+    });
   };
 
   const handleAddToList = async () => {
@@ -129,7 +139,10 @@ export default function StaplesScreen({ navigation, route }: Props) {
       setSelectedIds(new Set());
       navigation.goBack();
     } catch {
-      Alert.alert('Error', 'Failed to add staples to list');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to add staples to list',
+      });
     } finally {
       setAdding(false);
     }

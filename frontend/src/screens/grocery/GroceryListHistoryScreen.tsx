@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { GroceryList } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
+import { alertManager } from '../../utils/alertUtils';
 
 type Props = {
   navigation: any;
@@ -53,58 +53,65 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
     const newStatus = list.status === 'archived' ? 'active' : 'archived';
     const action = newStatus === 'archived' ? 'Archive' : 'Restore';
 
-    Alert.alert(
-      `${action} List`,
-      `${action} "${list.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: action,
-          onPress: async () => {
-            try {
-              await groceryListApi.update(list._id, { status: newStatus });
-              setLists((prev) =>
-                prev.map((l) => (l._id === list._id ? { ...l, status: newStatus } : l))
-              );
-            } catch {
-              Alert.alert('Error', `Failed to ${action.toLowerCase()} list`);
-            }
-          },
-        },
-      ]
-    );
+    alertManager.showConfirm({
+      title: `${action} List`,
+      message: `${action} "${list.name}"?`,
+      confirmText: action,
+      cancelText: 'Cancel',
+      icon: newStatus === 'archived' ? 'archive-outline' : 'refresh-outline',
+      onConfirm: async () => {
+        try {
+          await groceryListApi.update(list._id, { status: newStatus });
+          setLists((prev) =>
+            prev.map((l) => (l._id === list._id ? { ...l, status: newStatus } : l))
+          );
+        } catch {
+          alertManager.showError({
+            title: 'Error',
+            message: `Failed to ${action.toLowerCase()} list`,
+          });
+        }
+      },
+    });
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Delete List', 'Are you sure you want to delete this grocery list?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await groceryListApi.delete(id);
-            setLists((prev) => prev.filter((l) => l._id !== id));
-          } catch {
-            Alert.alert('Error', 'Failed to delete list');
-          }
-        },
+    alertManager.showConfirm({
+      title: 'Delete List',
+      message: 'Are you sure you want to delete this grocery list?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'trash-outline',
+      onConfirm: async () => {
+        try {
+          await groceryListApi.delete(id);
+          setLists((prev) => prev.filter((l) => l._id !== id));
+        } catch {
+          alertManager.showError({
+            title: 'Error',
+            message: 'Failed to delete list',
+          });
+        }
       },
-    ]);
+    });
   };
 
   const handleLongPress = (list: GroceryList) => {
     const isArchived = list.status === 'archived';
-    const archiveOption = {
-      text: isArchived ? 'Restore' : 'Archive',
-      onPress: () => handleArchive(list),
-    };
 
-    const options: any[] = [archiveOption];
+    const options: any[] = [
+      {
+        text: isArchived ? 'Restore' : 'Archive',
+        icon: isArchived ? 'refresh-outline' : 'archive-outline',
+        onPress: () => handleArchive(list),
+      },
+    ];
 
     if (canDelete) {
       options.push({
         text: 'Delete',
+        icon: 'trash-outline',
         style: 'destructive',
         onPress: () => handleDelete(list._id),
       });
@@ -112,7 +119,11 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
 
     options.push({ text: 'Cancel', style: 'cancel' });
 
-    Alert.alert('List Options', list.name, options);
+    alertManager.showActionSheet({
+      title: 'List Options',
+      message: list.name,
+      options,
+    });
   };
 
   const getCompletionPercent = (list: GroceryList) => {

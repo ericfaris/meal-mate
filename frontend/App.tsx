@@ -11,6 +11,9 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
 import ErrorModal, { ErrorModalRef } from './src/components/ErrorModal';
 import SuccessModal, { SuccessModalRef } from './src/components/SuccessModal';
+import ConfirmModal, { ConfirmModalRef } from './src/components/ConfirmModal';
+import InfoModal, { InfoModalRef } from './src/components/InfoModal';
+import ActionSheetModal, { ActionSheetModalRef } from './src/components/ActionSheetModal';
 import { alertManager } from './src/utils/alertUtils';
 import { colors } from './src/theme';
 
@@ -27,11 +30,17 @@ function AppContent() {
   const [showLogin, setShowLogin] = useState(true);
   const errorModalRef = useRef<ErrorModalRef>(null);
   const successModalRef = useRef<SuccessModalRef>(null);
+  const confirmModalRef = useRef<ConfirmModalRef>(null);
+  const infoModalRef = useRef<InfoModalRef>(null);
+  const actionSheetModalRef = useRef<ActionSheetModalRef>(null);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   useEffect(() => {
     alertManager.setErrorModal(errorModalRef.current);
     alertManager.setSuccessModal(successModalRef.current);
+    alertManager.setConfirmModal(confirmModalRef.current);
+    alertManager.setInfoModal(infoModalRef.current);
+    alertManager.setActionSheetModal(actionSheetModalRef.current);
   }, []);
 
   // Listen for notification taps to navigate to appropriate screen
@@ -114,6 +123,9 @@ function AppContent() {
       {/* Global Alert Modals */}
       <ErrorModal ref={errorModalRef} />
       <SuccessModal ref={successModalRef} />
+      <ConfirmModal ref={confirmModalRef} />
+      <InfoModal ref={infoModalRef} />
+      <ActionSheetModal ref={actionSheetModalRef} />
     </NavigationContainer>
   );
 }

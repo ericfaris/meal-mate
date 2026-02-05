@@ -11,7 +11,6 @@ import {
   TextInput,
   Clipboard,
   Linking,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
@@ -208,34 +207,31 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
     }
   };
 
-  const handleRemoveMember = async (member: HouseholdMember) => {
-    Alert.alert(
-      'Remove Member',
-      `Are you sure you want to remove ${member.name} from the household? They will lose access to shared recipes and plans.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await householdApi.removeMember(member._id);
-              await loadHouseholdData(); // Refresh the household data
-              alertManager.showSuccess({
-                title: 'Success',
-                message: `${member.name} has been removed from the household.`,
-              });
-            } catch (error: any) {
-              console.error('Error removing member:', error);
-              alertManager.showError({
-                title: 'Error',
-                message: error.response?.data?.message || 'Failed to remove member',
-              });
-            }
-          },
-        },
-      ]
-    );
+  const handleRemoveMember = (member: HouseholdMember) => {
+    alertManager.showConfirm({
+      title: 'Remove Member',
+      message: `Are you sure you want to remove ${member.name} from the household? They will lose access to shared recipes and plans.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'person-remove-outline',
+      onConfirm: async () => {
+        try {
+          await householdApi.removeMember(member._id);
+          await loadHouseholdData();
+          alertManager.showSuccess({
+            title: 'Success',
+            message: `${member.name} has been removed from the household.`,
+          });
+        } catch (error: any) {
+          console.error('Error removing member:', error);
+          alertManager.showError({
+            title: 'Error',
+            message: error.response?.data?.message || 'Failed to remove member',
+          });
+        }
+      },
+    });
   };
 
   const handleLeaveHousehold = () => {
@@ -243,41 +239,38 @@ export default function HouseholdSection({ onHouseholdChange }: HouseholdSection
       ? 'As the household admin, leaving will delete the entire household and remove all members. This cannot be undone.'
       : 'Are you sure you want to leave this household? You will lose access to shared recipes and plans.';
 
-    Alert.alert(
-      'Leave Household',
+    alertManager.showConfirm({
+      title: isAdmin ? 'Delete Household' : 'Leave Household',
       message,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLeaving(true);
-              if (isAdmin) {
-                await householdApi.deleteHousehold();
-              } else {
-                await householdApi.leaveHousehold();
-              }
-              await refreshUser();
-              onHouseholdChange?.();
-              alertManager.showSuccess({
-                title: 'Success',
-                message: 'Left household successfully',
-              });
-            } catch (error: any) {
-              console.error('Error leaving household:', error);
-              alertManager.showError({
-                title: 'Error',
-                message: error.response?.data?.message || 'Failed to leave household',
-              });
-            } finally {
-              setLeaving(false);
-            }
-          },
-        },
-      ]
-    );
+      confirmText: isAdmin ? 'Delete' : 'Leave',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'exit-outline',
+      onConfirm: async () => {
+        try {
+          setLeaving(true);
+          if (isAdmin) {
+            await householdApi.deleteHousehold();
+          } else {
+            await householdApi.leaveHousehold();
+          }
+          await refreshUser();
+          onHouseholdChange?.();
+          alertManager.showSuccess({
+            title: 'Success',
+            message: 'Left household successfully',
+          });
+        } catch (error: any) {
+          console.error('Error leaving household:', error);
+          alertManager.showError({
+            title: 'Error',
+            message: error.response?.data?.message || 'Failed to leave household',
+          });
+        } finally {
+          setLeaving(false);
+        }
+      },
+    });
   };
 
   const handleReviewSubmission = (submission: RecipeSubmission, approved: boolean) => {

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -95,70 +94,65 @@ export default function SettingsScreen() {
 
   const handleJoinHouseholdFromLink = (token: string) => {
     if (user?.householdId) {
-      Alert.alert(
-        'Already in Household',
-        'You are already a member of a household. You must leave your current household before joining another one.',
-        [{ text: 'OK' }]
-      );
+      alertManager.showInfo({
+        title: 'Already in Household',
+        message: 'You are already a member of a household. You must leave your current household before joining another one.',
+        icon: 'home',
+        iconColor: colors.warning,
+      });
       return;
     }
 
-    Alert.alert(
-      'Join Household',
-      'You\'ve been invited to join a household. Would you like to join?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Join',
-          onPress: async () => {
-            try {
-              // Import householdApi here to avoid circular dependency
-              const { householdApi } = await import('../services/api');
-              await householdApi.joinHousehold({ token });
-              await refreshUser(); // Refresh user data
-              alertManager.showSuccess({
-                title: 'Success',
-                message: 'Successfully joined household!',
-              });
-            } catch (error: any) {
-              console.error('Error joining household:', error);
-              alertManager.showError({
-                title: 'Error',
-                message: error.response?.data?.message || 'Failed to join household',
-              });
-            }
-          },
-        },
-      ]
-    );
+    alertManager.showConfirm({
+      title: 'Join Household',
+      message: 'You\'ve been invited to join a household. Would you like to join?',
+      confirmText: 'Join',
+      cancelText: 'Cancel',
+      icon: 'home-outline',
+      onConfirm: async () => {
+        try {
+          // Import householdApi here to avoid circular dependency
+          const { householdApi } = await import('../services/api');
+          await householdApi.joinHousehold({ token });
+          await refreshUser();
+          alertManager.showSuccess({
+            title: 'Success',
+            message: 'Successfully joined household!',
+          });
+        } catch (error: any) {
+          console.error('Error joining household:', error);
+          alertManager.showError({
+            title: 'Error',
+            message: error.response?.data?.message || 'Failed to join household',
+          });
+        }
+      },
+    });
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoggingOut(true);
-              await logout();
-            } catch (error) {
-              console.error('Error logging out:', error);
-              alertManager.showError({
-                title: 'Error',
-                message: 'Failed to log out. Please try again.',
-              });
-            } finally {
-              setLoggingOut(false);
-            }
-          },
-        },
-      ]
-    );
+    alertManager.showConfirm({
+      title: 'Log Out',
+      message: 'Are you sure you want to log out?',
+      confirmText: 'Log Out',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'log-out-outline',
+      onConfirm: async () => {
+        try {
+          setLoggingOut(true);
+          await logout();
+        } catch (error) {
+          console.error('Error logging out:', error);
+          alertManager.showError({
+            title: 'Error',
+            message: 'Failed to log out. Please try again.',
+          });
+        } finally {
+          setLoggingOut(false);
+        }
+      },
+    });
   };
 
   const handleExportRecipes = async () => {

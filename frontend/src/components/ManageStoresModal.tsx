@@ -8,14 +8,13 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Alert,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../theme';
 import { Store } from '../types';
 import { storesApi } from '../services/api/stores';
+import { alertManager } from '../utils/alertUtils';
 
 type Props = {
   visible: boolean;
@@ -50,29 +49,36 @@ export default function ManageStoresModal({ visible, onClose, stores, onStoresCh
       setNewStoreName('');
       setAddingStore(false);
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to create store');
+      alertManager.showError({
+        title: 'Error',
+        message: error.response?.data?.error || 'Failed to create store',
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteStore = async (store: Store) => {
-    const confirmed = Platform.OS === 'web'
-      ? window.confirm(`Delete "${store.name}"?`)
-      : await new Promise<boolean>((resolve) =>
-          Alert.alert('Delete Store', `Delete "${store.name}"?`, [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
-          ])
-        );
-    if (!confirmed) return;
-    try {
-      await storesApi.delete(store._id);
-      onStoresChanged(stores.filter((s) => s._id !== store._id));
-      if (expandedStoreId === store._id) setExpandedStoreId(null);
-    } catch {
-      Alert.alert('Error', 'Failed to delete store');
-    }
+  const handleDeleteStore = (store: Store) => {
+    alertManager.showConfirm({
+      title: 'Delete Store',
+      message: `Delete "${store.name}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmStyle: 'destructive',
+      icon: 'trash-outline',
+      onConfirm: async () => {
+        try {
+          await storesApi.delete(store._id);
+          onStoresChanged(stores.filter((s) => s._id !== store._id));
+          if (expandedStoreId === store._id) setExpandedStoreId(null);
+        } catch {
+          alertManager.showError({
+            title: 'Error',
+            message: 'Failed to delete store',
+          });
+        }
+      },
+    });
   };
 
   const handleMoveCategory = async (store: Store, index: number, direction: 'up' | 'down') => {

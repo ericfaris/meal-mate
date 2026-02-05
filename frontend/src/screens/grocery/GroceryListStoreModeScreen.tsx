@@ -7,10 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-  Alert,
   Modal,
   Pressable,
-
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,6 +19,7 @@ import { storesApi } from '../../services/api/stores';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import AddStapleModal from '../../components/AddStapleModal';
 import ManageStoresModal from '../../components/ManageStoresModal';
+import { alertManager } from '../../utils/alertUtils';
 
 type Props = {
   navigation: any;
@@ -62,8 +61,11 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
       const data = await groceryListApi.getById(listId);
       setList(data);
     } catch {
-      Alert.alert('Error', 'Failed to load grocery list');
-      navigation.goBack();
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to load grocery list',
+        onClose: () => navigation.goBack(),
+      });
     } finally {
       setLoading(false);
     }
@@ -125,7 +127,10 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
       setList(updated);
       setAddItemVisible(false);
     } catch {
-      Alert.alert('Error', 'Failed to add item');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to add item',
+      });
     }
   };
 
@@ -134,7 +139,10 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
       const updated = await groceryListApi.removeItem(listId, itemIndex);
       setList(updated);
     } catch {
-      Alert.alert('Error', 'Failed to remove item');
+      alertManager.showError({
+        title: 'Error',
+        message: 'Failed to remove item',
+      });
     }
   };
 
