@@ -107,9 +107,13 @@ async function findOrCreateGoogleUser(payload: TokenPayload): Promise<IUser> {
   if (existingUser) {
     // Link Google account to existing user if they used local auth
     if (existingUser.authProvider === 'local') {
+      // Only auto-link if Google has verified ownership of this email
+      if (!email_verified) {
+        throw new Error('Google email not verified. Cannot link to existing account.');
+      }
       existingUser.authProvider = 'google';
       existingUser.providerId = googleId;
-      existingUser.emailVerified = email_verified || false;
+      existingUser.emailVerified = true;
       existingUser.profilePicture = picture;
       existingUser.lastLoginAt = new Date();
       await existingUser.save();
@@ -202,6 +206,11 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
     if (error.message === 'Email already registered with different provider') {
       res.status(409).json({ error: error.message });
+      return;
+    }
+
+    if (error.message === 'Google email not verified. Cannot link to existing account.') {
+      res.status(403).json({ error: 'This email is already registered. Google could not verify your ownership of this email address.' });
       return;
     }
 

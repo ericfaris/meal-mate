@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Recipe from '../models/recipe';
 import User from '../models/user';
 import { parseRecipeFromUrl } from '../services/recipeParser';
+import { validateExternalUrl } from '../utils/urlValidation';
 
 // Try to use recipe-scraper first, fall back to our custom parser
 let recipeScraper: any = null;
@@ -31,11 +32,10 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch (e) {
-      res.status(400).json({ error: 'Invalid URL format' });
+    // Validate URL format and block internal/private URLs (SSRF protection)
+    const urlError = validateExternalUrl(url);
+    if (urlError) {
+      res.status(400).json({ error: urlError });
       return;
     }
 

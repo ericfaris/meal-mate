@@ -37,7 +37,7 @@ export const authenticate = async (
     }
 
     const token = authHeader.substring(7); // Remove "Bearer " prefix
-    const secret = process.env.JWT_SECRET || 'meal-mate-secret-key';
+    const secret = process.env.JWT_SECRET!;
 
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
@@ -172,7 +172,7 @@ export const optionalAuth = async (
     }
 
     const token = authHeader.substring(7);
-    const secret = process.env.JWT_SECRET || 'meal-mate-secret-key';
+    const secret = process.env.JWT_SECRET!;
 
     const decoded = jwt.verify(token, secret) as JwtPayload;
     const user = await User.findById(decoded.id);

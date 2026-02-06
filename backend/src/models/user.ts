@@ -145,7 +145,7 @@ userSchema.methods.generateAuthToken = function (): string {
     authProvider: this.authProvider,
   };
 
-  const secret = process.env.JWT_SECRET || 'meal-mate-secret-key';
+  const secret = process.env.JWT_SECRET!;
 
   return jwt.sign(payload, secret, { expiresIn: 60 * 60 * 24 * 7 }); // 7 days in seconds
 };

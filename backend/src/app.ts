@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
 import recipeRoutes from './routes/recipes';
 import recipeImportRoutes from './routes/recipeImport';
@@ -18,10 +19,27 @@ import { authenticate } from './middleware/auth';
 export const createApp = (): Express => {
   const app = express();
 
-  // Middleware
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // CORS - restrict origins in production
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+    : undefined; // undefined = allow all in development
+
+  app.use(cors(allowedOrigins ? {
+    origin: allowedOrigins,
+    credentials: true,
+  } : undefined));
+
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+  // Global rate limit: 100 requests per minute per IP
+  app.use(rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later' },
+  }));
 
   // Request logging
   app.use((req, _res, next) => {

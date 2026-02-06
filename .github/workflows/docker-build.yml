@@ -54,6 +54,7 @@ jobs:
             UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }}
             GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
             GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}
+            CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}

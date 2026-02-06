@@ -23,6 +23,12 @@ try {
 
 const startServer = async () => {
   try {
+    // Validate required environment variables before starting
+    if (!process.env.JWT_SECRET) {
+      console.error('FATAL: JWT_SECRET environment variable is not set. Exiting.');
+      process.exit(1);
+    }
+
     // Log version info at startup
     console.log(`\n🍽️  Meal Mate Backend v${appVersion} (build ${buildNumber})`);
     console.log('━'.repeat(50));

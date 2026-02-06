@@ -4,6 +4,7 @@ import RecipeSubmission from '../models/recipeSubmission';
 import User from '../models/user';
 import { importRecipeFromUrl } from './recipeImport';
 import { notifyHouseholdAdmins } from '../services/notificationService';
+import { validateExternalUrl } from '../utils/urlValidation';
 
 // Submit a recipe URL for household admin approval
 export const submitRecipe = async (req: Request, res: Response) => {
@@ -15,11 +16,10 @@ export const submitRecipe = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Recipe URL is required' });
     }
 
-    // Validate URL format
-    try {
-      new URL(recipeUrl.trim());
-    } catch {
-      return res.status(400).json({ message: 'Invalid URL format' });
+    // Validate URL format and block internal/private URLs (SSRF protection)
+    const urlError = validateExternalUrl(recipeUrl.trim());
+    if (urlError) {
+      return res.status(400).json({ message: urlError });
     }
 
     const user = await User.findById(userId);

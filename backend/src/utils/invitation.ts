@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 // Generate invitation token for household
 export const generateInvitationToken = (householdId: string): string => {
-  const secret = process.env.JWT_SECRET || 'meal-mate-secret-key';
+  const secret = process.env.JWT_SECRET!;
   return jwt.sign(
     {
       householdId,
@@ -16,7 +16,7 @@ export const generateInvitationToken = (householdId: string): string => {
 // Verify invitation token and return householdId
 export const verifyInvitationToken = (token: string): string | null => {
   try {
-    const secret = process.env.JWT_SECRET || 'meal-mate-secret-key';
+    const secret = process.env.JWT_SECRET!;
     const decoded = jwt.verify(token, secret) as any;
 
     if (decoded.type !== 'household_invite') {
