@@ -277,9 +277,9 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
               accessibilityLabel={store.name}
             >
               {bundledAsset ? (
-                <Image source={bundledAsset} style={styles.storeChipImage} />
+                <Image source={bundledAsset} style={[styles.storeChipImage, isActive && styles.storeChipImageActive]} />
               ) : store.imageUrl ? (
-                <Image source={{ uri: store.imageUrl }} style={styles.storeChipImage} />
+                <Image source={{ uri: store.imageUrl }} style={[styles.storeChipImage, isActive && styles.storeChipImageActive]} />
               ) : (
                 <Text style={[styles.storeChipInitial, isActive && styles.storeChipInitialActive]}>
                   {store.name.charAt(0).toUpperCase()}
@@ -536,6 +536,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: borderRadius.sm,
+  },
+  storeChipImageActive: {
+    width: 38,
+    height: 38,
   },
   storeChipInitial: {
     fontSize: typography.sizes.h3,
