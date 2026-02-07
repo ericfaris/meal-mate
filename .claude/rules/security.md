@@ -133,15 +133,15 @@ app.use(express.json()); // defaults to 100kb, but should be explicit
 
 ## Hardening Plan
 
-### Phase 1 - Critical (Do Immediately)
+### Phase 1 - Critical (COMPLETED 2026-02-05)
 
-| # | Task | Files |
-|---|------|-------|
-| 1 | Remove JWT secret fallback - crash on startup if missing | `middleware/auth.ts`, `models/user.ts`, `utils/invitation.ts` |
-| 2 | Fix OAuth account linking - require `email_verified === true` | `controllers/oauth.ts` |
-| 3 | Add rate limiting (`express-rate-limit`) on auth (5/min) and global (100/min) | `app.ts`, `routes/auth.ts` |
-| 4 | SSRF protection - validate/block private IPs and metadata endpoints | `services/recipeParser.ts`, `controllers/recipeImport.ts` |
-| 5 | Restrict CORS - environment-based origin allowlist | `app.ts` |
+| # | Task | Status |
+|---|------|--------|
+| 1 | Remove JWT secret fallback - crash on startup if missing | ✅ Done |
+| 2 | Fix OAuth account linking - require `email_verified === true` | ✅ Done |
+| 3 | Add rate limiting (`express-rate-limit`) on auth (10/15min) and global (100/min) | ✅ Done |
+| 4 | SSRF protection - validate/block private IPs and metadata endpoints | ✅ Done |
+| 5 | Restrict CORS - environment-based origin allowlist via `CORS_ORIGINS` env var | ✅ Done |
 
 ### Phase 2 - High Priority (This Week)
 
