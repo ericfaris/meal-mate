@@ -56,10 +56,11 @@ export default function StaplesScreen({ navigation, route }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [addedCount, setAddedCount] = useState(0);
   const contentMaxWidth = maxContentWidth.default;
 
-  // Only admins (or users not in a household) can delete staples
-  const canDelete = !user?.householdId || user?.role === 'admin';
+  // All users can delete staples
+  const canDelete = true;
 
   const loadStaples = useCallback(async () => {
     try {
@@ -135,15 +136,16 @@ export default function StaplesScreen({ navigation, route }: Props) {
     if (!listId || selectedIds.size === 0) return;
     try {
       setAdding(true);
+      const count = selectedIds.size;
       await staplesApi.addToGroceryList(listId, Array.from(selectedIds));
       setSelectedIds(new Set());
-      navigation.goBack();
+      setAddedCount(count);
+      setTimeout(() => navigation.goBack(), 1200);
     } catch {
       alertManager.showError({
         title: 'Error',
         message: 'Failed to add staples to list',
       });
-    } finally {
       setAdding(false);
     }
   };
@@ -177,8 +179,36 @@ export default function StaplesScreen({ navigation, route }: Props) {
     <View style={styles.container}>
       {/* Header info */}
       <View style={[styles.headerSection, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
-        <Text style={styles.subtitle}>Your go-to items — grab 'em quick!</Text>
+        <Text style={styles.subtitle}>
+          {listId ? 'Select items to add to your grocery list' : 'Your go-to items — grab \'em quick!'}
+        </Text>
       </View>
+
+      {/* Category filter icons */}
+      {presentCategories.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterRow}
+          contentContainerStyle={styles.filterRowContent}
+        >
+          <TouchableOpacity
+            style={[styles.filterChip, !selectedFilter && styles.filterChipActive]}
+            onPress={() => setSelectedFilter(null)}
+          >
+            <Text style={styles.filterChipText}>All</Text>
+          </TouchableOpacity>
+          {CATEGORY_ORDER.filter((c) => presentCategories.includes(c as any)).map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.filterChip, selectedFilter === cat && styles.filterChipActive]}
+              onPress={() => setSelectedFilter(selectedFilter === cat ? null : cat)}
+            >
+              <Text style={styles.filterChipEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Search */}
       <View style={[styles.searchContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
@@ -196,41 +226,6 @@ export default function StaplesScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         ) : null}
       </View>
-
-      {/* Category filter chips */}
-      {presentCategories.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterRow}
-          contentContainerStyle={[{ paddingHorizontal: spacing.lg, gap: spacing.sm, maxWidth: contentMaxWidth, alignSelf: 'center' as const }]}
-        >
-          <TouchableOpacity
-            style={[styles.filterChip, !selectedFilter && styles.filterChipSelected]}
-            onPress={() => setSelectedFilter(null)}
-          >
-            <Text style={[styles.filterChipText, !selectedFilter && styles.filterChipTextSelected]}>
-              All
-            </Text>
-          </TouchableOpacity>
-          {CATEGORY_ORDER.filter((c) => presentCategories.includes(c as any)).map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.filterChip, selectedFilter === cat && styles.filterChipSelected]}
-              onPress={() => setSelectedFilter(selectedFilter === cat ? null : cat)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedFilter === cat && styles.filterChipTextSelected,
-                ]}
-              >
-                {CATEGORY_EMOJIS[cat]} {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
 
       {/* Empty state */}
       {staples.length === 0 ? (
@@ -258,30 +253,53 @@ export default function StaplesScreen({ navigation, route }: Props) {
               <Text style={styles.sectionCount}>{section.data.length}</Text>
             </View>
           )}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.itemRow}
-              onPress={() => (listId ? handleToggleSelect(item._id) : null)}
-              onLongPress={canDelete ? () => handleDeleteStaple(item) : undefined}
-            >
-              {listId ? (
-                <Ionicons
-                  name={selectedIds.has(item._id) ? 'checkbox' : 'square-outline'}
-                  size={24}
-                  color={selectedIds.has(item._id) ? colors.primary : colors.textMuted}
-                />
-              ) : null}
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.quantity ? (
-                  <Text style={styles.itemQuantity}>{item.quantity}</Text>
-                ) : null}
+          renderItem={({ item }) => {
+            const content = (
+              <>
+                {listId && (
+                  <Ionicons
+                    name={selectedIds.has(item._id) ? 'checkbox' : 'square-outline'}
+                    size={24}
+                    color={selectedIds.has(item._id) ? colors.primary : colors.textMuted}
+                  />
+                )}
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  {item.quantity ? (
+                    <Text style={styles.itemQuantity}>{item.quantity}</Text>
+                  ) : null}
+                </View>
+                {!listId && (
+                  <View style={styles.usageBadge}>
+                    <Text style={styles.usageText}>{item.usageCount}x</Text>
+                  </View>
+                )}
+                {canDelete && !listId && (
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() => handleDeleteStaple(item)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={colors.error} />
+                  </TouchableOpacity>
+                )}
+              </>
+            );
+
+            return listId ? (
+              <TouchableOpacity
+                style={styles.itemRow}
+                onPress={() => handleToggleSelect(item._id)}
+                activeOpacity={0.7}
+              >
+                {content}
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.itemRow}>
+                {content}
               </View>
-              <View style={styles.usageBadge}>
-                <Text style={styles.usageText}>{item.usageCount}x</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+            );
+          }}
           stickySectionHeadersEnabled
         />
       )}
@@ -294,22 +312,31 @@ export default function StaplesScreen({ navigation, route }: Props) {
         <Ionicons name="add" size={28} color={colors.textOnPrimary} />
       </TouchableOpacity>
 
-      {/* Bottom bar for bulk add */}
-      {listId && selectedIds.size > 0 && (
+      {/* Bottom bar for bulk add / success */}
+      {listId && (selectedIds.size > 0 || addedCount > 0) && (
         <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.addToListBtn}
-            onPress={handleAddToList}
-            disabled={adding}
-          >
-            {adding ? (
-              <ActivityIndicator size="small" color={colors.textOnPrimary} />
-            ) : (
-              <Text style={styles.addToListText}>
-                Add {selectedIds.size} to List
+          {addedCount > 0 ? (
+            <View style={styles.addedSuccessBar}>
+              <Ionicons name="checkmark-circle" size={22} color={colors.success} />
+              <Text style={styles.addedSuccessText}>
+                Added {addedCount} {addedCount === 1 ? 'item' : 'items'} to list
               </Text>
-            )}
-          </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addToListBtn}
+              onPress={handleAddToList}
+              disabled={adding}
+            >
+              {adding ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <Text style={styles.addToListText}>
+                  Add {selectedIds.size} to List
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -363,28 +390,36 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   filterRow: {
-    maxHeight: 44,
-    marginBottom: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  filterRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.xs,
   },
   filterChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: borderRadius.full,
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  filterChipSelected: {
-    backgroundColor: colors.primary,
+  filterChipActive: {
     borderColor: colors.primary,
+    borderWidth: 2,
   },
   filterChipText: {
     fontSize: typography.sizes.small,
+    fontWeight: typography.weights.semibold,
     color: colors.textLight,
   },
-  filterChipTextSelected: {
-    color: colors.textOnPrimary,
-    fontWeight: typography.weights.semibold,
+  filterChipEmoji: {
+    fontSize: 22,
   },
   emptyContainer: {
     flex: 1,
@@ -464,6 +499,9 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
     color: colors.secondary,
   },
+  deleteBtn: {
+    padding: spacing.xs,
+  },
   fab: {
     position: 'absolute',
     right: spacing.lg,
@@ -498,5 +536,17 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     fontWeight: typography.weights.bold,
     color: colors.textOnPrimary,
+  },
+  addedSuccessBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 4,
+  },
+  addedSuccessText: {
+    fontSize: typography.sizes.body,
+    fontWeight: typography.weights.semibold,
+    color: colors.success,
   },
 });

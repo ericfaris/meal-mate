@@ -4,6 +4,7 @@ import Staple from '../models/staple';
 import GroceryList from '../models/groceryList';
 import User from '../models/user';
 import { notifyHouseholdAdminsOfGroceryItems } from '../services/notificationService';
+import { getList as getGroceryList } from '../services/groceryListService';
 
 /**
  * Build query that includes household staples (including legacy staples from members).
@@ -151,15 +152,7 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
     const user = req.user!;
     const householdId = user.householdId;
 
-    // Build query for household-aware access
-    const listQuery: any = { _id: req.params.id };
-    if (householdId) {
-      listQuery.$or = [{ userId: req.userId }, { householdId }];
-    } else {
-      listQuery.userId = req.userId;
-    }
-
-    const list = await GroceryList.findOne(listQuery);
+    const list = await getGroceryList(req.params.id, req.userId!, householdId);
     if (!list) {
       res.status(404).json({ error: 'Grocery list not found' });
       return;

@@ -37,7 +37,7 @@ export const groceryListApi = {
 
   addItem: async (
     listId: string,
-    item: { name: string; quantity?: string; category?: string }
+    item: { name: string; quantity?: string; category?: string; saveToStaples?: boolean }
   ): Promise<GroceryList> => {
     const response = await apiClient.post(
       `${API_ENDPOINTS.groceryLists}/${listId}/items`,

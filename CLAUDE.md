@@ -157,7 +157,7 @@ meal-mate/
 - `addedBy` tracks who added the staple
 - Unique compound index on userId + name (case-insensitive upsert)
 - Bulk-add staples to any grocery list in one tap
-- **Permissions**: Only admins can delete staples; members can view and add
+- **Permissions**: All users can add and delete staples
 
 ---
 

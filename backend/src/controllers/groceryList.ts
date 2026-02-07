@@ -109,7 +109,7 @@ export const updateGroceryItem = async (req: Request, res: Response): Promise<vo
 // POST /api/grocery-lists/:id/items - Add custom item
 export const addGroceryItem = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, quantity, category } = req.body;
+    const { name, quantity, category, saveToStaples } = req.body;
     if (!name?.trim()) {
       res.status(400).json({ error: 'Item name is required' });
       return;
@@ -128,25 +128,27 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Auto-save to staples (passive history)
-    try {
-      const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      await Staple.findOneAndUpdate(
-        { userId: req.userId, name: { $regex: new RegExp(`^${escapedName}$`, 'i') } },
-        {
-          $set: {
-            name: name.trim(),
-            ...(quantity && { quantity }),
-            ...(category && { category }),
-            lastUsedAt: new Date(),
+    // Auto-save to staples (passive history) — skip if explicitly opted out
+    if (saveToStaples !== false) {
+      try {
+        const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        await Staple.findOneAndUpdate(
+          { userId: req.userId, name: { $regex: new RegExp(`^${escapedName}$`, 'i') } },
+          {
+            $set: {
+              name: name.trim(),
+              ...(quantity && { quantity }),
+              ...(category && { category }),
+              lastUsedAt: new Date(),
+            },
+            $inc: { usageCount: 1 },
+            $setOnInsert: { userId: req.userId },
           },
-          $inc: { usageCount: 1 },
-          $setOnInsert: { userId: req.userId },
-        },
-        { upsert: true }
-      );
-    } catch (stapleErr) {
-      console.error('Auto-save staple failed (non-blocking):', stapleErr);
+          { upsert: true }
+        );
+      } catch (stapleErr) {
+        console.error('Auto-save staple failed (non-blocking):', stapleErr);
+      }
     }
 
     // Notify household admins if a member added items

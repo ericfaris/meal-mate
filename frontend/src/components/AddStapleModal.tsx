@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { colors, typography, spacing, borderRadius } from '../theme';
 
@@ -27,11 +28,12 @@ type Category = (typeof CATEGORIES)[number];
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onAdd: (data: { name: string; quantity: string; category: Category }) => void;
+  onAdd: (data: { name: string; quantity: string; category: Category; saveToStaples?: boolean }) => void;
   initialName?: string;
   initialQuantity?: string;
   initialCategory?: Category;
   title?: string;
+  showSaveToStaples?: boolean;
 }
 
 export default function AddStapleModal({
@@ -42,25 +44,29 @@ export default function AddStapleModal({
   initialQuantity = '',
   initialCategory = 'Other',
   title = 'Add Item',
+  showSaveToStaples = false,
 }: Props) {
   const [name, setName] = useState(initialName);
   const [quantity, setQuantity] = useState(initialQuantity);
   const [category, setCategory] = useState<Category>(initialCategory);
+  const [saveToStaples, setSaveToStaples] = useState(true);
 
   useEffect(() => {
     if (visible) {
       setName(initialName);
       setQuantity(initialQuantity);
       setCategory(initialCategory);
+      setSaveToStaples(true);
     }
   }, [visible, initialName, initialQuantity, initialCategory]);
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onAdd({ name: name.trim(), quantity: quantity.trim(), category });
+    onAdd({ name: name.trim(), quantity: quantity.trim(), category, saveToStaples: showSaveToStaples ? saveToStaples : undefined });
     setName('');
     setQuantity('');
     setCategory('Other');
+    setSaveToStaples(true);
   };
 
   return (
@@ -100,6 +106,22 @@ export default function AddStapleModal({
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          {showSaveToStaples && (
+            <TouchableOpacity
+              style={styles.stapleToggleRow}
+              activeOpacity={0.7}
+              onPress={() => setSaveToStaples(!saveToStaples)}
+            >
+              <Text style={styles.stapleToggleLabel}>Save to My Staples</Text>
+              <Switch
+                value={saveToStaples}
+                onValueChange={setSaveToStaples}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={saveToStaples ? colors.primary : colors.textMuted}
+              />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.buttons}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
@@ -180,6 +202,17 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: colors.textOnPrimary,
     fontWeight: typography.weights.semibold,
+  },
+  stapleToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  stapleToggleLabel: {
+    fontSize: typography.sizes.body,
+    color: colors.text,
   },
   buttons: {
     flexDirection: 'row',

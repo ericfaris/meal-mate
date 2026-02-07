@@ -121,12 +121,13 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
     }
   };
 
-  const handleAddItem = async (data: { name: string; quantity: string; category: string }) => {
+  const handleAddItem = async (data: { name: string; quantity: string; category: string; saveToStaples?: boolean }) => {
     try {
       const updated = await groceryListApi.addItem(listId, {
         name: data.name,
         quantity: data.quantity || undefined,
         category: data.category,
+        saveToStaples: data.saveToStaples,
       });
       setList(updated);
       setAddItemVisible(false);
@@ -388,7 +389,7 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         onPress={() => navigation.navigate('Staples', { listId })}
       >
         <Ionicons name="star" size={20} color={colors.textOnPrimary} />
-        <Text style={styles.staplesButtonText}>Staples</Text>
+        <Text style={styles.staplesButtonText}>Add Staples</Text>
       </TouchableOpacity>
 
       {/* FAB to add item */}
@@ -412,6 +413,7 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         onClose={() => setAddItemVisible(false)}
         onAdd={handleAddItem}
         title="Add Item"
+        showSaveToStaples
       />
 
       {/* Manage stores modal */}
