@@ -18,7 +18,7 @@
     "@react-navigation/stack": "^6.4.1",
     "@react-oauth/google": "^0.13.4",
     "axios": "^1.6.5",
-    "expo": "~54.0.32",
+    "expo": "~54.0.33",
     "expo-auth-session": "^7.0.10",
     "expo-build-properties": "^1.0.10",
     "expo-constants": "~18.0.13",
