@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: spacing.md,
     paddingTop: spacing.xl * 2,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     zIndex: 10,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -535,6 +535,9 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold as any,
     color: colors.white,
     marginBottom: spacing.xs,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   todayMeta: {
     flexDirection: 'row',

@@ -6,7 +6,7 @@
 export const colors = {
   // Primary palette
   background: '#FDFAF6',      // Warm cream (parchment paper)
-  primary: '#E8A798',         // Muted terracotta (buttons, accents)
+  primary: '#B14E33',         // Deep terracotta (buttons, accents) — 5.2:1 contrast with white text (WCAG AA)
   primaryLight: '#FDF5F3',    // Light terracotta tint
   secondary: '#A8B5A2',       // Soft sage (tags, highlights)
   secondaryLight: '#F3F6F2',  // Light sage tint

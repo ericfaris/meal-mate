@@ -324,7 +324,7 @@ export default function PlannerScreen() {
                 </View>
               </View>
             </View>
-            <View style={styles.actionButtons}>
+            {!past && <View style={styles.actionButtons}>
               {isAdmin && (
                 <>
                   <TouchableOpacity
@@ -343,7 +343,7 @@ export default function PlannerScreen() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </View>}
           </View>
         ) : item.label ? (
           <View style={styles.labelMainContainer}>
@@ -363,7 +363,7 @@ export default function PlannerScreen() {
                 item.label === 'TBD' && styles.labelTextTBD
               ]}>{item.label}</Text>
             </View>
-            <View style={styles.actionButtons}>
+            {!past && <View style={styles.actionButtons}>
               {isAdmin && (
                 <>
                   <TouchableOpacity
@@ -382,12 +382,12 @@ export default function PlannerScreen() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </View>}
           </View>
         ) : (
           <View style={styles.emptyMealContainer}>
             <Text style={styles.emptyText}>No meal planned</Text>
-            <View style={styles.actionButtons}>
+            {!past && <View style={styles.actionButtons}>
               {isAdmin && (
                 <>
                   <TouchableOpacity
@@ -406,7 +406,7 @@ export default function PlannerScreen() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </View>}
           </View>
         )}
       </View>
@@ -435,7 +435,7 @@ export default function PlannerScreen() {
           </View>
           <View style={styles.emptyMealContainer}>
             <Text style={styles.emptyText}>No meal planned</Text>
-            <View style={styles.actionButtons}>
+            {!past && <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
                 onPress={() => handleSuggestMeal(dateStr)}
@@ -450,7 +450,7 @@ export default function PlannerScreen() {
               >
                 <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
               </TouchableOpacity>
-            </View>
+            </View>}
           </View>
         </View>
       );
@@ -760,7 +760,6 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.primary,
   },
   planCardPast: {
-    opacity: 0.6,
     backgroundColor: '#F5F5F5',
   },
   planCardEmpty: {
