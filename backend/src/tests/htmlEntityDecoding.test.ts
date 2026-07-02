@@ -82,30 +82,10 @@ function decodeHtmlEntities(text: string): string {
   return decoded;
 }
 
-// Run tests
-console.log('Running HTML Entity Decoding Tests...\n');
-
-let passed = 0;
-let failed = 0;
-
-testCases.forEach((testCase) => {
-  const result = decodeHtmlEntities(testCase.input);
-  const success = result === testCase.expected;
-
-  if (success) {
-    console.log(`✓ PASS: ${testCase.description}`);
-    passed++;
-  } else {
-    console.log(`✗ FAIL: ${testCase.description}`);
-    console.log(`  Input:    "${testCase.input}"`);
-    console.log(`  Expected: "${testCase.expected}"`);
-    console.log(`  Got:      "${result}"`);
-    failed++;
-  }
+describe('HTML entity decoding', () => {
+  testCases.forEach((testCase) => {
+    it(testCase.description, () => {
+      expect(decodeHtmlEntities(testCase.input)).toBe(testCase.expected);
+    });
+  });
 });
-
-console.log(`\n${passed} passed, ${failed} failed`);
-
-if (failed > 0) {
-  process.exit(1);
-}
