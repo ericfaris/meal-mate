@@ -18,6 +18,9 @@
       },
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://meal-mate-backend-production-f138.up.railway.app"
       }
     },
     "production": {

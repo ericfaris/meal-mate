@@ -431,8 +431,13 @@ npx eas-cli build:list --platform android --limit 5
 **Build Profiles** (configured in [eas.json](eas.json)):
 
 - `preview` - APK builds for sideloading (internal distribution)
-- `production` - App Bundle/IPA for store submission
+- `production` - APK (Android) / IPA (iOS) — historically used for sideloaded APKs too
 - `development` - Development builds with dev client
+
+**IMPORTANT**: Both `preview` and `production` MUST set `EXPO_PUBLIC_API_URL` in their
+`env` block, or the APK falls back to the local dev server URL and shows no data
+(this broke the 2026-07-02 build). `api.ts` also hard-falls-back to the Railway URL
+in release builds as a safety net.
 
 ### Environment Variables
 

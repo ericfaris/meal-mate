@@ -16,10 +16,14 @@ export const setAuthExpiredCallback = (callback: (() => void) | null) => {
 const DEV_WEB_URL = 'http://localhost:3001';
 const DEV_MOBILE_URL = 'http://192.168.0.111:3001';
 
+// Fallback for release builds if EXPO_PUBLIC_API_URL is missing from the
+// build profile - a release APK must never point at the LAN dev server
+const PROD_URL = 'https://meal-mate-backend-production-f138.up.railway.app';
+
 const getApiUrl = () => {
-  // Production: use EXPO_PUBLIC_API_URL environment variable
-  if (!__DEV__ && process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+  // Release builds: use EXPO_PUBLIC_API_URL, fall back to production URL
+  if (!__DEV__) {
+    return process.env.EXPO_PUBLIC_API_URL || PROD_URL;
   }
 
   // Development: web uses localhost, mobile uses WiFi IP

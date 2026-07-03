@@ -616,8 +616,15 @@ npx eas-cli init --id 910a682b-5db4-440a-af99-ee987b813edf
 The project uses [eas.json](../eas.json) to configure build profiles:
 
 - **preview**: Builds APK for Android sideloading (internal distribution)
-- **production**: Builds App Bundle (Android) or IPA (iOS) for store submission
+- **production**: Builds APK (Android) or IPA (iOS) — also sideloadable
 - **development**: Development builds with dev client enabled
+
+**IMPORTANT**: Any profile used to build an installable APK must set
+`EXPO_PUBLIC_API_URL` in its `env` block in `eas.json`. Without it, the release
+build cannot see the variable and would previously fall back to the local dev
+server IP — the app installs fine but shows no data and login fails. Both
+`preview` and `production` now set it, and `src/config/api.ts` falls back to
+the production Railway URL in release builds as a safety net.
 
 ### Building for Android
 
