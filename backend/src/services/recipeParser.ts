@@ -64,6 +64,21 @@ function decodeHtmlEntities(text: string): string {
 }
 
 /**
+ * Fetches a page's raw HTML through r.jina.ai's read-through proxy. Used as a
+ * fallback when the target site blocks requests coming directly from our server's
+ * IP (common with WAFs/bot-protection on cloud-hosting IP ranges).
+ */
+async function fetchViaProxy(url: string): Promise<string> {
+  const response = await axios.get(`https://r.jina.ai/${url}`, {
+    headers: {
+      'X-Return-Format': 'html',
+    },
+    timeout: 15000,
+  });
+  return response.data;
+}
+
+/**
  * Attempts to parse a recipe from a URL using multiple strategies:
  * 1. JSON-LD structured data (Schema.org Recipe)
  * 2. Microdata (itemtype Recipe)
@@ -71,9 +86,9 @@ function decodeHtmlEntities(text: string): string {
  */
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   // Fetch the page HTML with browser-like headers
-  let response;
+  let html: string;
   try {
-    response = await axios.get(url, {
+    const response = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -93,20 +108,27 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
       timeout: 15000,
       maxRedirects: 5,
     });
+    html = response.data;
   } catch (error: any) {
-    if (error.response?.status === 403) {
-      throw new Error('BLOCKED: This site is blocking automated access. Try a different recipe site like AllRecipes or Serious Eats.');
-    }
     if (error.response?.status === 404) {
       throw new Error('Recipe page not found. Please check the URL and try again.');
     }
-    if (error.code === 'ECONNABORTED') {
-      throw new Error('Request timed out. The site may be slow or blocking access.');
+
+    // Some sites block requests from cloud/datacenter IPs (like our server's) even
+    // though the same page loads fine from a residential IP or browser. Retry once
+    // through a read-through proxy, which fetches on our behalf from a different IP.
+    const isBlocked = error.response?.status === 403 || error.code === 'ECONNABORTED';
+    if (isBlocked) {
+      try {
+        html = await fetchViaProxy(url);
+      } catch (proxyError: any) {
+        throw new Error('BLOCKED: This site is blocking automated access. Try a different recipe site like AllRecipes or Serious Eats.');
+      }
+    } else {
+      throw new Error(`Failed to fetch page: ${error.message}`);
     }
-    throw new Error(`Failed to fetch page: ${error.message}`);
   }
 
-  const html = response.data;
   const $ = cheerio.load(html);
 
   // Try JSON-LD first (most reliable)
