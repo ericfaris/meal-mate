@@ -350,7 +350,7 @@ node scripts/bump-version.js --set 1.0.0
 | **Backend API** | `GET /api/version` returns `{ version, buildNumber, environment }` |
 | **Docker Image** | Tagged as `user/meal-mate-backend:0.12.5` |
 | **Android App** | Settings screen shows "Version 0.12.5 (148)" |
-| **Railway** | Pulls versioned Docker image |
+| **Railway** | Runs whatever image tag was last manually deployed (see below — it does NOT auto-deploy) |
 
 ### Release Workflow
 
@@ -358,19 +358,16 @@ node scripts/bump-version.js --set 1.0.0
 2. Run `node scripts/bump-version.js patch` (or minor/major)
 3. Commit changes including updated `version.json`
 4. Push to `main` branch
-5. GitHub Actions automatically:
-   - Builds Docker image with version tag
-   - Pushes to Docker Hub with semantic version
-   - Triggers EAS Android build (on frontend changes)
-   - Triggers EAS iOS build (on frontend changes)
-6. For manual mobile builds: Run `npx eas-cli build --platform android --profile production`
+5. GitHub Actions automatically builds the backend Docker image and pushes it to Docker Hub with the semantic version tag (`docker-build.yml`)
+6. **Railway does NOT auto-deploy on a new image push.** You must manually trigger the deploy via the Railway GraphQL API (`serviceInstanceUpdate` with the new image tag, then `serviceInstanceDeploy`) — `plain railway redeploy` re-runs the *existing* deployment config and will NOT pick up a new tag. See the `railway-deploy` skill / `[[deploy-credentials-and-endpoints]]` memory for service IDs and the exact mutations. Verify afterward with `GET /api/version` on the deployed URL.
+7. For mobile builds: `eas-android-build.yml` and `eas-ios-build.yml` are currently disabled (`if: false`) — build manually with `npx eas-cli build --platform android --profile preview` (or `production`)
 
 ### CI/CD Pipelines
 
 | Workflow                 | Trigger                    | Description                             |
 |--------------------------|----------------------------|-----------------------------------------|
-| `docker-build.yml`       | Push to main (backend/**)  | Builds and pushes backend Docker image  |
-| `eas-android-build.yml`  | Push to main (frontend/**) | Triggers EAS Android APK build          |
+| `docker-build.yml`       | Push to main (backend/**)  | Builds and pushes backend Docker image (Railway deploy is a separate manual step) |
+| `eas-android-build.yml`  | Push to main (frontend/**) | Disabled (`if: false`) — build Android manually via `eas-cli` |
 | `eas-ios-build.yml`      | Push to main (frontend/**) | Triggers EAS iOS IPA build              |
 
 **Required GitHub Secrets for EAS builds:**
