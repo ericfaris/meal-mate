@@ -17,6 +17,11 @@
   ],
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "parse-domain": {
+      "jest": "$jest"
+    }
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
     "@types/multer": "^2.0.0",
