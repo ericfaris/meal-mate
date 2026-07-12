@@ -235,7 +235,7 @@ LoginScreen → auth.login()
   → Navigate to MainTabs
 ```
 
-### Google OAuth Flow:
+### Google OAuth Flow (Native — Android/iOS):
 ```
 LoginScreen → Google Sign-In Button
   → @react-native-google-signin/google-signin
@@ -249,6 +249,22 @@ LoginScreen → Google Sign-In Button
 **Library**: Uses `@react-native-google-signin/google-signin` (officially recommended by Expo)
 **Note**: Requires custom dev build (cannot use Expo Go)
 **Configuration**: Plugin configured in app.json with iOS URL scheme
+
+### Google OAuth Flow (Web — the shipping PWA):
+```
+LoginScreen → Google Sign-In Button
+  → GoogleSignInButton.tsx branches Platform.OS === 'web'
+  → @react-oauth/google GoogleOAuthProvider / GoogleLogin
+  → User consent → Get ID token
+  → services/auth/google.ts handleGoogleSignIn (web branch)
+  → Send to /api/auth/google  (same backend endpoint as native)
+  → Backend validates → Returns JWT → Store token → MainTabs
+```
+
+**Library**: Uses `@react-oauth/google` on web. This path already works and needs
+no code change — `src/components/auth/GoogleSignInButton.tsx` and
+`src/services/auth/google.ts` both branch web vs native; do not modify them.
+**Configuration**: `GOOGLE_WEB_CLIENT_ID` supplied to the web build.
 
 ### Session Persistence:
 - Check for token in SecureStore on app launch
@@ -598,6 +614,12 @@ npm run ios          # Run on iOS simulator
 
 ## Production Builds with EAS
 
+> **Note**: The primary (and now sole shipping) deployment is the **web PWA**,
+> built by `frontend/Dockerfile.web` and served from the self-hosted Docker lab
+> via the root `docker-compose.yml` (`https://mealmate.mooseflip.com`). The EAS
+> native build content below is retained for reference but is pending removal
+> (Phase B of the PWA migration) — it is no longer how the app ships.
+
 ### Prerequisites
 
 ```bash
@@ -624,7 +646,7 @@ The project uses [eas.json](../eas.json) to configure build profiles:
 build cannot see the variable and would previously fall back to the local dev
 server IP — the app installs fine but shows no data and login fails. Both
 `preview` and `production` now set it, and `src/config/api.ts` falls back to
-the production Railway URL in release builds as a safety net.
+the production API URL (`https://mealmate-api.mooseflip.com`) in release builds as a safety net.
 
 ### Building for Android
 

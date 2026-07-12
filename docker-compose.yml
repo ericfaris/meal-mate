@@ -1,0 +1,46 @@
+# Meal Mate on the Docker lab. Secrets come from ./.env (uncommitted — see
+# .env.example). Public entry is the shared Cloudflare tunnel:
+#   https://mealmate.mooseflip.com      -> 127.0.0.1:8600 (web)
+#   https://mealmate-api.mooseflip.com  -> 127.0.0.1:8601 (api)
+# Deploy with scripts/lab-deploy.sh (stamps APP_VERSION/BUILD_NUMBER from version.json).
+name: meal-mate
+
+services:
+  api:
+    build:
+      context: ./backend
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        BUILD_NUMBER: ${BUILD_NUMBER:-0}
+    image: ericfaris/meal-mate-backend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8601:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
+      - GOOGLE_ANDROID_CLIENT_ID=${GOOGLE_ANDROID_CLIENT_ID}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.web
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        BUILD_NUMBER: ${BUILD_NUMBER:-0}
+        EXPO_PUBLIC_API_URL: https://mealmate-api.mooseflip.com
+    image: ericfaris/meal-mate-web:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8600:80"
+    depends_on:
+      - api

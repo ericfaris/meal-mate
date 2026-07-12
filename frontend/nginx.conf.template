@@ -9,6 +9,18 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # PWA control files must never be long-cached or updates strand clients.
+    # Exact-match locations take precedence over the regex cache block below.
+    location = /service-worker.js {
+        add_header Cache-Control "no-cache";
+    }
+    location = /manifest.json {
+        add_header Cache-Control "no-cache";
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
         expires 1y;

@@ -10,6 +10,12 @@ RUN npm ci
 COPY . .
 RUN npx expo export --platform web
 
+# Metro's web bundler does not emit a PWA manifest or service worker. Copy the
+# hand-wired PWA files into the export and inject the manifest link + SW
+# registration into index.html. APP_VERSION stamps the SW cache name.
+ARG APP_VERSION=dev
+RUN cp -r public/. dist/ && APP_VERSION=${APP_VERSION} node scripts/inject-pwa.js
+
 # Production stage
 FROM nginx:alpine
 ARG APP_VERSION=1.0.0
@@ -21,7 +27,7 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 LABEL org.opencontainers.image.version="${APP_VERSION}"
 LABEL org.opencontainers.image.title="Meal Mate Web"
 
-# Railway sets PORT env var; default to 80 for local testing
+# nginx listens on ${PORT}, default 80; the lab compose maps host 8600 -> 80.
 ENV PORT=80
 EXPOSE ${PORT}
 CMD ["nginx", "-g", "daemon off;"]

@@ -10,8 +10,8 @@ paths:
 ## API Architecture
 
 ### Base URL:
-- Development: `http://localhost:3000`
-- Production: TBD (will be deployed URL)
+- Development: `http://localhost:3001` (backend default port)
+- Production: `https://mealmate-api.mooseflip.com` (self-hosted Docker lab behind Cloudflare Tunnel)
 
 ### Authentication:
 All protected endpoints require JWT token in Authorization header:

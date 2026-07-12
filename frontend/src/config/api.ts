@@ -1,6 +1,6 @@
 // API base URL configuration
 // Development: localhost (web) or WiFi IP (mobile)
-// Production: set EXPO_PUBLIC_API_URL in EAS secrets
+// Production: EXPO_PUBLIC_API_URL baked in by docker-compose.yml build arg
 import { Platform } from 'react-native';
 import axios, { AxiosInstance } from 'axios';
 import { getToken, clearAuth } from '../services/storage';
@@ -18,7 +18,7 @@ const DEV_MOBILE_URL = 'http://192.168.0.111:3001';
 
 // Fallback for release builds if EXPO_PUBLIC_API_URL is missing from the
 // build profile - a release APK must never point at the LAN dev server
-const PROD_URL = 'https://meal-mate-backend-production-f138.up.railway.app';
+const PROD_URL = 'https://mealmate-api.mooseflip.com';
 
 const getApiUrl = () => {
   // Release builds: use EXPO_PUBLIC_API_URL, fall back to production URL

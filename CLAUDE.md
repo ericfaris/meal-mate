@@ -24,12 +24,19 @@
 ## 🏗️ Architecture
 
 ```
-React Native Frontend (Expo)
-    ↓ REST API (Axios)
+React Native Frontend (Expo, Metro web bundler)
+    → installable PWA at https://mealmate.mooseflip.com
+    ↓ REST API (Axios) → https://mealmate-api.mooseflip.com
 Backend (Node.js + Express + TypeScript)
     ↓ Mongoose ODM
 MongoDB Atlas (Cloud Database)
 ```
+
+**Deployment**: self-hosted Docker lab (root `docker-compose.yml`, two
+containers — `web` on host 8600, `api` on host 8601) exposed publicly through
+the shared Cloudflare Tunnel. Secrets come from an uncommitted root `.env`.
+Deploy with `./scripts/lab-deploy.sh`. (Railway is retired — kept only as a
+rollback path until Eric tears it down.)
 
 ### Design Patterns
 - **User Isolation**: All queries scoped by userId for security
@@ -66,7 +73,7 @@ meal-mate/
 │       └── middleware/   # Auth, etc.
 │
 ├── .github/workflows/
-│   ├── docker-build.yml      # Backend Docker CI/CD
+│   ├── (docker-build.yml/web-build.yml removed — deploy is local via docker compose)
 │   ├── eas-android-build.yml # Android EAS build pipeline
 │   └── eas-ios-build.yml     # iOS EAS build pipeline
 │
@@ -317,14 +324,14 @@ The project uses a **single source of truth** for versioning across all platform
 
 ```
 version.json (source of truth)
-    ├── GitHub Actions → Docker Image Tags (v0.12.5, latest)
-    │   └── Backend ENV: APP_VERSION, BUILD_NUMBER
-    │       └── GET /api/version endpoint
+    ├── scripts/lab-deploy.sh → docker compose build args (APP_VERSION, BUILD_NUMBER)
+    │   └── Local Docker images (ericfaris/meal-mate-{backend,web}:latest, version labels)
+    │       └── Backend ENV: APP_VERSION, BUILD_NUMBER
+    │           └── GET /api/version endpoint (https://mealmate-api.mooseflip.com)
     │
-    └── app.config.js → Expo/EAS Build
-        └── Android: version + versionCode
-        └── iOS: version + buildNumber
+    └── app.config.js → web PWA build (Dockerfile.web)
         └── Settings Screen display
+        └── (EAS Android/iOS: pending removal — Phase B)
 ```
 
 ### Bumping Versions
@@ -347,10 +354,10 @@ node scripts/bump-version.js --set 1.0.0
 
 | Platform | Where to Check |
 |----------|----------------|
-| **Backend API** | `GET /api/version` returns `{ version, buildNumber, environment }` |
-| **Docker Image** | Tagged as `user/meal-mate-backend:0.12.5` |
-| **Android App** | Settings screen shows "Version 0.12.5 (148)" |
-| **Railway** | Runs whatever image tag was last manually deployed (see below — it does NOT auto-deploy) |
+| **Backend API** | `GET /api/version` at `https://mealmate-api.mooseflip.com/api/version` returns `{ version, buildNumber, environment }` |
+| **Docker Image** | Built locally by `docker-compose.yml` as `ericfaris/meal-mate-{backend,web}:latest` with OCI version labels |
+| **Web PWA** | Settings screen shows "Version 0.13.20 (170)" at `https://mealmate.mooseflip.com` |
+| **Lab (self-hosted)** | Runs the images built by the last `./scripts/lab-deploy.sh` on this box, behind the shared Cloudflare Tunnel |
 
 ### Release Workflow
 
@@ -358,17 +365,21 @@ node scripts/bump-version.js --set 1.0.0
 2. Run `node scripts/bump-version.js patch` (or minor/major)
 3. Commit changes including updated `version.json`
 4. Push to `main` branch
-5. GitHub Actions automatically builds the backend Docker image and pushes it to Docker Hub with the semantic version tag (`docker-build.yml`)
-6. **Railway does NOT auto-deploy on a new image push.** You must manually trigger the deploy via the Railway GraphQL API (`serviceInstanceUpdate` with the new image tag, then `serviceInstanceDeploy`) — `plain railway redeploy` re-runs the *existing* deployment config and will NOT pick up a new tag. See the `railway-deploy` skill / `[[deploy-credentials-and-endpoints]]` memory for service IDs and the exact mutations. Verify afterward with `GET /api/version` on the deployed URL.
-7. For mobile builds: `eas-android-build.yml` and `eas-ios-build.yml` are currently disabled (`if: false`) — build manually with `npx eas-cli build --platform android --profile preview` (or `production`)
+5. Deploy on the self-hosted Docker lab (this machine): pull/checkout the commit, then run `./scripts/lab-deploy.sh` (which stamps `APP_VERSION`/`BUILD_NUMBER` from `version.json` and runs `docker compose up -d --build`). Secrets come from the uncommitted root `.env` (see `.env.example`).
+6. Verify the deploy with `GET https://mealmate-api.mooseflip.com/api/version` (should report the new version and `environment: production`). The public web PWA is at `https://mealmate.mooseflip.com`, both exposed via the shared Cloudflare Tunnel.
+7. Mobile/EAS builds are pending removal (Phase B of the PWA migration) — the web PWA is now the shipping frontend.
 
 ### CI/CD Pipelines
 
+Deployment is no longer driven by GitHub Actions. The backend and web images are
+built locally on the Docker lab via `./scripts/lab-deploy.sh` (`docker compose up
+-d --build`). The former `docker-build.yml` / `web-build.yml` (Docker Hub push)
+workflows have been removed.
+
 | Workflow                 | Trigger                    | Description                             |
 |--------------------------|----------------------------|-----------------------------------------|
-| `docker-build.yml`       | Push to main (backend/**)  | Builds and pushes backend Docker image (Railway deploy is a separate manual step) |
-| `eas-android-build.yml`  | Push to main (frontend/**) | Disabled (`if: false`) — build Android manually via `eas-cli` |
-| `eas-ios-build.yml`      | Push to main (frontend/**) | Triggers EAS iOS IPA build              |
+| `eas-android-build.yml`  | Push to main (frontend/**) | Pending removal (Phase B) — not active |
+| `eas-ios-build.yml`      | Push to main (frontend/**) | Pending removal (Phase B) — not active |
 
 **Required GitHub Secrets for EAS builds:**
 
@@ -433,8 +444,8 @@ npx eas-cli build:list --platform android --limit 5
 
 **IMPORTANT**: Both `preview` and `production` MUST set `EXPO_PUBLIC_API_URL` in their
 `env` block, or the APK falls back to the local dev server URL and shows no data
-(this broke the 2026-07-02 build). `api.ts` also hard-falls-back to the Railway URL
-in release builds as a safety net.
+(this broke the 2026-07-02 build). `api.ts` also hard-falls-back to the production
+API URL (`https://mealmate-api.mooseflip.com`) in release builds as a safety net.
 
 ### Environment Variables
 
@@ -664,7 +675,7 @@ Recent changes:
     4. Generate FCM V1 Service Account Key from Firebase Console → Project Settings → Service Accounts
     5. Upload to Expo: `eas credentials -p android` → Push Notifications → FCM V1 Service Account Key
     6. Also upload via Expo dashboard: Project → Credentials → Android → Push Notifications (FCM V1)
-  - **Backend deploys via Docker**: Changes to `backend/` on `main` trigger GitHub Actions → Docker Hub → Railway auto-deploy. Frontend changes require EAS build.
+  - **Deploys via the Docker lab**: build + restart both containers on this box with `./scripts/lab-deploy.sh` (`docker compose up -d --build`); no GitHub Actions / Docker Hub / Railway step anymore.
 - **🛒 Grocery List Generation** - Generate shopping lists from planned meals
   - AI-powered ingredient parsing and categorization (Claude Sonnet 4)
   - Regex fallback parser when API key unavailable
@@ -745,6 +756,7 @@ Recent changes:
 - `/help` - Claude Code help
 - Report issues: https://github.com/anthropics/claude-code/issues
 - Project issues: Create in this repository
+- **Deployment**: the app is self-hosted on Eric's Docker lab (this machine) behind the shared Cloudflare Tunnel — web PWA at `https://mealmate.mooseflip.com`, API at `https://mealmate-api.mooseflip.com`. Redeploy with `./scripts/lab-deploy.sh`.
 
 ---
 
