@@ -612,170 +612,26 @@ npm run android      # Run on Android emulator
 npm run ios          # Run on iOS simulator
 ```
 
-## Production Builds with EAS
+## Building for Production (Web PWA)
 
-> **Note**: The primary (and now sole shipping) deployment is the **web PWA**,
-> built by `frontend/Dockerfile.web` and served from the self-hosted Docker lab
-> via the root `docker-compose.yml` (`https://mealmate.mooseflip.com`). The EAS
-> native build content below is retained for reference but is pending removal
-> (Phase B of the PWA migration) — it is no longer how the app ships.
+The app ships **only** as an installable web PWA. There is no native
+(Android/iOS) EAS build path anymore — it was removed in the PWA migration
+(root `docker-compose.yml` + `frontend/Dockerfile.web`).
 
-### Prerequisites
-
-```bash
-# Install EAS CLI globally (if not already installed)
-npm install -g eas-cli
-
-# Login to Expo account (one-time)
-npx eas-cli login
-
-# Initialize project with EAS (one-time)
-npx eas-cli init --id 910a682b-5db4-440a-af99-ee987b813edf
-```
-
-### Build Profiles
-
-The project uses [eas.json](../eas.json) to configure build profiles:
-
-- **preview**: Builds APK for Android sideloading (internal distribution)
-- **production**: Builds APK (Android) or IPA (iOS) — also sideloadable
-- **development**: Development builds with dev client enabled
-
-**IMPORTANT**: Any profile used to build an installable APK must set
-`EXPO_PUBLIC_API_URL` in its `env` block in `eas.json`. Without it, the release
-build cannot see the variable and would previously fall back to the local dev
-server IP — the app installs fine but shows no data and login fails. Both
-`preview` and `production` now set it, and `src/config/api.ts` falls back to
-the production API URL (`https://mealmate-api.mooseflip.com`) in release builds as a safety net.
-
-### Building for Android
-
-```bash
-# Build APK for sideloading (fastest for testing)
-npx eas-cli build --platform android --profile preview
-
-# Build AAB for Google Play Store
-npx eas-cli build --platform android --profile production
-```
-
-### Building for iOS
-
-```bash
-# Build IPA for App Store
-npx eas-cli build --platform ios --profile production
-
-# Build for development (requires Apple Developer account)
-npx eas-cli build --platform android --profile development
-```
-
-### Managing Builds
-
-```bash
-# List recent builds
-npx eas-cli build:list --platform android --limit 5
-
-# Check build status
-npx eas-cli build:view [BUILD_ID]
-
-# Download build artifact (requires build ID from build:list)
-# APK download URL is shown in build details
-```
-
-### Distribution
-
-**For Android APK (preview profile):**
-
-1. Build completes on EAS servers (~15-20 minutes)
-2. Get download URL from build output or `eas build:list`
-3. Download APK from URL (e.g., `https://expo.dev/artifacts/eas/xxxxx.apk`)
-4. Transfer to device via:
-   - Direct download on device
-   - USB transfer
-   - Cloud storage (Google Drive, etc.)
-5. Enable "Install from unknown sources" on Android device
-6. Install APK
-
-**For Store Submission:**
-
-Use `production` profile and follow respective app store guidelines (Google Play, Apple App Store).
-
-### Build Configuration
-
-Key settings in [app.json](../frontend/app.json):
-
-- `version`: App version number (0.12.5)
-- `expo.android.versionCode`: Build number (148, auto-incremented by EAS)
-- `expo.ios.buildNumber`: Build number (148, auto-incremented by EAS)
-- `expo.android.package`: Android package name
-- `expo.ios.bundleIdentifier`: iOS bundle identifier
-
-### Android HTTP Cleartext Traffic (Local Development)
-
-**Problem**: Android 9+ blocks HTTP traffic by default, which prevents APK builds from connecting to local development servers (e.g., `http://192.168.0.111:3001`).
-
-**Solution**: Use the `expo-build-properties` plugin to enable cleartext traffic.
-
-#### Configuration in app.json:
-
-```json
-{
-  "expo": {
-    "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
-        }
-      ]
-    ],
-    "android": {
-      "permissions": [
-        "INTERNET"
-      ]
-    }
-  }
-}
-```
-
-#### Installation:
-
-```bash
-npm install expo-build-properties
-npx expo install react-native-worklets  # Required peer dependency
-```
-
-**Important Notes:**
-- This allows HTTP traffic for local development testing
-- For production builds connecting to production servers, use HTTPS instead
-- Browser access working but app failing = cleartext traffic issue
-- This setting only affects standalone APK builds, not Expo Go
-
-### Troubleshooting
-
-**Build fails with dependency errors:**
-- Run `npx expo install --fix` to fix version mismatches
-- Ensure all dependencies are compatible with Expo SDK version
-- Check for native module compatibility
-- Common fix: `npx expo install expo@~54.0.31 expo-constants@~18.0.13`
-
-**App can't connect to local backend:**
-- Verify cleartext traffic is enabled (see above)
-- Check Windows Firewall - add Node.js inbound rule
-- Confirm device and computer are on same WiFi network
-- Test backend accessibility in phone's browser first
-- Verify correct IP address in `frontend/src/config/api.ts`
-
-**Credentials issues:**
-- EAS manages Android keystore automatically
-- For iOS, ensure Apple Developer account is linked
-
-**Build takes too long:**
-- Build queue times vary based on Expo server load
-- Average build time: 15-20 minutes for Android, 20-30 for iOS
-
-**Package version warnings:**
-- Run `npx expo install --check` to see mismatches
-- Use `npx expo install <package>@~<version>` to fix specific packages
-- Add packages to `expo.install.exclude` in package.json to ignore warnings
+- **Build**: `frontend/Dockerfile.web` runs `npx expo export --platform web`
+  (Metro web bundler) → static `dist/`, served by nginx.
+- **PWA layer**: Metro web does not emit a manifest or service worker. Source
+  PWA files live in `frontend/public/` (`manifest.json`, `service-worker.js`,
+  `icons/`); `frontend/scripts/inject-pwa.js` injects the manifest link + SW
+  registration into `dist/index.html` at build time. `nginx.conf.template` sets
+  `Cache-Control: no-cache` on `index.html`, `manifest.json`, and
+  `service-worker.js` so updates are never stranded.
+- **API URL**: `EXPO_PUBLIC_API_URL=https://mealmate-api.mooseflip.com` is a
+  build arg in `docker-compose.yml`; `src/config/api.ts` also hard-falls-back to
+  that production URL in release builds.
+- **Deploy**: from the repo root run `./scripts/lab-deploy.sh` (stamps
+  `APP_VERSION`/`BUILD_NUMBER` from `version.json`, then
+  `docker compose up -d --build`). Public URLs are
+  `https://mealmate.mooseflip.com` (web) and
+  `https://mealmate-api.mooseflip.com` (API), exposed via the shared Cloudflare
+  Tunnel on the self-hosted Docker lab.

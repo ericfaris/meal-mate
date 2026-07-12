@@ -53,9 +53,9 @@ meal-mate/
 ├── version.json            # Single source of truth for app version
 ├── scripts/
 │   └── bump-version.js    # Version bump automation script
-├── frontend/               # React Native app
+├── frontend/               # React Native app (ships as web PWA)
 │   ├── app.config.js      # Expo config (reads version.json)
-│   ├── eas.json           # EAS Build configuration
+│   ├── Dockerfile.web     # Web PWA build (expo export -> nginx)
 │   └── src/
 │       ├── screens/       # Screen components
 │       ├── navigation/    # React Navigation setup
@@ -73,9 +73,9 @@ meal-mate/
 │       └── middleware/   # Auth, etc.
 │
 ├── .github/workflows/
-│   ├── (docker-build.yml/web-build.yml removed — deploy is local via docker compose)
-│   ├── eas-android-build.yml # Android EAS build pipeline
-│   └── eas-ios-build.yml     # iOS EAS build pipeline
+│   └── (Docker Hub + EAS workflows removed — deploy is local via docker compose)
+│
+├── docker-compose.yml     # Lab stack: api + web (see scripts/lab-deploy.sh)
 │
 └── .claude/
     ├── CLAUDE.md         # This file
@@ -109,7 +109,6 @@ meal-mate/
 - JWT token-based authentication
 - **All new users default to 'admin' role** (no household membership initially)
 - Household membership with role-based permissions (admin/member)
-- Optional `pushToken` for Expo push notifications
 
 ### Household
 - Named groups for shared cooking communities
@@ -331,7 +330,6 @@ version.json (source of truth)
     │
     └── app.config.js → web PWA build (Dockerfile.web)
         └── Settings Screen display
-        └── (EAS Android/iOS: pending removal — Phase B)
 ```
 
 ### Bumping Versions
@@ -367,30 +365,16 @@ node scripts/bump-version.js --set 1.0.0
 4. Push to `main` branch
 5. Deploy on the self-hosted Docker lab (this machine): pull/checkout the commit, then run `./scripts/lab-deploy.sh` (which stamps `APP_VERSION`/`BUILD_NUMBER` from `version.json` and runs `docker compose up -d --build`). Secrets come from the uncommitted root `.env` (see `.env.example`).
 6. Verify the deploy with `GET https://mealmate-api.mooseflip.com/api/version` (should report the new version and `environment: production`). The public web PWA is at `https://mealmate.mooseflip.com`, both exposed via the shared Cloudflare Tunnel.
-7. Mobile/EAS builds are pending removal (Phase B of the PWA migration) — the web PWA is now the shipping frontend.
+
+The app ships solely as the web PWA. The native (EAS Android/iOS) build path and its GitHub Actions workflows were removed in the PWA migration.
 
 ### CI/CD Pipelines
 
 Deployment is no longer driven by GitHub Actions. The backend and web images are
 built locally on the Docker lab via `./scripts/lab-deploy.sh` (`docker compose up
 -d --build`). The former `docker-build.yml` / `web-build.yml` (Docker Hub push)
-workflows have been removed.
-
-| Workflow                 | Trigger                    | Description                             |
-|--------------------------|----------------------------|-----------------------------------------|
-| `eas-android-build.yml`  | Push to main (frontend/**) | Pending removal (Phase B) — not active |
-| `eas-ios-build.yml`      | Push to main (frontend/**) | Pending removal (Phase B) — not active |
-
-**Required GitHub Secrets for EAS builds:**
-
-- `EXPO_TOKEN` - Expo access token (from expo.dev account settings)
-- `EXPO_USERNAME` - Expo account username
-
-**Required for iOS App Store submission (optional):**
-
-- `APPLE_ID` - Apple ID email for App Store Connect
-- `ASC_APP_ID` - App Store Connect App ID
-- `APPLE_TEAM_ID` - Apple Developer Team ID
+and `eas-android-build.yml` / `eas-ios-build.yml` (native EAS build) workflows
+have all been removed.
 
 ---
 
@@ -414,38 +398,19 @@ npm run ios          # iOS simulator
 
 ### Building for Production
 
-#### EAS Build (Android/iOS)
+The app ships as an installable **web PWA**, built by `frontend/Dockerfile.web`
+(`npx expo export --platform web` → nginx) and served from the self-hosted
+Docker lab via the root `docker-compose.yml`. There is no native (Android/iOS)
+build path anymore — it was removed in the PWA migration.
 
 ```bash
-cd frontend
+# From the repo root, build + (re)start the lab stack (stamps version.json):
+./scripts/lab-deploy.sh          # docker compose up -d --build
 
-# Login to Expo account (one-time)
-npx eas-cli login
-
-# Initialize EAS project (one-time)
-npx eas-cli init --id 910a682b-5db4-440a-af99-ee987b813edf
-
-# Build Android APK for sideloading
-npx eas-cli build --platform android --profile preview
-
-# Build for production (App Store/Play Store)
-npx eas-cli build --platform android --profile production
-npx eas-cli build --platform ios --profile production
-
-# Check build status
-npx eas-cli build:list --platform android --limit 5
+# The web build bakes EXPO_PUBLIC_API_URL=https://mealmate-api.mooseflip.com
+# (a build arg in docker-compose.yml, not a secret). src/config/api.ts also
+# hard-falls-back to that production API URL in release builds as a safety net.
 ```
-
-**Build Profiles** (configured in [eas.json](eas.json)):
-
-- `preview` - APK builds for sideloading (internal distribution)
-- `production` - APK (Android) / IPA (iOS) — historically used for sideloaded APKs too
-- `development` - Development builds with dev client
-
-**IMPORTANT**: Both `preview` and `production` MUST set `EXPO_PUBLIC_API_URL` in their
-`env` block, or the APK falls back to the local dev server URL and shows no data
-(this broke the 2026-07-02 build). `api.ts` also hard-falls-back to the production
-API URL (`https://mealmate-api.mooseflip.com`) in release builds as a safety net.
 
 ### Environment Variables
 
@@ -710,9 +675,6 @@ Recent changes:
 - [x] Grocery list generation from meal plans (completed)
 - [x] Push notifications for recipe submissions (completed)
 - [x] Recipe photo import with AI (completed)
-- [ ] Push notifications for meal reminders
-- [ ] Apple OAuth refinement and testing
-- [ ] EAS Build for App Store submission
 - [ ] Household analytics and insights
 - [ ] Recipe sharing beyond households
 - [ ] Meal plan templates and presets

@@ -28,56 +28,14 @@ export default {
       backgroundColor: '#FDFAF6',
     },
     assetBundlePatterns: ['**/*'],
-    android: {
-      package: 'com.mealmate.app',
-      versionCode: buildNumber,
-      adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
-        backgroundColor: '#FDFAF6',
-      },
-      permissions: ['INTERNET', 'CAMERA', 'READ_MEDIA_IMAGES'],
-      googleServicesFile: './google-services.json',
-    },
-    ios: {
-      bundleIdentifier: 'com.mealmate.app',
-      buildNumber: String(buildNumber),
-    },
-    scheme: 'mealmate',
     web: {
       favicon: './assets/icon.png',
       bundler: 'metro',
     },
-    plugins: [
-      [
-        'expo-build-properties',
-        {
-          android: {
-            usesCleartextTraffic: true,
-          },
-        },
-      ],
-      [
-        '@react-native-google-signin/google-signin',
-        {
-          iosUrlScheme:
-            'com.googleusercontent.apps.760619972742-o3kcevm7pnr8epu0o5ci7gd223883naa',
-        },
-      ],
-      [
-        'expo-notifications',
-        {
-          color: '#4A90A4',
-          defaultChannel: 'default',
-        },
-      ],
-      'expo-image-picker',
-    ],
+    plugins: ['expo-image-picker'],
     extra: {
       appVersion: version,
       buildNumber: buildNumber,
-      eas: {
-        projectId: '910a682b-5db4-440a-af99-ee987b813edf',
-      },
     },
     owner: 'ericfaris',
   },

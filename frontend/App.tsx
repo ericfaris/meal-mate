@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Linking } from 'react-native';
 import Constants from 'expo-constants';
-import { addNotificationResponseListener } from './src/services/notifications';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -42,34 +41,6 @@ function AppContent() {
     alertManager.setInfoModal(infoModalRef.current);
     alertManager.setActionSheetModal(actionSheetModalRef.current);
   }, []);
-
-  // Listen for notification taps to navigate to appropriate screen
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const subscription = addNotificationResponseListener((data) => {
-      if (!navigationRef.current) return;
-
-      // Handle recipe submission notifications
-      if (data?.screen === 'Household' || data?.type === 'recipe_submission') {
-        navigationRef.current.navigate('Main', { screen: 'Household' });
-      }
-      // Handle grocery item added notifications
-      else if (data?.type === 'grocery_item_added' && data?.groceryListId) {
-        navigationRef.current.navigate('Main', {
-          screen: 'GroceryTab',
-          params: {
-            screen: 'GroceryStoreMode',
-            params: { listId: data.groceryListId },
-          },
-        });
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

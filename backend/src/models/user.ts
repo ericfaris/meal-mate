@@ -22,7 +22,6 @@ export interface IUser extends Document {
   profilePicture?: string;
   emailVerified: boolean;
   lastLoginAt?: Date;
-  pushToken?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -92,10 +91,6 @@ const userSchema = new Schema<IUser>(
     },
     lastLoginAt: {
       type: Date,
-    },
-    pushToken: {
-      type: String,
-      sparse: true,
     },
   },
   {

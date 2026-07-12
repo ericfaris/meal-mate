@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import * as groceryListService from '../services/groceryListService';
 import Staple from '../models/staple';
-import { notifyHouseholdAdminsOfGroceryItems } from '../services/notificationService';
 
 // POST /api/grocery-lists - Create grocery list from plans
 export const createGroceryList = async (req: Request, res: Response): Promise<void> => {
@@ -148,21 +147,6 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
         );
       } catch (stapleErr) {
         console.error('Auto-save staple failed (non-blocking):', stapleErr);
-      }
-    }
-
-    // Notify household admins if a member added items
-    if (householdId && user.role === 'member') {
-      try {
-        await notifyHouseholdAdminsOfGroceryItems(
-          householdId,
-          list._id.toString(),
-          list.name,
-          user.name,
-          [name.trim()]
-        );
-      } catch (notifyErr) {
-        console.error('Notification failed (non-blocking):', notifyErr);
       }
     }
 

@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import Staple from '../models/staple';
 import GroceryList from '../models/groceryList';
 import User from '../models/user';
-import { notifyHouseholdAdminsOfGroceryItems } from '../services/notificationService';
 import { getList as getGroceryList } from '../services/groceryListService';
 
 /**
@@ -189,21 +188,6 @@ export const addStaplesToGroceryList = async (req: Request, res: Response): Prom
     }
 
     await list.save();
-
-    // Notify household admins if a member added staples
-    if (householdId && user.role === 'member') {
-      try {
-        await notifyHouseholdAdminsOfGroceryItems(
-          householdId,
-          list._id.toString(),
-          list.name,
-          user.name,
-          addedItemNames
-        );
-      } catch (notifyErr) {
-        console.error('Notification failed (non-blocking):', notifyErr);
-      }
-    }
 
     res.json(list);
   } catch (error) {
