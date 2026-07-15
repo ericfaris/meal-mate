@@ -35,8 +35,8 @@ MongoDB Atlas (Cloud Database)
 **Deployment**: self-hosted Docker lab (root `docker-compose.yml`, two
 containers — `web` on host 8600, `api` on host 8601) exposed publicly through
 the shared Cloudflare Tunnel. Secrets come from an uncommitted root `.env`.
-Deploy with `./scripts/lab-deploy.sh`. (Railway is retired — kept only as a
-rollback path until Eric tears it down.)
+Deploy with `./scripts/lab-deploy.sh`. (The Railway project was deleted
+2026-07-15 — no rollback path remains.)
 
 ### Design Patterns
 - **User Isolation**: All queries scoped by userId for security
