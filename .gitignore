@@ -149,3 +149,5 @@ firebase-service-account*.json
 
 
 /frontend/android
+
+.claude/investigations/
