@@ -18,6 +18,10 @@ import { authenticate } from './middleware/auth';
 export const createApp = (): Express => {
   const app = express();
 
+  // Trust first proxy hop (Cloudflare Tunnel) so express-rate-limit and
+  // req.ip see the real client IP from X-Forwarded-For.
+  app.set('trust proxy', 1);
+
   // CORS - restrict origins in production
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
