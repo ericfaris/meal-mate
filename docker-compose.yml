@@ -14,6 +14,13 @@ services:
         BUILD_NUMBER: ${BUILD_NUMBER:-0}
     image: ericfaris/meal-mate-backend:latest
     restart: unless-stopped
+    # Non-root, no privilege escalation, no Linux capabilities. Node app reads
+    # world-readable files under /app and persists only to MongoDB Atlas.
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "127.0.0.1:8601:3001"
     environment:
@@ -40,6 +47,18 @@ services:
         EXPO_PUBLIC_API_URL: https://mealmate-api.mooseflip.com
     image: ericfaris/meal-mate-web:latest
     restart: unless-stopped
+    # nginx master needs root to bind :80 and manage workers; drop everything
+    # else and block privilege escalation.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+      - DAC_OVERRIDE
     ports:
       - "127.0.0.1:8600:80"
     depends_on:
