@@ -1,0 +1,55 @@
+name: Tests
+
+# meal-mate has no root package.json — backend and frontend are separate
+# npm projects. Only backend has a real test script (jest); frontend's is
+# unset, so there's nothing to gate on there yet.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # Runs on a self-hosted runner on the lab host itself — GitHub's own hosted
+  # runners can't reach this private host. Gated to push-to-main ONLY
+  # (never pull_request) so untrusted PR code can never execute here; this
+  # job only ever runs post-merge, already-trusted code. Delegates the
+  # actual deploy to lab-sentinel's own guarded engine. No containerName
+  # passed — meal-mate runs 2 containers (api + web) from one compose file,
+  # so the health-check covers all of them rather than just one.
+  deploy:
+    name: Deploy to lab
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, lab]
+    steps:
+      - name: Trigger lab-sentinel deploy
+        run: |
+          curl -sf -X POST http://127.0.0.1:7891/api/deploy \
+            -H 'Content-Type: application/json' \
+            -d '{"repo":"meal-mate"}' \
+            -o deploy-result.json
+          cat deploy-result.json
+          jq -e '.deployStatus == "done"' deploy-result.json
