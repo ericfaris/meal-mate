@@ -151,3 +151,6 @@ firebase-service-account*.json
 /frontend/android
 
 .claude/investigations/
+
+# Test-run screenshots (before/after UI captures) — regenerable, not permanent content.
+.claude/screenshots/
