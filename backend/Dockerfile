@@ -8,6 +8,7 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:20-alpine
+RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 
 # Version build arguments
