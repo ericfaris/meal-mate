@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    fontWeight: typography.weights.bold,
-    letterSpacing: 0.5,
+    fontFamily: typography.families.display,
+    letterSpacing: 0.3,
   },
 });
 

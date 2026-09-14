@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meal Mate — Design System</title>
+<link rel="icon" href="/favicon.png" />
+<link rel="stylesheet" href="/design-tokens.css" />
+<style>
+  @font-face {
+    font-family: 'Fraunces';
+    src: url('/fonts/Fraunces-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Karla';
+    src: url('/fonts/Karla-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--type-body-font);
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-line-height);
+    padding: var(--space-xl) var(--space-lg) var(--space-xxl);
+  }
+  h1, h2, h3 { margin: 0; }
+  .page-title {
+    font-family: var(--type-display-font);
+    font-size: var(--type-display-size);
+    line-height: var(--type-display-line-height);
+    letter-spacing: var(--type-display-letter-spacing);
+    color: var(--color-primary);
+  }
+  .page-subtitle {
+    color: var(--color-text-light);
+    margin-top: var(--space-xs);
+    max-width: 640px;
+  }
+  section {
+    margin-top: var(--space-xxl);
+  }
+  .section-title {
+    font-family: var(--type-h2-font);
+    font-size: var(--type-h2-size);
+    line-height: var(--type-h2-line-height);
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-md);
+  }
+  .swatch {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+  }
+  .swatch-color {
+    height: 72px;
+  }
+  .swatch-label {
+    padding: var(--space-sm);
+    font-size: var(--type-small-size);
+  }
+  .swatch-label strong {
+    display: block;
+    font-family: var(--type-h3-font);
+  }
+  .swatch-label code {
+    color: var(--color-text-muted);
+    font-size: var(--type-tiny-size);
+  }
+
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-divider);
+    flex-wrap: wrap;
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta {
+    width: 220px;
+    flex-shrink: 0;
+    font-size: var(--type-tiny-size);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+  .type-meta strong {
+    display: block;
+    color: var(--color-text);
+    font-size: var(--type-small-size);
+  }
+  .type-sample { flex: 1; min-width: 240px; }
+
+  .scale-row { display: flex; align-items: flex-end; gap: var(--space-lg); flex-wrap: wrap; }
+  .scale-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  .scale-box-visual {
+    background: var(--color-secondary);
+    border-radius: var(--radius-sm);
+  }
+  .scale-box-label { font-size: var(--type-tiny-size); color: var(--color-text-muted); }
+
+  .radius-row { display: flex; gap: var(--space-lg); flex-wrap: wrap; }
+  .radius-box {
+    width: 88px;
+    height: 88px;
+    background: var(--color-primary-light);
+    border: 2px solid var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--type-tiny-size);
+    color: var(--color-primary);
+    text-align: center;
+  }
+
+  .shadow-row { display: flex; gap: var(--space-xl); flex-wrap: wrap; }
+  .shadow-card {
+    width: 160px;
+    height: 100px;
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--type-small-size);
+    color: var(--color-text-light);
+  }
+
+  .motion-row { display: flex; gap: var(--space-lg); flex-wrap: wrap; }
+  .motion-card {
+    width: 200px;
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    cursor: pointer;
+    text-align: center;
+  }
+  .motion-card .puck {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    margin: var(--space-md) auto 0;
+    transform: translateX(0);
+  }
+  .motion-card:hover .puck,
+  .motion-card:focus-visible .puck {
+    transform: translateX(60px);
+  }
+  .motion-card[data-motion="micro"] .puck { transition: transform var(--motion-micro-interaction-duration) var(--motion-micro-interaction-easing); }
+  .motion-card[data-motion="reveal"] .puck { transition: transform var(--motion-reveal-duration) var(--motion-reveal-easing); }
+  .motion-card[data-motion="emphasis"] .puck { transition: transform var(--motion-emphasis-duration) var(--motion-emphasis-easing); }
+  .motion-card .motion-name { font-family: var(--type-h3-font); font-size: var(--type-small-size); }
+  .motion-card .motion-usage { font-size: var(--type-tiny-size); color: var(--color-text-muted); margin-top: var(--space-xs); }
+
+  /* Components */
+  .component-row { display: flex; gap: var(--space-lg); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-lg); }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--height-button);
+    padding: 0 var(--space-lg);
+    border-radius: var(--radius-full);
+    font-family: var(--type-h3-font);
+    font-size: var(--type-body-size);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-button);
+    transition: transform var(--motion-micro-interaction-duration) var(--motion-micro-interaction-easing),
+                box-shadow var(--motion-micro-interaction-duration) var(--motion-micro-interaction-easing);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-floating); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--color-primary); color: var(--color-text-on-primary); }
+  .btn-secondary { background: var(--color-secondary-light); color: var(--color-text); }
+  .btn-disabled { background: var(--color-divider); color: var(--color-text-muted); cursor: not-allowed; box-shadow: none; }
+  .btn:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+
+  .card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-card);
+    width: 260px;
+  }
+  .card h3 { font-family: var(--type-h3-font); font-size: var(--type-h3-size); margin-bottom: var(--space-xs); }
+  .card p { color: var(--color-text-light); font-size: var(--type-small-size); margin: 0; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    height: var(--height-chip);
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: var(--type-small-size);
+    font-weight: 600;
+  }
+  .tag-simple { background: var(--color-tag-simple); color: #2E5E30; }
+  .tag-medium { background: var(--color-tag-medium); color: #8A5A00; }
+  .tag-complex { background: var(--color-tag-complex); color: #8A2020; }
+
+  .input-group { display: flex; flex-direction: column; gap: var(--space-xs); width: 240px; }
+  .input-group label { font-size: var(--type-small-size); color: var(--color-text-light); }
+  .input {
+    height: var(--height-input);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    padding: 0 var(--space-md);
+    font-family: var(--type-body-font);
+    font-size: var(--type-body-size);
+    background: var(--color-white);
+    color: var(--color-text);
+  }
+  .input:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; border-color: var(--color-primary); }
+  .input-error { border-color: var(--color-error); }
+  .input-hint-error { color: var(--color-error); font-size: var(--type-tiny-size); }
+
+  .banner {
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--type-small-size);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .banner-success { background: var(--color-success); color: #204020; }
+  .banner-error { background: var(--color-error); color: #fff; }
+  .banner-warning { background: var(--color-warning); color: #4a3000; }
+
+  .texture-sample {
+    width: 100%;
+    max-width: 480px;
+    height: 140px;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary-light);
+    border: 1px dashed var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: var(--type-small-size);
+    text-align: center;
+    padding: var(--space-md);
+  }
+
+  footer {
+    margin-top: var(--space-xxl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-divider);
+    color: var(--color-text-muted);
+    font-size: var(--type-tiny-size);
+  }
+  a { color: var(--color-primary); }
+</style>
+</head>
+<body>
+
+  <h1 class="page-title">Meal Mate — Design System</h1>
+  <p class="page-subtitle">
+    "Farmhouse Kitchen" — every token and component below is rendered live from
+    <code>frontend/src/theme/index.ts</code> via the generated
+    <code>design-tokens.css</code> (see <code>frontend/scripts/generate-design-tokens-css.js</code>).
+    Full narrative and rationale in <code>DESIGN.md</code> at the repo root.
+  </p>
+
+  <section>
+    <h2 class="section-title">Color</h2>
+    <div class="grid" id="color-grid"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Type</h2>
+    <div class="type-row">
+      <div class="type-meta"><strong>display</strong>Fraunces · 34/40 · hero moments only</div>
+      <div class="type-sample" style="font-family: var(--type-display-font); font-size: var(--type-display-size); line-height: var(--type-display-line-height); letter-spacing: var(--type-display-letter-spacing);">Meal Mate</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>h1</strong>Fraunces · 28/34 · screen titles, day names</div>
+      <div class="type-sample" style="font-family: var(--type-h1-font); font-size: var(--type-h1-size); line-height: var(--type-h1-line-height);">Good evening, Eric</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>h2</strong>Karla · 24/30 · section headers</div>
+      <div class="type-sample" style="font-family: var(--type-h2-font); font-size: var(--type-h2-size); line-height: var(--type-h2-line-height);">This Week's Plan</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>h3</strong>Karla · 20/26 · recipe titles, card headers</div>
+      <div class="type-sample" style="font-family: var(--type-h3-font); font-size: var(--type-h3-size); line-height: var(--type-h3-line-height);">Spaghetti Carbonara</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>body</strong>Karla · 16/24 · default copy</div>
+      <div class="type-sample" style="font-family: var(--type-body-font); font-size: var(--type-body-size); line-height: var(--type-body-line-height);">Plan your week, love your meals — Meal Mate keeps the whole household on the same page.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>small</strong>Karla · 14/20 · tags, microcopy, labels</div>
+      <div class="type-sample" style="font-family: var(--type-small-font); font-size: var(--type-small-size); line-height: var(--type-small-line-height);">Medium complexity · 30 min</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>tiny</strong>Karla · 12/16 · timestamps, hints</div>
+      <div class="type-sample" style="font-family: var(--type-tiny-font); font-size: var(--type-tiny-size); line-height: var(--type-tiny-line-height);">Last cooked 6 days ago</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Spacing</h2>
+    <div class="scale-row" id="spacing-row"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Radius</h2>
+    <div class="radius-row" id="radius-row"></div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Shadow</h2>
+    <div class="shadow-row">
+      <div class="shadow-card" style="box-shadow: var(--shadow-card);">shadow-card</div>
+      <div class="shadow-card" style="box-shadow: var(--shadow-button);">shadow-button</div>
+      <div class="shadow-card" style="box-shadow: var(--shadow-floating);">shadow-floating</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Motion — hover or focus each card</h2>
+    <div class="motion-row">
+      <div class="motion-card" data-motion="micro" tabindex="0">
+        <div class="motion-name">microInteraction</div>
+        <div class="motion-usage">150ms · standard ease<br>button press, toggle</div>
+        <div class="puck"></div>
+      </div>
+      <div class="motion-card" data-motion="reveal" tabindex="0">
+        <div class="motion-name">reveal</div>
+        <div class="motion-usage">300ms · ease-out-expo<br>modal/card entrance</div>
+        <div class="puck"></div>
+      </div>
+      <div class="motion-card" data-motion="emphasis" tabindex="0">
+        <div class="motion-name">emphasis</div>
+        <div class="motion-usage">500ms · spring overshoot<br>success celebrations</div>
+        <div class="puck"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Buttons</h2>
+    <div class="component-row">
+      <button class="btn btn-primary">Plan This Week</button>
+      <button class="btn btn-secondary">Browse Recipes</button>
+      <button class="btn btn-disabled" disabled>Confirmed</button>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Cards</h2>
+    <div class="component-row">
+      <div class="card">
+        <h3>Spaghetti Carbonara</h3>
+        <p>Medium · 30 min · Italian</p>
+      </div>
+      <div class="card" style="box-shadow: var(--shadow-floating);">
+        <h3>Tonight's Dinner</h3>
+        <p>Confirmed — enjoy!</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Tags / Complexity Badges</h2>
+    <div class="component-row">
+      <span class="tag tag-simple">Simple</span>
+      <span class="tag tag-medium">Medium</span>
+      <span class="tag tag-complex">Complex</span>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Inputs</h2>
+    <div class="component-row">
+      <div class="input-group">
+        <label for="i1">Recipe title</label>
+        <input class="input" id="i1" placeholder="e.g. Spaghetti Carbonara" />
+      </div>
+      <div class="input-group">
+        <label for="i2">Recipe title (error)</label>
+        <input class="input input-error" id="i2" value="" placeholder="Required" />
+        <span class="input-hint-error">Title is required</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Status Banners</h2>
+    <div class="component-row" style="flex-direction: column; align-items: stretch;">
+      <div class="banner banner-success">Plan confirmed for tonight.</div>
+      <div class="banner banner-warning">You haven't planned Thursday yet.</div>
+      <div class="banner banner-error">Couldn't reach the server — check your connection.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Backgrounds &amp; App Icon</h2>
+    <div class="component-row">
+      <div class="texture-sample">Flat warm-cream surface (--color-background) — the app's current surface treatment. No additional texture asset was generated this pass; see DESIGN.md "Backgrounds, texture, and generated art".</div>
+      <img src="/icons/icon-512.png" width="96" height="96" alt="Meal Mate app icon" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-card);" />
+    </div>
+  </section>
+
+  <footer>
+    Meal Mate Design System · generated from live tokens · regenerate with
+    <code>node frontend/scripts/generate-design-tokens-css.js</code> after editing <code>theme/index.ts</code>
+  </footer>
+
+<script>
+  // Render color swatches and spacing scale directly from the CSS custom
+  // properties so this page can never hand-duplicate a value that drifts
+  // from the generated tokens.css.
+  const rootStyles = getComputedStyle(document.documentElement);
+  const styleSheets = Array.from(document.styleSheets);
+
+  function getCssVarNames(prefix) {
+    const names = new Set();
+    for (const sheet of styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      for (const rule of rules || []) {
+        if (rule.selectorText === ':root' && rule.style) {
+          for (let i = 0; i < rule.style.length; i++) {
+            const name = rule.style[i];
+            if (name.startsWith(prefix)) names.add(name);
+          }
+        }
+      }
+    }
+    return Array.from(names);
+  }
+
+  // Colors
+  const colorGrid = document.getElementById('color-grid');
+  for (const name of getCssVarNames('--color-')) {
+    const value = rootStyles.getPropertyValue(name).trim();
+    const label = name.replace('--color-', '');
+    const el = document.createElement('div');
+    el.className = 'swatch';
+    el.innerHTML = `<div class="swatch-color" style="background:${value}"></div>
+      <div class="swatch-label"><strong>${label}</strong><code>${value}</code></div>`;
+    colorGrid.appendChild(el);
+  }
+
+  // Spacing
+  const spacingRow = document.getElementById('spacing-row');
+  for (const name of getCssVarNames('--space-')) {
+    const value = rootStyles.getPropertyValue(name).trim();
+    const label = name.replace('--space-', '');
+    const px = parseInt(value, 10);
+    const el = document.createElement('div');
+    el.className = 'scale-box';
+    el.innerHTML = `<div class="scale-box-visual" style="width:${px}px;height:${px}px"></div>
+      <div class="scale-box-label">${label} — ${value}</div>`;
+    spacingRow.appendChild(el);
+  }
+
+  // Radius
+  const radiusRow = document.getElementById('radius-row');
+  for (const name of getCssVarNames('--radius-')) {
+    const value = rootStyles.getPropertyValue(name).trim();
+    const label = name.replace('--radius-', '');
+    const el = document.createElement('div');
+    el.className = 'radius-box';
+    el.style.borderRadius = value === '999px' ? '999px' : value;
+    el.textContent = `${label}\n${value}`;
+    el.style.whiteSpace = 'pre';
+    radiusRow.appendChild(el);
+  }
+</script>
+</body>
+</html>

@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
   },
   tagline: {
     marginTop: 24,
+    fontFamily: typography.families.display,
     fontSize: typography.sizes.body,
     color: colors.textLight,
-    fontWeight: typography.weights.medium,
     fontStyle: 'italic',
   },
   footer: {

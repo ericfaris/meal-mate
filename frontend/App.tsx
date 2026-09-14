@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, TextInput } from 'react-native';
 import { Linking } from 'react-native';
 import Constants from 'expo-constants';
+import { useFonts } from 'expo-font';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -23,6 +24,20 @@ const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
 // Log version at startup
 console.log(`\n🍽️  Meal Mate v${appVersion} (build ${buildNumber})`);
 console.log('━'.repeat(50));
+
+// Design system: apply the body face (Karla) as the app-wide default so the
+// ~30 existing screens (which style text via `typography.sizes.*` without a
+// fontFamily) pick it up automatically, with zero per-screen edits. Any
+// screen/component can still opt into the display face (Fraunces) directly
+// via `typography.families.display` for hero moments. See DESIGN.md "Type".
+// @ts-ignore — defaultProps exists on RN's Text/TextInput at runtime.
+Text.defaultProps = Text.defaultProps || {};
+// @ts-ignore
+Text.defaultProps.style = [{ fontFamily: 'Karla-Regular' }, Text.defaultProps.style];
+// @ts-ignore
+TextInput.defaultProps = TextInput.defaultProps || {};
+// @ts-ignore
+TextInput.defaultProps.style = [{ fontFamily: 'Karla-Regular' }, TextInput.defaultProps.style];
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -102,6 +117,19 @@ function AppContent() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    'Fraunces-Regular': require('./assets/fonts/Fraunces-Regular.ttf'),
+    'Karla-Regular': require('./assets/fonts/Karla-Regular.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <AuthProvider>
       <AppContent />

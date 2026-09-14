@@ -454,8 +454,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
   greeting: {
+    fontFamily: typography.families.display,
     fontSize: typography.sizes.h1,
-    fontWeight: typography.weights.bold as any,
     color: colors.text,
   },
   dateText: {
