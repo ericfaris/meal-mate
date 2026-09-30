@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/design/logo.svg" width="96" alt="Meal Mate logo"></p>
+
 # Meal Mate - Smart Meal Planning App
 
 A React Native mobile app for intelligent weekly meal planning with household collaboration, AI-powered features, and grocery list generation. Built with Node.js backend and MongoDB Atlas database.

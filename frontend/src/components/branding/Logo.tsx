@@ -1,7 +1,30 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 import { colors, typography, spacing } from '../../theme';
+
+const INK = '#FDFAF6';
+const SMALL_CUT_MAX = 32;
+
+// Mirrors PATHS in scripts/logoMark.js (logoMark.test.js enforces it).
+const MARK = {
+  full: {
+    m: {
+      d: 'M20.3 76.6V50A14.8 14.8 0 0 1 50 50V76.6M50 50A14.8 14.8 0 0 1 79.7 50V76.6',
+      strokeWidth: 11,
+    },
+    knobs: { cy: 20.4, cxs: [35.2, 64.8], r: 6 },
+    table: { x: 10.2, y: 78.6, width: 79.6, height: 7, rx: 3.5 },
+  },
+  small: {
+    m: {
+      d: 'M19 78V50A15.5 15.5 0 0 1 50 50V78M50 50A15.5 15.5 0 0 1 81 50V78',
+      strokeWidth: 14,
+    },
+    knobs: { cy: 19.5, cxs: [34.5, 65.5], r: 7.5 },
+    table: { x: 8, y: 80, width: 84, height: 9, rx: 4.5 },
+  },
+};
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large' | 'splash';
@@ -59,101 +82,34 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
   size,
   variant = 'default'
 }) => {
-  // Color scheme based on variant
-  const plateColor = variant === 'light' ? colors.white : colors.primary;
-  const accentColor = variant === 'light' ? colors.primaryLight : colors.secondary;
-  const steamColor = variant === 'light' ? 'rgba(255,255,255,0.7)' : colors.textMuted;
+  // "Two Cloches" mark. Geometry mirrors scripts/logoMark.js (100x100 box).
+  // default: terracotta badge + cream mark (for light surfaces)
+  // light:   cream mark only, for placement on a terracotta surface (headers)
+  // dark:    badge in dark text color
+  // Icons at or below SMALL_CUT_MAX px use the heavier small-size cut.
+  const badgeColor = variant === 'dark' ? colors.text : colors.primary;
+  const geo = size <= SMALL_CUT_MAX ? MARK.small : MARK.full;
+  const inset = variant === 'light' ? 'translate(0 0)' : 'translate(6 6) scale(0.88)';
 
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
-      {/* Plate/Bowl base */}
-      <Circle
-        cx="50"
-        cy="55"
-        r="40"
-        fill={plateColor}
-        opacity={0.2}
-      />
-      <Circle
-        cx="50"
-        cy="55"
-        r="35"
-        fill={plateColor}
-        opacity={0.4}
-      />
-      <Circle
-        cx="50"
-        cy="55"
-        r="28"
-        fill={plateColor}
-      />
-
-      {/* Fork - left utensil */}
-      <G transform="translate(25, 20) rotate(-15, 10, 30)">
-        {/* Fork handle */}
-        <Path
-          d="M8 25 L8 55"
-          stroke={accentColor}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        {/* Fork tines */}
-        <Path
-          d="M4 10 L4 25 M8 8 L8 25 M12 10 L12 25"
-          stroke={accentColor}
-          strokeWidth="2"
-          strokeLinecap="round"
+      {variant !== 'light' && (
+        <Rect width="100" height="100" rx="22" fill={badgeColor} />
+      )}
+      <G transform={inset}>
+        <Path d={geo.m.d} fill="none" stroke={INK} strokeWidth={geo.m.strokeWidth} />
+        {geo.knobs.cxs.map((cx) => (
+          <Circle key={cx} cx={cx} cy={geo.knobs.cy} r={geo.knobs.r} fill={INK} />
+        ))}
+        <Rect
+          x={geo.table.x}
+          y={geo.table.y}
+          width={geo.table.width}
+          height={geo.table.height}
+          rx={geo.table.rx}
+          fill={INK}
         />
       </G>
-
-      {/* Knife - right utensil */}
-      <G transform="translate(60, 20) rotate(15, 10, 30)">
-        {/* Knife handle */}
-        <Path
-          d="M10 25 L10 55"
-          stroke={accentColor}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        {/* Knife blade */}
-        <Path
-          d="M10 10 L10 25 L14 25 L14 12 Z"
-          fill={accentColor}
-        />
-      </G>
-
-      {/* Steam wisps */}
-      <G opacity={0.6}>
-        <Path
-          d="M40 35 Q38 28 42 22 Q40 18 44 12"
-          stroke={steamColor}
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <Path
-          d="M50 32 Q48 25 52 20 Q50 15 54 10"
-          stroke={steamColor}
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <Path
-          d="M60 35 Q58 28 62 22 Q60 18 64 12"
-          stroke={steamColor}
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </G>
-
-      {/* Heart accent on plate */}
-      <Path
-        d="M50 60 C50 55 45 52 42 55 C38 58 38 62 42 66 L50 72 L58 66 C62 62 62 58 58 55 C55 52 50 55 50 60"
-        fill={variant === 'light' ? colors.primary : colors.white}
-        opacity={0.9}
-        transform="scale(0.5) translate(50, 70)"
-      />
     </Svg>
   );
 };

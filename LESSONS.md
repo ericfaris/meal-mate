@@ -28,3 +28,17 @@
   touching every screen's `StyleSheet.create`. Screens that already read
   weight/size from theme tokens (`typography.sizes.h1`, etc.) inherit the
   new font automatically with zero risk of behavioral regression.
+
+## 2026-09-30 — Logo: Plate-and-M replaced by Two Cloches
+- **Critique-first worked**: the old mark (initial in a circle) had two ideas
+  and a 2.6-unit hairline ring that vanished at 16px. Comparing three
+  one-idea concepts side by side at real 64/32/16px sizes made the choice fast.
+- **Ship a small-size cut, not one master.** Knobs/gaps that read at 512px
+  close up at 16px, so `logoMark.js` has `PATHS.full` and a heavier
+  `PATHS.small`; `Logo.tsx` switches at <=32px. The test renders a 16px favicon
+  and checks the knobs survive.
+- **No SVG renderer was installed** (no rsvg/inkscape/cairosvg, so the logo
+  skill's `render_png.py` fails). `sharp` in `frontend/node_modules` works; call
+  `sharp(svgBuffer, {density:300})` and `process.exit(0)` afterwards (it can
+  keep the node process alive).
+- SVG `<title>` must escape `&` (raw `&` made sharp's parser throw).

@@ -12,6 +12,8 @@ const ICONS_DIR = path.join(PUBLIC_DIR, 'icons');
 // Splash/theme background from app.config.js (iOS ignores transparency, so
 // maskable + apple-touch icons are flattened onto this).
 const BACKGROUND = '#FDFAF6';
+// Icon artwork is full-bleed terracotta; maskable padding must match it.
+const ICON_BACKGROUND = '#B14E33';
 
 const SOURCE_ICON = path.join(ASSETS_DIR, 'icon.png');
 const SOURCE_FAVICON = path.join(ASSETS_DIR, 'favicon.png');
@@ -33,7 +35,7 @@ async function generate() {
   console.log('Creating icons/icon-512.png (512x512)...');
   await sharp(SOURCE_ICON).resize(512, 512).png().toFile(path.join(ICONS_DIR, 'icon-512.png'));
 
-  // 3. Maskable 512x512 — source scaled to ~70% centered on the background
+  // 3. Maskable 512x512 — source scaled to ~70% centered on the icon background
   //    so it survives the maskable safe-zone crop on Android.
   console.log('Creating icons/maskable-512.png (512x512)...');
   const inner = 358; // ~70% of 512
@@ -43,7 +45,7 @@ async function generate() {
       width: 512,
       height: 512,
       channels: 4,
-      background: BACKGROUND,
+      background: ICON_BACKGROUND,
     },
   })
     .composite([{ input: scaled, gravity: 'centre' }])

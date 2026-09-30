@@ -27,6 +27,12 @@ export default {
       resizeMode: 'contain',
       backgroundColor: '#FDFAF6',
     },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#B14E33',
+      },
+    },
     assetBundlePatterns: ['**/*'],
     web: {
       favicon: './assets/icon.png',

@@ -328,16 +328,22 @@ rather than faking a texture sample that isn't actually in the app.
 
 ## 8. Icon / favicon
 
-**Already present and kept as-is.** `frontend/assets/icon.png` /
-`adaptive-icon.png` / `favicon.png` and the PWA icon set under
-`frontend/public/icons/` (`icon-192.png`, `icon-512.png`,
-`maskable-512.png`, `apple-touch-icon.png`) already depict a plate with
-fork/knife and a heart accent in exactly the terracotta/sage/cream palette
-this direction keeps — it was reviewed against the "Farmhouse Kitchen"
-direction and found to already fit (same hues, same warm-friendly
-character), so it was **not** regenerated. All `<link>`/manifest wiring
-(`frontend/public/manifest.json`, `frontend/scripts/inject-pwa.js`) was
-already correct and untouched.
+**Mark: "Two Cloches"** (2026-09-30). A lowercase "m" whose two arches are
+serving domes with knobs on top, standing on one shared table line: a
+household at one table. Single ink colour (cream `#FDFAF6`) on the terracotta
+badge (`#B14E33`); sage is not used in the mark because it is too faint on
+terracotta. Geometry lives in `frontend/scripts/logoMark.js` (`PATHS.full`
+master and a heavier `PATHS.small` cut used for favicon sizes, 32px and below).
+
+Generated from that file by `node scripts/generateIcons.js` then
+`node scripts/generatePwaAssets.js`: `assets/icon.png`, `adaptive-icon.png`,
+`splash.png`, `favicon.png`, `public/favicon.svg`, `docs/design/logo.svg` and
+the PWA set under `public/icons/` (`icon-192.png`, `icon-512.png`,
+`maskable-512.png`, `apple-touch-icon.png`). `Logo.tsx` mirrors the geometry
+for in-app use (`variant="light"` is the cream mark alone for terracotta
+headers). `frontend/scripts/logoMark.test.js` fails if the two drift.
+All `<link>`/manifest wiring (`frontend/public/manifest.json`,
+`frontend/scripts/inject-pwa.js`) is unchanged.
 
 ---
 
@@ -384,3 +390,21 @@ swatches and spacing scale, so no value is ever hand-copied twice.
   radius/shadow scales, app icon/favicon set. Targeted font rollout to the
   wordmark, splash tagline, and home-screen greeting only (see §3
   "Extending this" for the pattern to continue it elsewhere).
+- **2026-09-30** — Logo redesign: "Plate-and-M" (superseded the same day by "Two Cloches", below). Replaced the pastel
+  plate/fork/knife/heart mark with a cream plate + bold rounded terracotta
+  "M" + sage rim on a full-bleed terracotta badge (`#B14E33`, matches
+  `--color-primary`; the old icon used the pastel `#E8A798`). Geometry is
+  single-sourced in `frontend/scripts/logoMark.js`; `generateIcons.js` +
+  `generatePwaAssets.js` regenerate icon/adaptive/splash/favicon/PWA icons,
+  `favicon.svg` and `docs/design/logo.svg`; `Logo.tsx` mirrors the paths
+  (enforced by `node --test scripts/logoMark.test.js`). Android adaptive icon
+  now configured (terracotta bg). Bump the release version so the service
+  worker cache picks up the new icons.
+- **2026-09-30** — Logo redesign: "Two Cloches". Replaced Plate-and-M (an
+  initial in a circle: generic, and its sage rim vanished at 16px) with a
+  lowercase "m" of two serving domes on a shared table line. One cream ink on
+  the terracotta badge; heavier small-size cut for favicons. Same
+  single-source pipeline as before (`logoMark.js` -> generators -> `Logo.tsx`,
+  guarded by `logoMark.test.js`, now also checking both cuts and that the
+  16px favicon keeps its knobs). Bump the release version so the service
+  worker cache picks up the new icons.
