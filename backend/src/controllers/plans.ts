@@ -67,7 +67,7 @@ export const getPlans = async (req: Request, res: Response): Promise<void> => {
 };
 
 // GET /api/plans/:date - Get plan for specific date
-export const getPlanByDate = async (req: Request, res: Response): Promise<void> => {
+export const getPlanByDate = async (req: Request<{ date: string }>, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     const { date } = req.params;
@@ -113,7 +113,7 @@ export const getPlanByDate = async (req: Request, res: Response): Promise<void> 
 };
 
 // PUT /api/plans/:date - Update or create plan for specific date
-export const updatePlanByDate = async (req: Request, res: Response): Promise<void> => {
+export const updatePlanByDate = async (req: Request<{ date: string }>, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     const { date } = req.params;
@@ -195,7 +195,7 @@ export const deleteAllPlans = async (req: Request, res: Response): Promise<void>
 };
 
 // DELETE /api/plans/:date - Delete plan for specific date
-export const deletePlanByDate = async (req: Request, res: Response): Promise<void> => {
+export const deletePlanByDate = async (req: Request<{ date: string }>, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
 

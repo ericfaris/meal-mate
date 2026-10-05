@@ -46,7 +46,7 @@ export const getGroceryLists = async (req: Request, res: Response): Promise<void
 };
 
 // GET /api/grocery-lists/:id - Get single grocery list
-export const getGroceryList = async (req: Request, res: Response): Promise<void> => {
+export const getGroceryList = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const householdId = req.user?.householdId;
     const list = await groceryListService.getList(req.params.id, req.userId!, householdId);
@@ -62,7 +62,7 @@ export const getGroceryList = async (req: Request, res: Response): Promise<void>
 };
 
 // PUT /api/grocery-lists/:id - Update list name/status
-export const updateGroceryList = async (req: Request, res: Response): Promise<void> => {
+export const updateGroceryList = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const { name, status } = req.body;
     const householdId = req.user?.householdId;
@@ -79,7 +79,7 @@ export const updateGroceryList = async (req: Request, res: Response): Promise<vo
 };
 
 // PUT /api/grocery-lists/:id/items/:index - Update an item (check/uncheck, edit)
-export const updateGroceryItem = async (req: Request, res: Response): Promise<void> => {
+export const updateGroceryItem = async (req: Request<{ id: string; index: string }>, res: Response): Promise<void> => {
   try {
     const itemIndex = parseInt(req.params.index, 10);
     if (isNaN(itemIndex) || itemIndex < 0) {
@@ -106,7 +106,7 @@ export const updateGroceryItem = async (req: Request, res: Response): Promise<vo
 };
 
 // POST /api/grocery-lists/:id/items - Add custom item
-export const addGroceryItem = async (req: Request, res: Response): Promise<void> => {
+export const addGroceryItem = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const { name, quantity, category, saveToStaples } = req.body;
     if (!name?.trim()) {
@@ -158,7 +158,7 @@ export const addGroceryItem = async (req: Request, res: Response): Promise<void>
 };
 
 // DELETE /api/grocery-lists/:id/items/:index - Remove an item
-export const removeGroceryItem = async (req: Request, res: Response): Promise<void> => {
+export const removeGroceryItem = async (req: Request<{ id: string; index: string }>, res: Response): Promise<void> => {
   try {
     const itemIndex = parseInt(req.params.index, 10);
     if (isNaN(itemIndex) || itemIndex < 0) {
@@ -180,7 +180,7 @@ export const removeGroceryItem = async (req: Request, res: Response): Promise<vo
 };
 
 // DELETE /api/grocery-lists/:id - Delete list
-export const deleteGroceryList = async (req: Request, res: Response): Promise<void> => {
+export const deleteGroceryList = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const deleted = await groceryListService.deleteList(req.params.id, req.userId!);
     if (!deleted) {

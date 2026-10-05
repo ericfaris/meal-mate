@@ -215,7 +215,7 @@ export const deleteHousehold = async (req: Request, res: Response) => {
 };
 
 // Remove a member from household (admin only)
-export const removeMember = async (req: Request, res: Response) => {
+export const removeMember = async (req: Request<{ memberId: string }>, res: Response) => {
   try {
     const userId = req.userId;
     const { memberId } = req.params;

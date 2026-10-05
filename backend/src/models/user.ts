@@ -103,22 +103,18 @@ userSchema.index({ householdId: 1 });
 userSchema.index({ householdId: 1, role: 1 }); // For finding household admins with push tokens
 
 // Hash password before saving (only for local auth users)
-userSchema.pre('save', async function (next) {
+// Mongoose 9: async middleware resolves/throws instead of calling next().
+userSchema.pre('save', async function () {
   // Skip if no password or password not modified
   if (!this.passwordHash || !this.isModified('passwordHash')) {
-    return next();
+    return;
   }
 
   // Only hash if it's a local user and password is being set
   if (this.authProvider === 'local') {
-    try {
-      const salt = await bcrypt.genSalt(10);
-      this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
-    } catch (error) {
-      return next(error as Error);
-    }
+    const salt = await bcrypt.genSalt(10);
+    this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
   }
-  next();
 });
 
 // Compare password method (only for local auth users)

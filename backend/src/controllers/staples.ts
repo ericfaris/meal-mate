@@ -107,7 +107,7 @@ export const upsertStaple = async (req: Request, res: Response): Promise<void> =
 
 // DELETE /api/staples/:id
 // Only admins can delete staples (enforced by middleware for household users)
-export const deleteStaple = async (req: Request, res: Response): Promise<void> => {
+export const deleteStaple = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const user = req.user!;
     const query = await buildStaplesAccessQuery(req.userId!, user.householdId);
@@ -140,7 +140,7 @@ export const clearStaples = async (req: Request, res: Response): Promise<void> =
 };
 
 // POST /api/grocery-lists/:id/staples - Bulk-add staples to a grocery list
-export const addStaplesToGroceryList = async (req: Request, res: Response): Promise<void> => {
+export const addStaplesToGroceryList = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
   try {
     const { stapleIds } = req.body;
     if (!Array.isArray(stapleIds) || stapleIds.length === 0) {
