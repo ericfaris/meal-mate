@@ -42,3 +42,11 @@
   `sharp(svgBuffer, {density:300})` and `process.exit(0)` afterwards (it can
   keep the node process alive).
 - SVG `<title>` must escape `&` (raw `&` made sharp's parser throw).
+
+## 2026-10-05 — Renovate vs. Expo pins
+- Renovate bumped `react-native` 0.81.5→0.87.1 and gesture-handler 2.28→2.33
+  in package.json only (no lockfile update) → web image `npm ci` ERESOLVE
+  (RN 0.87 peers react ^19.2.3; Expo 54 pins react 19.1). Restored the Expo 54
+  pins; sentinel's renovate config now disables minor/major bumps of
+  react/react-native/react-native-* here. Upgrade those via an Expo SDK bump
+  (`npx expo install --fix`), never piecemeal.
