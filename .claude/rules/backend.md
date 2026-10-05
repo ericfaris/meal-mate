@@ -548,11 +548,11 @@ lists `jest@^24.9.0` under `dependencies` instead of `devDependencies`, which dr
 conflicting `node-notifier`/`is-wsl`/`semver` tree into `node_modules`. Without the
 `overrides.parse-domain.jest` entry in `package.json` (pinning it to our own top-level `jest`),
 the lockfile `npm install` writes works locally but fails `npm ci` inside the Docker build
-(`node:20-alpine`) with an EUSAGE lock-mismatch error. If you ever touch backend deps and the
+(`node:26-alpine`) with an EUSAGE lock-mismatch error. If you ever touch backend deps and the
 lab `docker compose build` (via `./scripts/lab-deploy.sh`) fails on `npm ci`, regenerate the
 lockfile *inside* the same image the Dockerfile uses before committing:
 ```bash
-docker run --rm -v "$PWD":/app -w /app node:20-alpine sh -c "rm -rf node_modules package-lock.json && npm install && rm -rf node_modules && npm ci"
+docker run --rm -v "$PWD":/app -w /app node:26-alpine sh -c "rm -rf node_modules package-lock.json && npm install && rm -rf node_modules && npm ci"
 ```
 If that fails, the override may need extending to whatever new package introduced the conflict.
 
