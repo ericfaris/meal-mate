@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,42 +8,26 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
-  Linking,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
-// WebView is only available on native platforms
-let WebView: any = null;
-if (Platform.OS !== 'web') {
-  WebView = require('react-native-webview').WebView;
-}
+import { Ionicons } from '../components/icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows, heights } from '../theme';
 import { Recipe } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { recipeImportApi } from '../services/api/recipeImport';
 import { recipePhotoImportApi } from '../services/api/recipePhotoImport';
-import * as ImagePicker from 'expo-image-picker';
 import RecipeSavedModal from '../components/RecipeSavedModal';
 import ErrorModal from '../components/ErrorModal';
 import { useAuth } from '../contexts/AuthContext';
 import { alertManager } from '../utils/alertUtils';
+import { pickImageFile } from '../utils/fileUtils';
 
 type Props = {
   route: { params?: { recipe?: Recipe; mode?: 'create' | 'edit' } };
   navigation: any;
 };
 
-type Tab = 'import' | 'browse' | 'photo' | 'manual';
-
-const DEFAULT_RECIPE_SITES = [
-  { name: 'AllRecipes', url: 'https://www.allrecipes.com' },
-  { name: 'Food Network', url: 'https://www.foodnetwork.com/recipes' },
-  { name: 'Serious Eats', url: 'https://www.seriouseats.com/recipes' },
-  { name: 'Bon Appetit', url: 'https://www.bonappetit.com/recipes' },
-  { name: 'Epicurious', url: 'https://www.epicurious.com/recipes-menus' },
-];
+type Tab = 'import' | 'photo' | 'manual';
 
 export default function RecipeEntryScreen({ route, navigation }: Props) {
   const existingRecipe = route.params?.recipe;
@@ -69,15 +53,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   // Import state
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
-
-  // Browser state
-  const webViewRef = useRef<any>(null);
-  const [browserUrl, setBrowserUrl] = useState('https://www.google.com/search?q=dinner+recipes');
-  const [currentUrl, setCurrentUrl] = useState(browserUrl);
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [canGoForward, setCanGoForward] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [savingFromBrowser, setSavingFromBrowser] = useState(false);
 
   // Form state
   const [title, setTitle] = useState(existingRecipe?.title || '');
@@ -139,26 +114,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       showError('Import Failed', message);
     } finally {
       setImporting(false);
-    }
-  };
-
-  const handleSaveFromBrowser = async () => {
-    if (!currentUrl || currentUrl === 'about:blank') {
-      showError('Error', 'Please navigate to a recipe page first');
-      return;
-    }
-
-    setSavingFromBrowser(true);
-    try {
-      const recipe = await recipeImportApi.importFromUrl(currentUrl);
-      // Show success modal instead of alert
-      setSavedRecipe(recipe);
-      setShowSuccessModal(true);
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Failed to import recipe. This page may not contain a recognized recipe format.';
-      showError('Import Failed', message);
-    } finally {
-      setSavingFromBrowser(false);
     }
   };
 
@@ -235,20 +190,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.tab, activeTab === 'browse' && styles.tabActive]}
-        onPress={() => setActiveTab('browse')}
-        disabled={isEditMode}
-      >
-        <Ionicons
-          name="globe-outline"
-          size={18}
-          color={activeTab === 'browse' ? colors.primary : colors.textMuted}
-        />
-        <Text style={[styles.tabText, activeTab === 'browse' && styles.tabTextActive]}>
-          Browse Web
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
         style={[styles.tab, activeTab === 'photo' && styles.tabActive]}
         onPress={() => setActiveTab('photo')}
         disabled={isEditMode}
@@ -318,141 +259,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       </Text>
     </View>
   );
-
-  const renderBrowseTab = () => {
-    // WebView is not available on web platform
-    if (Platform.OS === 'web') {
-      return (
-        <View style={styles.webFallbackContainer}>
-          <View style={styles.webFallbackContent}>
-            <Ionicons name="phone-portrait-outline" size={64} color={colors.textMuted} />
-            <Text style={styles.webFallbackTitle}>Browser Not Available</Text>
-            <Text style={styles.webFallbackText}>
-              The in-app browser is only available on mobile devices. On web, please use the URL import tab to paste recipe links directly.
-            </Text>
-            <TouchableOpacity
-              style={styles.webFallbackButton}
-              onPress={() => setActiveTab('import')}
-            >
-              <Ionicons name="link-outline" size={20} color={colors.textOnPrimary} />
-              <Text style={styles.webFallbackButtonText}>Go to URL Import</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.quickLinksWeb}>
-            <Text style={styles.quickLinksWebTitle}>Or visit these sites in a new tab:</Text>
-            <View style={styles.quickLinksWebGrid}>
-              {DEFAULT_RECIPE_SITES.map((site) => (
-                <TouchableOpacity
-                  key={site.name}
-                  style={styles.quickLinkWebChip}
-                  onPress={() => Linking.openURL(site.url)}
-                >
-                  <Ionicons name="open-outline" size={14} color={colors.primary} />
-                  <Text style={styles.quickLinkWebText}>{site.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.browserContainer}>
-        {/* Quick Links */}
-        <View style={styles.quickLinks}>
-          <Text style={styles.quickLinksLabel}>Quick access:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickLinksScroll}>
-            {DEFAULT_RECIPE_SITES.map((site) => (
-              <TouchableOpacity
-                key={site.name}
-                style={styles.quickLinkChip}
-                onPress={() => {
-                  setBrowserUrl(site.url);
-                  setCurrentUrl(site.url);
-                }}
-              >
-                <Text style={styles.quickLinkText}>{site.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Browser Navigation Bar */}
-        <View style={styles.browserNav}>
-          <TouchableOpacity
-            style={[styles.navButton, !canGoBack && styles.navButtonDisabled]}
-            onPress={() => webViewRef.current?.goBack()}
-            disabled={!canGoBack}
-          >
-            <Ionicons name="chevron-back" size={24} color={canGoBack ? colors.text : colors.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.navButton, !canGoForward && styles.navButtonDisabled]}
-            onPress={() => webViewRef.current?.goForward()}
-            disabled={!canGoForward}
-          >
-            <Ionicons name="chevron-forward" size={24} color={canGoForward ? colors.text : colors.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.navButton}
-            onPress={() => webViewRef.current?.reload()}
-          >
-            <Ionicons name="refresh" size={20} color={colors.text} />
-          </TouchableOpacity>
-          <View style={styles.urlBar}>
-            <Ionicons name="globe-outline" size={16} color={colors.textMuted} />
-            <Text style={styles.urlText} numberOfLines={1}>
-              {currentUrl}
-            </Text>
-          </View>
-        </View>
-
-        {/* WebView */}
-        <View style={styles.webViewContainer}>
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-          )}
-          {WebView && (
-            <WebView
-              ref={webViewRef}
-              source={{ uri: browserUrl }}
-              style={styles.webView}
-              onNavigationStateChange={(navState: any) => {
-                setCurrentUrl(navState.url);
-                setCanGoBack(navState.canGoBack);
-                setCanGoForward(navState.canGoForward);
-              }}
-              onLoadStart={() => setIsLoading(true)}
-              onLoadEnd={() => setIsLoading(false)}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
-              scalesPageToFit={true}
-            />
-          )}
-        </View>
-
-        {/* Save Recipe FAB */}
-        <TouchableOpacity
-          style={[styles.saveFab, savingFromBrowser && styles.saveFabDisabled]}
-          onPress={handleSaveFromBrowser}
-          disabled={savingFromBrowser}
-        >
-          {savingFromBrowser ? (
-            <ActivityIndicator size="small" color={colors.textOnPrimary} />
-          ) : (
-            <>
-              <Ionicons name="bookmark" size={20} color={colors.textOnPrimary} />
-              <Text style={styles.saveFabText}>Import This Page</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   const renderManualTab = () => (
     <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
@@ -626,57 +432,16 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
     </ScrollView>
   );
 
-  const handleTakePhoto = async () => {
+  const handlePickImage = async () => {
     try {
-      console.log('[Photo] Requesting camera permissions...');
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      console.log('[Photo] Camera permission status:', status);
-      if (status !== 'granted') {
-        showError('Permission Required', 'Camera permission is needed to take photos.');
-        return;
-      }
-
-      console.log('[Photo] Launching camera...');
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        quality: 0.8,
-      });
-
-      console.log('[Photo] Camera result:', { cancelled: result.canceled, assets: result.assets?.length });
-      if (!result.canceled && result.assets[0]) {
-        console.log('[Photo] Photo captured, URI:', result.assets[0].uri.substring(0, 80) + '...');
-        setPhotoUri(result.assets[0].uri);
+      const uri = await pickImageFile();
+      if (uri) {
+        console.log('[Photo] Image selected');
+        setPhotoUri(uri);
       }
     } catch (error: any) {
-      console.error('[Photo] Camera error:', error);
-      showError('Camera Error', error.message || 'Failed to take photo');
-    }
-  };
-
-  const handlePickFromGallery = async () => {
-    try {
-      console.log('[Photo] Requesting media library permissions...');
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      console.log('[Photo] Media library permission status:', status);
-      if (status !== 'granted') {
-        showError('Permission Required', 'Photo library permission is needed to select photos.');
-        return;
-      }
-
-      console.log('[Photo] Launching image picker...');
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.8,
-      });
-
-      console.log('[Photo] Picker result:', { cancelled: result.canceled, assets: result.assets?.length });
-      if (!result.canceled && result.assets[0]) {
-        console.log('[Photo] Image selected, URI:', result.assets[0].uri.substring(0, 80) + '...');
-        setPhotoUri(result.assets[0].uri);
-      }
-    } catch (error: any) {
-      console.error('[Photo] Gallery error:', error);
-      showError('Gallery Error', error.message || 'Failed to pick photo');
+      console.error('[Photo] Picker error:', error);
+      showError('Image Error', error.message || 'Failed to choose image');
     }
   };
 
@@ -722,29 +487,18 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       <View style={styles.importHeader}>
         <Text style={styles.importTitle}>Import from Photo</Text>
         <Text style={styles.importSubtitle}>
-          Take a photo of a recipe or choose one from your gallery
+          Choose a photo of a recipe card, cookbook page, or screenshot
         </Text>
       </View>
 
       <View style={styles.photoButtonRow}>
-        {Platform.OS !== 'web' && (
-          <TouchableOpacity
-            style={[styles.photoButton, extracting && styles.importButtonDisabled]}
-            onPress={handleTakePhoto}
-            disabled={extracting}
-          >
-            <Ionicons name="camera" size={24} color={colors.primary} />
-            <Text style={styles.photoButtonText}>Take Photo</Text>
-          </TouchableOpacity>
-        )}
-
         <TouchableOpacity
           style={[styles.photoButton, extracting && styles.importButtonDisabled]}
-          onPress={handlePickFromGallery}
+          onPress={handlePickImage}
           disabled={extracting}
         >
           <Ionicons name="images" size={24} color={colors.primary} />
-          <Text style={styles.photoButtonText}>{Platform.OS === 'web' ? 'Choose Image' : 'Gallery'}</Text>
+          <Text style={styles.photoButtonText}>Choose Image</Text>
         </TouchableOpacity>
       </View>
 
@@ -795,8 +549,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
     switch (activeTab) {
       case 'import':
         return renderImportTab();
-      case 'browse':
-        return renderBrowseTab();
       case 'photo':
         return renderPhotoTab();
       case 'manual':
@@ -833,7 +585,6 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
       {!isEditMode && renderTabs()}
@@ -995,181 +746,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  // Browse Tab
-  browserContainer: {
-    flex: 1,
-  },
-  browserNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: spacing.xs,
-  },
-  navButton: {
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
-  },
-  navButtonDisabled: {
-    opacity: 0.4,
-  },
-  urlBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    gap: spacing.xs,
-  },
-  urlText: {
-    flex: 1,
-    fontSize: typography.sizes.small,
-    color: colors.textLight,
-  },
-  quickLinks: {
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  quickLinksLabel: {
-    fontSize: typography.sizes.tiny,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  quickLinksScroll: {
-    gap: spacing.sm,
-  },
-  quickLinkChip: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-  },
-  quickLinkText: {
-    fontSize: typography.sizes.small,
-    color: colors.primary,
-    fontWeight: typography.weights.medium,
-  },
-  webViewContainer: {
-    flex: 1,
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderTopWidth: 0,
-  },
-  webView: {
-    flex: 1,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  saveFab: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    left: spacing.lg,
-    right: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    ...shadows.floating,
-  },
-  saveFabDisabled: {
-    backgroundColor: colors.textMuted,
-  },
-  saveFabText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.bold,
-    color: colors.textOnPrimary,
-  },
-  // Web Fallback (when WebView is not available)
-  webFallbackContainer: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  webFallbackContent: {
-    alignItems: 'center',
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
-  },
-  webFallbackTitle: {
-    fontSize: typography.sizes.h2,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  webFallbackText: {
-    fontSize: typography.sizes.body,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  webFallbackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    ...shadows.button,
-  },
-  webFallbackButtonText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold,
-    color: colors.textOnPrimary,
-  },
-  quickLinksWeb: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    ...shadows.card,
-  },
-  quickLinksWebTitle: {
-    fontSize: typography.sizes.small,
-    color: colors.textLight,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  quickLinksWebGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  quickLinkWebChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-  },
-  quickLinkWebText: {
-    fontSize: typography.sizes.small,
-    color: colors.primary,
-    fontWeight: typography.weights.medium,
   },
   // Manual Tab
   formContainer: {

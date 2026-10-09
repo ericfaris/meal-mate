@@ -6,20 +6,12 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  Dimensions,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
-
-// Try to import confetti cannon (may not be available)
-let ConfettiCannon: any = null;
-try {
-  ConfettiCannon = require('react-native-confetti-cannon').default;
-} catch (e) {
-  // Confetti not available
-}
+import { celebrate } from '../utils/confetti';
 
 interface Props {
   visible: boolean;
@@ -30,8 +22,6 @@ interface Props {
   simple?: boolean; // For edits - no confetti, simpler messaging
   notification?: boolean; // For ephemeral notifications - auto-dismiss, no interaction
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Encouraging messages to rotate through
 const CELEBRATION_MESSAGES = [
@@ -60,7 +50,6 @@ export default function RecipeSavedModal({
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const confettiRef = useRef<any>(null);
 
   // Pick a random celebration message and emoji
   const celebrationMessage = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
@@ -98,7 +87,7 @@ export default function RecipeSavedModal({
       // Trigger confetti after a short delay (only for non-simple, non-notification mode)
       if (!simple && !notification) {
         setTimeout(() => {
-          confettiRef.current?.start();
+          celebrate([colors.primary, colors.secondary, colors.success, '#FFD700', '#FF6B6B'], 80);
         }, 200);
       }
 
@@ -121,19 +110,6 @@ export default function RecipeSavedModal({
       onRequestClose={notification ? undefined : onClose}
     >
       <View style={[styles.overlay, notification && styles.notificationOverlay]}>
-        {/* Confetti - only for non-simple mode */}
-        {!simple && ConfettiCannon && (
-          <ConfettiCannon
-            ref={confettiRef}
-            count={80}
-            origin={{ x: SCREEN_WIDTH / 2, y: -20 }}
-            fadeOut
-            autoStart={false}
-            fallSpeed={2500}
-            colors={[colors.primary, colors.secondary, colors.success, '#FFD700', '#FF6B6B']}
-          />
-        )}
-
         <Animated.View
           style={[
             styles.modalContainer,

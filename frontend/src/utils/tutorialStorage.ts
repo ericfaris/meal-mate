@@ -1,5 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 const PLANNER_TUTORIAL_KEY = 'planner_tutorial_completed';
 
 /**
@@ -7,7 +5,7 @@ const PLANNER_TUTORIAL_KEY = 'planner_tutorial_completed';
  */
 export const hasPlannerTutorialCompleted = async (): Promise<boolean> => {
   try {
-    const value = await AsyncStorage.getItem(PLANNER_TUTORIAL_KEY);
+    const value = localStorage.getItem(PLANNER_TUTORIAL_KEY);
     return value === 'true';
   } catch (error) {
     console.error('Error checking tutorial status:', error);
@@ -20,7 +18,7 @@ export const hasPlannerTutorialCompleted = async (): Promise<boolean> => {
  */
 export const setPlannerTutorialCompleted = async (): Promise<void> => {
   try {
-    await AsyncStorage.setItem(PLANNER_TUTORIAL_KEY, 'true');
+    localStorage.setItem(PLANNER_TUTORIAL_KEY, 'true');
   } catch (error) {
     console.error('Error setting tutorial status:', error);
   }
@@ -31,7 +29,7 @@ export const setPlannerTutorialCompleted = async (): Promise<void> => {
  */
 export const resetPlannerTutorial = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(PLANNER_TUTORIAL_KEY);
+    localStorage.removeItem(PLANNER_TUTORIAL_KEY);
   } catch (error) {
     console.error('Error resetting tutorial:', error);
   }

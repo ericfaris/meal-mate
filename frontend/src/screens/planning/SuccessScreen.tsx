@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Share,
-  Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, CommonActions } from '@react-navigation/native';
@@ -15,14 +14,8 @@ import { Plan } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { formatDateString } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { celebrate } from '../../utils/confetti';
 
-// Conditionally import confetti if available
-let ConfettiCannon: any = null;
-try {
-  ConfettiCannon = require('react-native-confetti-cannon').default;
-} catch (e) {
-  // Library not installed, will skip confetti
-}
 
 type SuccessScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -44,13 +37,9 @@ export default function SuccessScreen({ navigation, route }: Props) {
   const shouldConstrainWidth = width > contentMaxWidth + 96;
 
   const { plans } = route.params;
-  const confettiRef = useRef<any>(null);
-
   useEffect(() => {
     // Shoot confetti on mount
-    if (confettiRef.current) {
-      confettiRef.current.start();
-    }
+    celebrate([colors.primary, colors.secondary, colors.success, '#FFD700']);
   }, []);
 
   const formatDate = (dateStr: string): string => {
@@ -110,18 +99,6 @@ export default function SuccessScreen({ navigation, route }: Props) {
   return (
     <View style={[styles.outerContainer, shouldConstrainWidth && styles.desktopOuter]}>
       <View style={[styles.container, shouldConstrainWidth && styles.desktopContent, shouldConstrainWidth && { maxWidth: contentMaxWidth }]}>
-      {/* Confetti */}
-      {ConfettiCannon && (
-        <ConfettiCannon
-          ref={confettiRef}
-          count={100}
-          origin={{ x: -10, y: 0 }}
-          autoStart={true}
-          fadeOut={true}
-          colors={[colors.primary, colors.secondary, colors.success, '#FFD700']}
-        />
-      )}
-
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Success Message */}
         <View style={styles.successContainer}>

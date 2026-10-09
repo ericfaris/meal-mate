@@ -9,7 +9,7 @@ const ASSETS_DIR = path.join(__dirname, '..', 'assets');
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const ICONS_DIR = path.join(PUBLIC_DIR, 'icons');
 
-// Splash/theme background from app.config.js (iOS ignores transparency, so
+// Theme background, matching manifest.json (iOS ignores transparency, so
 // maskable + apple-touch icons are flattened onto this).
 const BACKGROUND = '#FDFAF6';
 // Icon artwork is full-bleed terracotta; maskable padding must match it.

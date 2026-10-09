@@ -50,3 +50,30 @@
   pins; sentinel's renovate config now disables minor/major bumps of
   react/react-native/react-native-* here. Upgrade those via an Expo SDK bump
   (`npx expo install --fix`), never piecemeal.
+
+## 2026-10-08 — Expo removed; frontend is Vite + react-native-web
+- Expo was only the web bundler by now (native app gone), and it dragged ~50
+  audit findings (metro/jest/@expo/cli chain) along. Vite 8 + an
+  `react-native` → `react-native-web` alias builds the same app in ~0.2s.
+- **`.npmrc` `legacy-peer-deps=true` is load-bearing**: React Navigation and
+  react-native-screens peer on `react-native`; without it npm auto-installs
+  real RN and its vulnerable toolchain. Types come from `@types/react-native`
+  0.72.8 (last release with real typings).
+- **RN libraries `require('./x.png')` even in their ESM builds** (React
+  Navigation's header back arrow). Vite silently drops these; no error, the
+  arrow just vanishes. `vite.config.mts`'s `rnAssetRequires` plugin rewrites
+  them, and it must also run in `optimizeDeps.rolldownOptions.plugins` or dev
+  mode still loses them.
+- **Flow-source packages don't bundle** (react-native-confetti-cannon ships
+  raw Flow); replaced with canvas-confetti.
+- **Correction to the 2026-09 font lesson**: `Text.defaultProps` is ignored
+  for function components under React 19, so the Karla default never applied
+  (live site renders body text in the system font). Still unfixed.
+- Auth keys in localStorage (`auth_token`, `user_data`) match what
+  AsyncStorage-web wrote, so the switch doesn't log users out; a unit test
+  pins them.
+- `.expo/` had been committed despite the gitignore entry; `git ls-files`
+  before trusting `.gitignore`.
+- The 2026-10-05 Renovate rule (no minor/major react/react-native bumps)
+  was there for Expo pins; react can be upgraded freely now, but RNW and
+  React Navigation still need their own peer ranges checked.

@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { imageSearchApi, SearchImage, ImageSource } from '../services/api/imageSearch';
 

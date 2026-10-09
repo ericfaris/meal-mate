@@ -8,7 +8,7 @@ import {
   Animated,
   Pressable,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 
 interface ActionOption {

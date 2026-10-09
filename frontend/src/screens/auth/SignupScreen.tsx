@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,7 +67,7 @@ export default function SignupScreen({ onNavigateToLogin }: SignupScreenProps) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="height"
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}

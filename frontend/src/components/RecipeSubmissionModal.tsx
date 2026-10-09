@@ -8,7 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { submissionApi } from '../services/api';
 import { alertManager } from '../utils/alertUtils';

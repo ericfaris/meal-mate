@@ -55,13 +55,13 @@ export const typography = {
   // gracefully to synthetic/system bolding where a platform doesn't apply
   // it to a custom font. See DESIGN.md "Type" for the full rationale.
   families: {
-    display: 'Fraunces-Regular',   // registered name passed to useFonts()
+    display: 'Fraunces-Regular',   // @font-face family name (index.html)
     body: 'Karla-Regular',
-    // Files loaded via expo-font in App.tsx; also self-hosted as .woff2
-    // under frontend/public/fonts/ for the web PWA + showcase page.
+    // Self-hosted .woff2 files, loaded via @font-face in index.html,
+    // from frontend/public/fonts/ (also used by the showcase page).
     files: {
-      display: '../assets/fonts/Fraunces-Regular.ttf',
-      body: '../assets/fonts/Karla-Regular.ttf',
+      display: '/fonts/Fraunces-Regular.woff2',
+      body: '/fonts/Karla-Regular.woff2',
     },
   },
   weights: {

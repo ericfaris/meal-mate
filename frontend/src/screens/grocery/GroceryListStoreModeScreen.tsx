@@ -11,8 +11,8 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
+import { Ionicons } from '../../components/icons/Ionicons';
+import { Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import { getStoreAsset } from '../../utils/storeAssets';

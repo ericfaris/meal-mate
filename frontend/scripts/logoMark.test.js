@@ -4,16 +4,15 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
-const { PATHS, COLORS, markGroup, iconSVG, splashSVG } = require('./logoMark');
+const { PATHS, COLORS, markGroup, iconSVG } = require('./logoMark');
 
 const root = path.join(__dirname, '..');
 
-test('SVG builders are well-formed, use the brand colors, and ink is a single colour', () => {
-  for (const svg of [iconSVG(64), splashSVG(300, 600)]) {
-    assert.match(svg, /^<svg[\s\S]*<\/svg>$/);
-    assert.ok(svg.includes(COLORS.primary));
-    assert.ok(svg.includes(COLORS.cream));
-  }
+test('SVG builder is well-formed, uses the brand colors, and ink is a single colour', () => {
+  const svg = iconSVG(64);
+  assert.match(svg, /^<svg[\s\S]*<\/svg>$/);
+  assert.ok(svg.includes(COLORS.primary));
+  assert.ok(svg.includes(COLORS.cream));
   // Mark itself is one ink colour (sage is too faint on terracotta).
   const mark = markGroup();
   assert.ok(!mark.includes(COLORS.secondary));
@@ -71,8 +70,6 @@ test('16px favicon still shows both knobs (regression: details closing up)', asy
 test('generated raster assets have expected sizes', async () => {
   const expected = {
     'assets/icon.png': [1024, 1024],
-    'assets/adaptive-icon.png': [1024, 1024],
-    'assets/splash.png': [1284, 2778],
     'assets/favicon.png': [48, 48],
     'public/icons/icon-192.png': [192, 192],
     'public/icons/icon-512.png': [512, 512],

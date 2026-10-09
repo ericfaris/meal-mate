@@ -3,8 +3,8 @@
 //      service-worker registration snippet into dist/index.html.
 //   2. Stamp the app version into dist/service-worker.js (replacing the
 //      __APP_VERSION__ placeholder) so releases bust the old cache.
-// Node, no dependencies. Metro's web bundler does not emit any of this, so it
-// must be wired in explicitly. Fails loudly if the build looks wrong — a
+// Node, no dependencies. Vite copies public/ into dist/ but doesn't wire up
+// the manifest or service worker, so that's done here. Fails loudly if the build looks wrong — a
 // silent no-op would ship a site that works but isn't installable.
 const fs = require('fs');
 const path = require('path');

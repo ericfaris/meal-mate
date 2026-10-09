@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Text, TextInput } from 'react-native';
-import { Linking } from 'react-native';
-import Constants from 'expo-constants';
-import { useFonts } from 'expo-font';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
@@ -16,13 +12,10 @@ import InfoModal, { InfoModalRef } from './src/components/InfoModal';
 import ActionSheetModal, { ActionSheetModalRef } from './src/components/ActionSheetModal';
 import { alertManager } from './src/utils/alertUtils';
 import { colors } from './src/theme';
-
-// Get version info from app config
-const appVersion = Constants.expoConfig?.extra?.appVersion || Constants.expoConfig?.version || '1.0.0';
-const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
+import { APP_VERSION, BUILD_NUMBER } from './src/config/version';
 
 // Log version at startup
-console.log(`\n🍽️  Meal Mate v${appVersion} (build ${buildNumber})`);
+console.log(`\n🍽️  Meal Mate v${APP_VERSION} (build ${BUILD_NUMBER})`);
 console.log('━'.repeat(50));
 
 // Design system: apply the body face (Karla) as the app-wide default so the
@@ -77,7 +70,8 @@ function AppContent() {
     <NavigationContainer
       ref={navigationRef}
       linking={{
-        prefixes: ['exp://localhost:8081', 'mealmate://'],
+        // Web linking reads the browser URL directly; prefixes are unused.
+        prefixes: [],
         config: {
           screens: {
             Main: {
@@ -92,18 +86,8 @@ function AppContent() {
             },
           },
         },
-        async getInitialURL() {
-          const url = await Linking.getInitialURL();
-          return url;
-        },
-        subscribe(listener) {
-          const onReceiveURL = ({ url }: { url: string }) => listener(url);
-          const subscription = Linking.addEventListener('url', onReceiveURL);
-          return () => subscription?.remove();
-        },
       }}
     >
-      <StatusBar style="light" />
       <BottomTabNavigator />
       
       {/* Global Alert Modals */}
@@ -117,19 +101,7 @@ function AppContent() {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    'Fraunces-Regular': require('./assets/fonts/Fraunces-Regular.ttf'),
-    'Karla-Regular': require('./assets/fonts/Karla-Regular.ttf'),
-  });
-
-  if (!fontsLoaded) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
+  // Fonts (Karla, Fraunces, Ionicons) load via @font-face in index.html.
   return (
     <AuthProvider>
       <AppContent />

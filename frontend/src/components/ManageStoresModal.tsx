@@ -10,8 +10,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius } from '../theme';
 import { Store } from '../types';
 import { storesApi } from '../services/api/stores';

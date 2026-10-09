@@ -12,7 +12,7 @@ import {
   Clipboard,
   Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from './icons/Ionicons';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { householdApi, submissionApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';

@@ -1,7 +1,6 @@
 // API base URL configuration
-// Development: localhost (web) or WiFi IP (mobile)
-// Production: EXPO_PUBLIC_API_URL baked in by docker-compose.yml build arg
-import { Platform } from 'react-native';
+// Development (vite dev server): local backend on :3001
+// Production: VITE_API_URL baked in by the docker-compose.yml build arg
 import axios, { AxiosInstance } from 'axios';
 import { getToken, clearAuth } from '../services/storage';
 
@@ -12,26 +11,18 @@ export const setAuthExpiredCallback = (callback: (() => void) | null) => {
   authExpiredCallback = callback;
 };
 
-// Development URLs
-const DEV_WEB_URL = 'http://localhost:3001';
-const DEV_MOBILE_URL = 'http://192.168.0.111:3001';
+const DEV_URL = 'http://localhost:3001';
 
-// Fallback for release builds if EXPO_PUBLIC_API_URL is missing from the
-// build profile - a release APK must never point at the LAN dev server
+// Fallback for production builds if VITE_API_URL is missing from the build
+// args - a release build must never point at the local dev server
 const PROD_URL = 'https://mealmate-api.mooseflip.com';
 
-const getApiUrl = () => {
-  // Release builds: use EXPO_PUBLIC_API_URL, fall back to production URL
-  if (!__DEV__) {
-    return process.env.EXPO_PUBLIC_API_URL || PROD_URL;
-  }
-
-  // Development: web uses localhost, mobile uses WiFi IP
-  if (Platform.OS === 'web') {
-    return DEV_WEB_URL;
-  }
-  return DEV_MOBILE_URL;
+export const resolveApiUrl = (isDev: boolean, configuredUrl?: string): string => {
+  if (isDev) return DEV_URL;
+  return configuredUrl || PROD_URL;
 };
+
+const getApiUrl = () => resolveApiUrl(__DEV__, import.meta.env.VITE_API_URL);
 
 export const API_BASE_URL = getApiUrl();
 

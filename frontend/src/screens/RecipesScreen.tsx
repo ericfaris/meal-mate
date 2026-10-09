@@ -9,8 +9,8 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from '../components/icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { recipeApi } from '../services/api';
 import { Recipe } from '../types';
