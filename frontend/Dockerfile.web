@@ -4,10 +4,10 @@ WORKDIR /app
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
-# vite.config.mts bakes these into the bundle (Settings screen version).
-ARG APP_VERSION=dev
-ARG BUILD_NUMBER=0
-ENV APP_VERSION=${APP_VERSION} BUILD_NUMBER=${BUILD_NUMBER}
+# Repo-root version.json (compose `additional_contexts: repo`) is the version
+# source: vite.config.mts reads ../version.json and inject-pwa.js reads
+# ../../version.json, both resolving to /version.json from /app.
+COPY --from=repo version.json /version.json
 
 COPY package*.json .npmrc ./
 RUN npm ci
@@ -22,8 +22,8 @@ RUN node scripts/inject-pwa.js
 # Production stage
 FROM nginx:alpine
 RUN apk update && apk upgrade --no-cache
-ARG APP_VERSION=1.0.0
-ARG BUILD_NUMBER=1
+# Optional: only feeds the image label (lab-deploy.sh passes it).
+ARG APP_VERSION=unknown
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template

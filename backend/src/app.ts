@@ -14,8 +14,10 @@ import groceryListRoutes from './routes/groceryList';
 import stapleRoutes from './routes/staples';
 import storeRoutes from './routes/stores';
 import { authenticate } from './middleware/auth';
+import { readVersionInfo } from './utils/version';
 
 export const createApp = (): Express => {
+  const versionInfo = readVersionInfo();
   const app = express();
 
   // Trust first proxy hop (Cloudflare Tunnel) so express-rate-limit and
@@ -58,8 +60,7 @@ export const createApp = (): Express => {
   // Version endpoint (public)
   app.get('/api/version', (_req: Request, res: Response) => {
     res.json({
-      version: process.env.APP_VERSION || '1.0.0',
-      buildNumber: parseInt(process.env.BUILD_NUMBER || '1', 10),
+      ...versionInfo,
       environment: process.env.NODE_ENV || 'development',
     });
   });

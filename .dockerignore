@@ -1,0 +1,5 @@
+# Root build context = compose `additional_contexts: repo` (see
+# docker-compose.yml). Images only need version.json from here; never send
+# .env, node_modules or anything else.
+*
+!version.json

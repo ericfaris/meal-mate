@@ -34,7 +34,10 @@ MongoDB Atlas (Cloud Database)
 **Deployment**: self-hosted Docker lab (root `docker-compose.yml`, two
 containers — `web` on host 8600, `api` on host 8601) exposed publicly through
 the shared Cloudflare Tunnel. Secrets come from an uncommitted root `.env`.
-Deploy with `./scripts/lab-deploy.sh`. (The Railway project was deleted
+**Pushing to `main` deploys automatically**: `test.yml`'s `deploy` job (self-hosted
+runner) calls sentinel's `/api/deploy` after tests pass. `./scripts/lab-deploy.sh`
+is only for a manual redeploy; don't run it right after a push or the two
+`docker compose up --build` runs collide. (The Railway project was deleted
 2026-07-15 — no rollback path remains.)
 
 ### Design Patterns
@@ -315,14 +318,16 @@ The project uses a **single source of truth** for versioning across all platform
 ### Version Flow
 
 ```
-version.json (source of truth)
-    ├── scripts/lab-deploy.sh → docker compose build args (APP_VERSION, BUILD_NUMBER)
-    │   └── Local Docker images (ericfaris/meal-mate-{backend,web}:latest, version labels)
-    │       └── Backend ENV: APP_VERSION, BUILD_NUMBER
-    │           └── GET /api/version endpoint (https://mealmate-api.mooseflip.com)
+version.json (source of truth, copied into both images via compose
+             `additional_contexts: repo` — any `docker compose build` is stamped)
+    ├── backend/Dockerfile → /app/version.json
+    │   └── src/utils/version.ts → GET /api/version + startup log
     │
-    └── same build args → vite.config.mts → web PWA build (Dockerfile.web)
-        └── Settings Screen display (src/config/version.ts)
+    └── frontend/Dockerfile.web → /version.json
+        ├── vite.config.mts (vite/readVersion.ts) → Settings screen (src/config/version.ts)
+        └── scripts/inject-pwa.js → service-worker cache name
+
+APP_VERSION (set by lab-deploy.sh) only feeds the images' OCI version label.
 ```
 
 ### Bumping Versions
@@ -348,24 +353,25 @@ node scripts/bump-version.js --set 1.0.0
 | **Backend API** | `GET /api/version` at `https://mealmate-api.mooseflip.com/api/version` returns `{ version, buildNumber, environment }` |
 | **Docker Image** | Built locally by `docker-compose.yml` as `ericfaris/meal-mate-{backend,web}:latest` with OCI version labels |
 | **Web PWA** | Settings screen shows "Version 0.13.20 (170)" at `https://mealmate.mooseflip.com` |
-| **Lab (self-hosted)** | Runs the images built by the last `./scripts/lab-deploy.sh` on this box, behind the shared Cloudflare Tunnel |
+| **Lab (self-hosted)** | Runs the images built by the last deploy (sentinel auto-deploy or `./scripts/lab-deploy.sh`), behind the shared Cloudflare Tunnel |
 
 ### Release Workflow
 
 1. Make changes and test locally
 2. Run `node scripts/bump-version.js patch` (or minor/major)
 3. Commit changes including updated `version.json`
-4. Push to `main` branch
-5. Deploy on the self-hosted Docker lab (this machine): pull/checkout the commit, then run `./scripts/lab-deploy.sh` (which stamps `APP_VERSION`/`BUILD_NUMBER` from `version.json` and runs `docker compose up -d --build`). Secrets come from the uncommitted root `.env` (see `.env.example`).
+4. Push to `main` branch (or merge the PR). That deploys: the `Tests` workflow's `deploy` job asks sentinel to pull and `docker compose up -d --build` on the lab. Watch it with `gh run list --limit 3`.
+5. Only if you need a manual redeploy (nothing pushed): `./scripts/lab-deploy.sh`. Never run it while an auto-deploy is in flight. Secrets come from the uncommitted root `.env` (see `.env.example`).
 6. Verify the deploy with `GET https://mealmate-api.mooseflip.com/api/version` (should report the new version and `environment: production`). The public web PWA is at `https://mealmate.mooseflip.com`, both exposed via the shared Cloudflare Tunnel.
 
 The app ships solely as the web PWA. The native (EAS Android/iOS) build path and its GitHub Actions workflows were removed in the PWA migration.
 
 ### CI/CD Pipelines
 
-Deployment is no longer driven by GitHub Actions. The backend and web images are
-built locally on the Docker lab via `./scripts/lab-deploy.sh` (`docker compose up
--d --build`). The former `docker-build.yml` / `web-build.yml` (Docker Hub push)
+`.github/workflows/test.yml` runs backend tests on PRs and pushes; on push to
+`main` its `deploy` job (self-hosted `lab` runner) calls sentinel's
+`POST http://127.0.0.1:7891/api/deploy {"repo":"meal-mate"}`, which pulls and
+runs `docker compose up -d --build` on this box. The former `docker-build.yml` / `web-build.yml` (Docker Hub push)
 and `eas-android-build.yml` / `eas-ios-build.yml` (native EAS build) workflows
 have all been removed.
 
@@ -398,7 +404,8 @@ self-hosted Docker lab via the root `docker-compose.yml`. There is no native
 (Android/iOS) build path and no Expo anymore.
 
 ```bash
-# From the repo root, build + (re)start the lab stack (stamps version.json):
+# Normal path: push to main (auto-deploys via sentinel).
+# Manual redeploy from the repo root (nothing pushed / in flight):
 ./scripts/lab-deploy.sh          # docker compose up -d --build
 
 # The web build bakes VITE_API_URL=https://mealmate-api.mooseflip.com
@@ -696,7 +703,7 @@ Recent changes:
 - `/help` - Claude Code help
 - Report issues: https://github.com/anthropics/claude-code/issues
 - Project issues: Create in this repository
-- **Deployment**: the app is self-hosted on Eric's Docker lab (this machine) behind the shared Cloudflare Tunnel — web PWA at `https://mealmate.mooseflip.com`, API at `https://mealmate-api.mooseflip.com`. Redeploy with `./scripts/lab-deploy.sh`.
+- **Deployment**: the app is self-hosted on Eric's Docker lab (this machine) behind the shared Cloudflare Tunnel — web PWA at `https://mealmate.mooseflip.com`, API at `https://mealmate-api.mooseflip.com`. Pushing to `main` auto-deploys; `./scripts/lab-deploy.sh` is the manual fallback.
 
 ---
 
