@@ -1,31 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  View,
-  Platform,
-} from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
+import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { GoogleOAuthProvider, GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { colors, borderRadius, spacing, shadows } from '../../theme';
 import {
   GoogleConfig,
   getGoogleConfig,
-  configureGoogleSignIn,
   handleGoogleSignIn,
   GoogleAuthResponse,
 } from '../../services/auth/google';
 import { alertManager } from '../../utils/alertUtils';
-
-// Web-only imports
-let GoogleOAuthProvider: any;
-let GoogleLogin: any;
-if (Platform.OS === 'web') {
-  const googleOAuth = require('@react-oauth/google');
-  GoogleOAuthProvider = googleOAuth.GoogleOAuthProvider;
-  GoogleLogin = googleOAuth.GoogleLogin;
-}
 
 interface GoogleSignInButtonProps {
   onSuccess: (response: GoogleAuthResponse) => void;
@@ -36,13 +19,11 @@ interface GoogleSignInButtonProps {
 export default function GoogleSignInButton({
   onSuccess,
   onError,
-  disabled = false,
 }: GoogleSignInButtonProps) {
   const [config, setConfig] = useState<GoogleConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch and configure Google Sign-In on mount
+  // Fetch the Google client ID from the backend on mount
   useEffect(() => {
     loadConfig();
   }, []);
@@ -53,37 +34,12 @@ export default function GoogleSignInButton({
 
     if (googleConfig && googleConfig.webClientId) {
       setConfig(googleConfig);
-      // Configure Google Sign-In with the fetched config
-      configureGoogleSignIn(googleConfig);
     }
 
     setConfigLoading(false);
   };
 
-  // Native platform handler
-  const handlePressNative = async () => {
-    setIsLoading(true);
-    try {
-      const result = await handleGoogleSignIn(config || undefined);
-      onSuccess(result);
-    } catch (error: any) {
-      console.error('Google Sign-In error:', error);
-      onError?.(error);
-
-      if (error.message !== 'Sign-in was cancelled') {
-        alertManager.showError({
-          title: 'Sign-In Failed',
-          message: error.message || 'Could not sign in with Google',
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Web platform handler
-  const handleWebSuccess = async (credentialResponse: any) => {
-    setIsLoading(true);
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       const credential = credentialResponse.credential;
       if (!credential) {
@@ -98,12 +54,10 @@ export default function GoogleSignInButton({
         title: 'Sign-In Failed',
         message: error.message || 'Could not sign in with Google',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleWebError = () => {
+  const handleError = () => {
     console.error('Google Sign-In failed');
     onError?.(new Error('Google Sign-In failed'));
   };
@@ -121,52 +75,21 @@ export default function GoogleSignInButton({
     return null;
   }
 
-  // Web platform: Use @react-oauth/google
-  if (Platform.OS === 'web' && GoogleOAuthProvider && GoogleLogin) {
-    return (
-      <GoogleOAuthProvider clientId={config.webClientId}>
-        <View style={styles.webContainer}>
-          <GoogleLogin
-            onSuccess={handleWebSuccess}
-            onError={handleWebError}
-            useOneTap
-            theme="outline"
-            size="large"
-            text="continue_with"
-            shape="rectangular"
-          />
-        </View>
-      </GoogleOAuthProvider>
-    );
-  }
-
-  // Native platforms: Use TouchableOpacity button
-  const isDisabled = disabled || isLoading;
-
   return (
-    <TouchableOpacity
-      style={[styles.button, isDisabled && styles.buttonDisabled]}
-      onPress={handlePressNative}
-      disabled={isDisabled}
-      activeOpacity={0.8}
-    >
-      {isLoading ? (
-        <ActivityIndicator size="small" color={colors.text} />
-      ) : (
-        <>
-          <View style={styles.iconContainer}>
-            <GoogleIcon />
-          </View>
-          <Text style={styles.buttonText}>Continue with Google</Text>
-        </>
-      )}
-    </TouchableOpacity>
+    <GoogleOAuthProvider clientId={config.webClientId}>
+      <View style={styles.webContainer}>
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={handleError}
+          useOneTap
+          theme="outline"
+          size="large"
+          text="continue_with"
+          shape="rectangular"
+        />
+      </View>
+    </GoogleOAuthProvider>
   );
-}
-
-// Google "G" icon component
-function GoogleIcon() {
-  return <FontAwesome name="google" size={16} color="#4285F4" />;
 }
 
 const styles = StyleSheet.create({
@@ -188,13 +111,5 @@ const styles = StyleSheet.create({
   webContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconContainer: {
-    marginRight: spacing.sm,
-  },
-  buttonText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium,
-    color: colors.text,
   },
 });

@@ -1,8 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '../components/icons/Ionicons';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useResponsive } from '../hooks/useResponsive';
@@ -221,8 +221,8 @@ function TabNavigator() {
       borderTopColor: colors.border,
       borderTopWidth: 1,
       paddingTop: spacing.xs,
-      paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
-      height: Platform.OS === 'ios' ? 85 : 60,
+      paddingBottom: spacing.sm,
+      height: 60,
     };
 
     // On desktop/web with wide screens, center the tab bar content

@@ -44,7 +44,7 @@ services:
       args:
         APP_VERSION: ${APP_VERSION:-dev}
         BUILD_NUMBER: ${BUILD_NUMBER:-0}
-        EXPO_PUBLIC_API_URL: https://mealmate-api.mooseflip.com
+        VITE_API_URL: https://mealmate-api.mooseflip.com
     image: ericfaris/meal-mate-web:latest
     restart: unless-stopped
     # nginx master needs root to bind :80 and manage workers; drop everything

@@ -57,23 +57,4 @@ function iconSVG(size, { scale = 1, background = COLORS.primary, radius = 0, cut
 </svg>`;
 }
 
-// Splash: cream background, badge mark + wordmark + tagline.
-function splashSVG(width, height) {
-  const badge = 360;
-  const x = (width - badge) / 2;
-  const y = (height - badge) / 2 - 140;
-  const cx = width / 2;
-  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="${width}" height="${height}" fill="${COLORS.background}"/>
-  <g transform="translate(${x}, ${y})">
-    <rect width="${badge}" height="${badge}" rx="${badge * 0.225}" fill="${COLORS.primary}"/>
-    <g transform="translate(${badge * 0.1}, ${badge * 0.1}) scale(${(badge * 0.8) / 100})">
-    ${markGroup()}
-    </g>
-  </g>
-  <text x="${cx}" y="${y + badge + 110}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="92" font-weight="bold" fill="${COLORS.primary}">Meal Mate</text>
-  <text x="${cx}" y="${y + badge + 175}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-style="italic" fill="#666666">Plan your week, love your meals</text>
-</svg>`;
-}
-
-module.exports = { COLORS, PATHS, markGroup, iconSVG, splashSVG };
+module.exports = { COLORS, PATHS, markGroup, iconSVG };

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 import { colors, typography, spacing } from '../../theme';
 
 const INK = '#FDFAF6';
@@ -92,16 +91,18 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
   const inset = variant === 'light' ? 'translate(0 0)' : 'translate(6 6) scale(0.88)';
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
+    // Plain DOM SVG: react-native-web renders through react-dom, so web
+    // elements can sit alongside RN components.
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
       {variant !== 'light' && (
-        <Rect width="100" height="100" rx="22" fill={badgeColor} />
+        <rect width="100" height="100" rx="22" fill={badgeColor} />
       )}
-      <G transform={inset}>
-        <Path d={geo.m.d} fill="none" stroke={INK} strokeWidth={geo.m.strokeWidth} />
+      <g transform={inset}>
+        <path d={geo.m.d} fill="none" stroke={INK} strokeWidth={geo.m.strokeWidth} />
         {geo.knobs.cxs.map((cx) => (
-          <Circle key={cx} cx={cx} cy={geo.knobs.cy} r={geo.knobs.r} fill={INK} />
+          <circle key={cx} cx={cx} cy={geo.knobs.cy} r={geo.knobs.r} fill={INK} />
         ))}
-        <Rect
+        <rect
           x={geo.table.x}
           y={geo.table.y}
           width={geo.table.width}
@@ -109,8 +110,8 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
           rx={geo.table.rx}
           fill={INK}
         />
-      </G>
-    </Svg>
+      </g>
+    </svg>
   );
 };
 

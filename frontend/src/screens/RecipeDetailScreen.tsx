@@ -8,8 +8,8 @@ import {
   Linking,
   ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from '../components/icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { Recipe } from '../types';
@@ -270,7 +270,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Source URL */}
-          {recipe.sourceUrl && (
+          {!!recipe.sourceUrl && (
             <TouchableOpacity style={styles.sourceLink} onPress={handleOpenSource}>
               <Ionicons name="link-outline" size={18} color={colors.primary} />
               <Text style={styles.sourceLinkText}>View Original Recipe</Text>
@@ -278,7 +278,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Notes */}
-          {recipe.notes && (
+          {!!recipe.notes && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Notes</Text>
               <Text style={styles.sectionText}>{recipe.notes}</Text>
@@ -286,7 +286,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Ingredients */}
-          {recipe.ingredientsText && (
+          {!!recipe.ingredientsText && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Ingredients</Text>
               {parseListItems(recipe.ingredientsText).map((item, index) => (
@@ -299,7 +299,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Directions */}
-          {recipe.directionsText && (() => {
+          {!!recipe.directionsText && (() => {
             const directionItems = parseListItems(recipe.directionsText);
 
             return (

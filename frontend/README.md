@@ -1,86 +1,53 @@
 # Meal Mate Frontend
 
-React Native mobile app built with Expo for planning weekly meals.
-
-## Features
-
-- Browse and manage recipes
-- Plan meals for the week
-- Bottom tab navigation
-- Real-time updates via REST API
-- TypeScript for type safety
+React Native components rendered on the web with
+[react-native-web](https://necolas.github.io/react-native-web/), bundled by
+[Vite](https://vite.dev). Ships as an installable PWA.
 
 ## Setup
 
-1. Install dependencies:
 ```bash
-npm install
+npm install        # .npmrc sets legacy-peer-deps (see "Dependencies" below)
+npm run dev        # http://localhost:8081, talks to the backend on :3001
 ```
 
-2. Get your computer's local IP:
-   - **Windows**: Run `ipconfig`
-   - **Mac/Linux**: Run `ifconfig`
-   - Find your WiFi adapter's IPv4 address
-
-3. Create `.env` file:
-```bash
-cp .env.example .env
-```
-
-4. Add your local IP to `.env`:
-```
-API_BASE_URL=http://192.168.1.XXX:3001
-```
-
-5. Start Expo:
-```bash
-npm start
-```
-
-6. Scan QR code with Expo Go app on your phone
+Start the backend first (`cd ../backend && npm run dev`).
 
 ## Scripts
 
-- `npm start` - Start Expo development server
-- `npm run android` - Open on Android emulator
-- `npm run ios` - Open on iOS simulator
-- `npm run web` - Open in web browser
+- `npm run dev` - Vite dev server on port 8081
+- `npm run build` - production build into `dist/`
+- `npm run preview` - serve the production build locally
+- `npm run typecheck` - TypeScript check (`tsc --noEmit`)
+- `npm test` - Vitest unit tests + `scripts/logoMark.test.js`
 
-## Project Structure
+## How it fits together
 
-```
-frontend/
-├── src/
-│   ├── config/
-│   │   └── api.ts          # API configuration
-│   ├── navigation/
-│   │   └── BottomTabNavigator.tsx
-│   ├── screens/
-│   │   ├── RecipesScreen.tsx
-│   │   ├── PlannerScreen.tsx
-│   │   └── SettingsScreen.tsx
-│   ├── services/
-│   │   └── api/
-│   │       ├── recipes.ts  # Recipe API client
-│   │       ├── plans.ts    # Plans API client
-│   │       └── index.ts
-│   └── types/
-│       └── index.ts        # TypeScript types
-├── App.tsx                 # App entry point
-├── app.json                # Expo configuration
-├── .env                    # Environment variables
-└── package.json
-```
+- `index.html` + `src/main.tsx` - entry point; `@font-face` rules for Karla,
+  Fraunces and the Ionicons icon font live in `index.html`.
+- `vite.config.mts` - aliases `react-native` to `react-native-web`, bakes in
+  the app version (`APP_VERSION`/`BUILD_NUMBER`, else `../version.json`), and
+  rewrites `require('./icon.png')` calls inside React Native libraries into
+  asset imports (React Navigation's header back arrow needs this).
+- `src/components/icons/Ionicons.tsx` - drop-in `Ionicons` component backed
+  by the vendored font (`public/fonts/Ionicons.ttf`).
+- `public/` - copied into `dist/` as-is: PWA manifest, service worker, icons,
+  fonts. `scripts/inject-pwa.js` wires the manifest and service worker into
+  `dist/index.html` after the build.
 
-## Troubleshooting
+## API URL
 
-### Can't connect to backend
+Development always uses `http://localhost:3001`. Production builds use
+`VITE_API_URL` (a build arg in the root `docker-compose.yml`), falling back to
+`https://mealmate-api.mooseflip.com`.
 
-1. Verify backend is running on port 3001
-2. Check your local IP in `.env` matches `ipconfig`/`ifconfig`
-3. Ensure phone and computer are on same WiFi network
-4. Try temporarily disabling firewall
+## Dependencies
 
-### App won't reload
+`.npmrc` sets `legacy-peer-deps=true` so npm doesn't auto-install
+`react-native` as a peer of the React Navigation packages; it's aliased to
+`react-native-web` instead. Types come from `@types/react-native`.
 
-Shake your phone and press "Reload" in the Expo menu.
+## Deploy
+
+From the repo root: `./scripts/lab-deploy.sh` (builds `Dockerfile.web`:
+`npm ci` → `npm run build` → `inject-pwa.js` → nginx).

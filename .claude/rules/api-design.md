@@ -745,7 +745,7 @@ X-RateLimit-Reset: 1609459200
 Development:
 ```typescript
 app.use(cors({
-  origin: 'http://localhost:19006', // Expo dev server
+  origin: 'http://localhost:8081', // Vite dev server
   credentials: true
 }));
 ```

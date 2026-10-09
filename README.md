@@ -38,7 +38,7 @@ meal-mate/
 │   ├── Dockerfile       # Docker build configuration
 │   └── package.json
 │
-└── frontend/            # React Native + Expo app
+└── frontend/            # React Native Web app (installable PWA, Vite)
     ├── src/
     │   ├── config/      # API configuration
     │   ├── navigation/  # React Navigation (tabs, stacks)
@@ -47,8 +47,8 @@ meal-mate/
     │   ├── services/    # API client services
     │   ├── contexts/    # Global state (Auth)
     │   └── types/       # TypeScript interfaces
-    ├── app.config.js    # Expo configuration
-    ├── eas.json         # EAS Build profiles
+    ├── vite.config.mts  # Vite build config
+    ├── Dockerfile.web   # PWA build (vite build -> nginx)
     └── package.json
 ```
 
@@ -61,16 +61,15 @@ meal-mate/
 - **Mongoose** - MongoDB ODM
 - **JWT** - Authentication
 - **Anthropic Claude API** - AI suggestions & photo import (optional)
-- **Docker** - Containerization for Railway deployment
+- **Docker** - Containerization for the self-hosted lab deployment
 
 ### Frontend
-- **React Native 0.81.5** + **Expo ~54.0.0** - Mobile framework
+- **React Native Web** + **Vite** - React Native components on the web, shipped as an installable PWA
 - **TypeScript** - Type safety
 - **React Navigation** - Bottom tabs + stack navigation
 - **Axios** - HTTP client
-- **expo-image** - Image caching
-- **Expo Notifications** - Push notifications
-- **@react-native-google-signin/google-signin** - Google OAuth
+- **@react-oauth/google** - Google OAuth
+- **Vitest** - Unit tests
 
 ## Getting Started
 
@@ -79,7 +78,6 @@ meal-mate/
 - **Node.js 18+** installed
 - **MongoDB Atlas** account (free tier)
 - **Google Cloud** project for OAuth (optional)
-- **Expo account** for EAS builds (optional)
 - **Anthropic API key** for AI features (optional)
 
 ### Setup Instructions
@@ -116,10 +114,6 @@ The backend will run on `http://localhost:3001`
 
 #### 3. Frontend Setup
 
-**Get your local IP address:**
-- **Windows**: Run `ipconfig` and find your WiFi adapter's IPv4 address
-- **Mac/Linux**: Run `ifconfig` or `ip addr` and find your WiFi interface's IP
-
 ```bash
 # Navigate to frontend directory
 cd frontend
@@ -127,27 +121,11 @@ cd frontend
 # Install dependencies
 npm install
 
-# Update src/config/api.ts with your local IP:
-# export const API_BASE_URL = 'http://192.168.1.XXX:3001';
-# (Replace XXX with your actual IP address)
-
-# Start Expo development server
-npm start
+# Start the Vite dev server (http://localhost:8081, uses the backend on :3001)
+npm run dev
 ```
 
-#### 4. Run on Your Device
-
-**Option A: Expo Go (Quick Start)**
-1. Install **Expo Go** app from App Store or Google Play
-2. Scan the QR code shown in terminal
-3. The app will connect to your local backend via WiFi
-
-**Option B: Development Build (For Google OAuth)**
-```bash
-cd frontend
-npx expo run:android  # For Android
-npx expo run:ios      # For iOS (Mac only)
-```
+Open http://localhost:8081 in a browser.
 
 ## Development Workflow
 
@@ -162,7 +140,7 @@ npm run dev  # Auto-restarts on file changes
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm start    # Hot reload on device
+npm run dev  # Vite dev server with hot reload
 ```
 
 ### Iteration Loop
@@ -276,39 +254,25 @@ See [CLAUDE.md](./CLAUDE.md) for complete API documentation.
 
 ## 🚀 Building for Production
 
-### Android APK Build
+The backend and web PWA are built and run on the self-hosted Docker lab:
 
 ```bash
-cd frontend
-
-# Login to Expo (one-time)
-npx eas-cli login
-
-# Build APK for sideloading
-npx eas-cli build --platform android --profile preview
-
-# Download and install on device
-# APK link provided in build output
+./scripts/lab-deploy.sh   # stamps version.json, docker compose up -d --build
 ```
 
-### Backend Deployment (Railway)
-
-The backend auto-deploys via GitHub Actions when changes are pushed to `main`:
-1. Docker image is built and tagged with version from `version.json`
-2. Pushed to Docker Hub
-3. Railway pulls and deploys automatically
+The web image runs `npm ci` → `npm run build` (Vite) → `scripts/inject-pwa.js`
+and serves `dist/` with nginx. See [CLAUDE.md](./CLAUDE.md) for details.
 
 ### Environment Variables for Production
 
-**Backend (Railway):**
+**Backend (root `.env`, uncommitted):**
 - `MONGODB_URI` - Production MongoDB Atlas connection
 - `JWT_SECRET` - Secure secret key
 - `ANTHROPIC_API_KEY` - For AI features
 - `GOOGLE_CLIENT_ID` - For OAuth
 - `NODE_ENV=production`
 
-**Frontend (EAS Build):**
-Update `frontend/src/config/api.ts` with production URL before building.
+**Frontend:** `VITE_API_URL` is a build arg in `docker-compose.yml`.
 
 ## 🔧 Common Issues
 
@@ -319,32 +283,16 @@ Update `frontend/src/config/api.ts` with production URL before building.
 - ✅ Check port 3001 is not already in use
 
 ### Frontend can't connect to backend
-- ✅ Verify your local IP in `frontend/src/config/api.ts`
-- ✅ Ensure phone and computer are on **same WiFi network**
-- ✅ Check backend is running on port 3001
-- ✅ Check Windows Firewall - add Node.js inbound rule
-- ✅ Test backend in phone's browser first: `http://YOUR_IP:3001/health`
-
-### APK can't connect to local backend (HTTP blocked)
-- ✅ Enable cleartext traffic in `app.config.js`:
-  ```json
-  {
-    "plugins": [
-      ["expo-build-properties", {
-        "android": { "usesCleartextTraffic": true }
-      }]
-    ]
-  }
-  ```
+- ✅ Check the backend is running on port 3001 (`curl localhost:3001/health`)
+- ✅ The dev server always calls `http://localhost:3001`
 
 ### Google Sign-In not working
-- ✅ Requires development build (not Expo Go)
-- ✅ Verify Google OAuth client ID is configured
-- ✅ Check SHA-1 certificate fingerprint is added to Google Cloud project
+- ✅ Verify `GOOGLE_WEB_CLIENT_ID` is set for the backend (the button is hidden without it)
+- ✅ Add the site origin to the OAuth client's authorized JavaScript origins
 
 ### Changes not appearing
 - **Backend**: Check if nodemon is watching files (restart with `npm run dev`)
-- **Frontend**: Shake device and press "Reload" in dev menu, or restart with `r` in terminal
+- **Frontend**: Vite hot-reloads; hard-refresh the browser if the service worker serves a stale build
 
 ## 📚 Documentation
 
@@ -360,10 +308,8 @@ Update `frontend/src/config/api.ts` with production URL before building.
 - ✅ **Recipe Photo Import** - AI-powered extraction using Claude Vision
 - ✅ **Member Recipe Editing** - Household members can update recipes
 - ✅ **Leftovers Plan Option** - Quick planning for leftover meals
-- ✅ **Image Caching** - Migrated to expo-image for better performance
 - ✅ **Grocery Store Layouts** - Per-store category ordering
 - ✅ **My Staples** - Quick-add frequently purchased items
-- ✅ **Push Notifications** - Admin alerts for recipe submissions
 - ✅ **AI Meal Suggestions** - Optional Claude API integration
 
 ## 📋 Roadmap

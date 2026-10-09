@@ -6,7 +6,7 @@
 
 ## 🎯 What is Meal Mate?
 
-**Meal Mate** is a React Native mobile application for intelligent weekly meal planning with household collaboration. It helps users create, manage, and organize recipes while providing AI-powered meal suggestions based on preferences and constraints. Users can create households to share recipes and meal plans with family members.
+**Meal Mate** is a web app (installable PWA, built with React Native Web) for intelligent weekly meal planning with household collaboration. It helps users create, manage, and organize recipes while providing AI-powered meal suggestions based on preferences and constraints. Users can create households to share recipes and meal plans with family members.
 
 ### Core Features
 - 🍽️ Recipe management with URL import and photo import (AI-powered)
@@ -14,9 +14,8 @@
 - 📅 Flexible meal planning (past, present, future) with Leftovers option
 - 👥 **Household collaboration** - Share recipes and plans with family
 - 🔐 Secure authentication (Email/Password + Google OAuth)
-- 📱 Native mobile app (iOS/Android via Expo)
+- 📱 Installable web PWA (React Native Web + Vite; no native app, no Expo)
 - 🔗 Deep linking for household invitations
-- 🔔 **Push notifications** - Admin alerts for recipe submissions
 - 🛒 **Grocery Lists** - AI-powered shopping lists with store layouts
 
 ---
@@ -24,7 +23,7 @@
 ## 🏗️ Architecture
 
 ```
-React Native Frontend (Expo, Metro web bundler)
+React Native Web frontend (Vite)
     → installable PWA at https://mealmate.mooseflip.com
     ↓ REST API (Axios) → https://mealmate-api.mooseflip.com
 Backend (Node.js + Express + TypeScript)
@@ -53,9 +52,9 @@ meal-mate/
 ├── version.json            # Single source of truth for app version
 ├── scripts/
 │   └── bump-version.js    # Version bump automation script
-├── frontend/               # React Native app (ships as web PWA)
-│   ├── app.config.js      # Expo config (reads version.json)
-│   ├── Dockerfile.web     # Web PWA build (expo export -> nginx)
+├── frontend/               # React Native Web app (ships as web PWA)
+│   ├── vite.config.mts    # Vite config (RN→RNW alias, version from version.json)
+│   ├── Dockerfile.web     # Web PWA build (vite build -> nginx)
 │   └── src/
 │       ├── screens/       # Screen components
 │       ├── navigation/    # React Navigation setup
@@ -73,7 +72,7 @@ meal-mate/
 │       └── middleware/   # Auth, etc.
 │
 ├── .github/workflows/
-│   └── (Docker Hub + EAS workflows removed — deploy is local via docker compose)
+│   └── (Docker Hub + native build workflows removed — deploy is local via docker compose)
 │
 ├── docker-compose.yml     # Lab stack: api + web (see scripts/lab-deploy.sh)
 │
@@ -94,11 +93,11 @@ meal-mate/
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React Native 0.81.5, Expo ~54.0.0, TypeScript |
+| **Frontend** | React Native Web 0.21, Vite, React 19, TypeScript, Vitest |
 | **Backend** | Node.js, Express, TypeScript |
 | **Database** | MongoDB Atlas, Mongoose ODM |
 | **Auth** | JWT, bcrypt, OAuth (Google) |
-| **Mobile** | React Navigation, Expo Secure Store, Expo Notifications |
+| **Navigation / UI** | React Navigation v6, vendored Ionicons font |
 
 ---
 
@@ -246,12 +245,6 @@ PUT    /api/stores/:id               # Update (name, categoryOrder, isDefault)
 DELETE /api/stores/:id               # Delete a store
 ```
 
-### User Management
-```
-PUT    /api/users/push-token        # Save push token for notifications
-DELETE /api/users/push-token        # Remove push token (on logout)
-```
-
 See @.claude/rules/api-design.md for full API documentation.
 
 ---
@@ -328,8 +321,8 @@ version.json (source of truth)
     │       └── Backend ENV: APP_VERSION, BUILD_NUMBER
     │           └── GET /api/version endpoint (https://mealmate-api.mooseflip.com)
     │
-    └── app.config.js → web PWA build (Dockerfile.web)
-        └── Settings Screen display
+    └── same build args → vite.config.mts → web PWA build (Dockerfile.web)
+        └── Settings Screen display (src/config/version.ts)
 ```
 
 ### Bumping Versions
@@ -391,25 +384,26 @@ npm start            # Production
 ### Frontend
 ```bash
 cd frontend
-npm start            # Expo dev server
-npm run android      # Android emulator
-npm run ios          # iOS simulator
+npm run dev          # Vite dev server on :8081 (backend on :3001)
+npm run build        # Production build into dist/
+npm run typecheck    # tsc --noEmit
+npm test             # Vitest + logo asset tests
 ```
 
 ### Building for Production
 
 The app ships as an installable **web PWA**, built by `frontend/Dockerfile.web`
-(`npx expo export --platform web` → nginx) and served from the self-hosted
-Docker lab via the root `docker-compose.yml`. There is no native (Android/iOS)
-build path anymore — it was removed in the PWA migration.
+(`npm run build` → `scripts/inject-pwa.js` → nginx) and served from the
+self-hosted Docker lab via the root `docker-compose.yml`. There is no native
+(Android/iOS) build path and no Expo anymore.
 
 ```bash
 # From the repo root, build + (re)start the lab stack (stamps version.json):
 ./scripts/lab-deploy.sh          # docker compose up -d --build
 
-# The web build bakes EXPO_PUBLIC_API_URL=https://mealmate-api.mooseflip.com
+# The web build bakes VITE_API_URL=https://mealmate-api.mooseflip.com
 # (a build arg in docker-compose.yml, not a secret). src/config/api.ts also
-# hard-falls-back to that production API URL in release builds as a safety net.
+# hard-falls-back to that production API URL in production builds as a safety net.
 ```
 
 ### Environment Variables
@@ -420,10 +414,10 @@ MONGODB_URI=mongodb+srv://...
 JWT_SECRET=your-secret-key
 GOOGLE_CLIENT_ID=...
 PORT=3000
+GOOGLE_WEB_CLIENT_ID=...   # served to the web app via GET /api/auth/google/config
 
-# frontend/app.config.js
-API_URL=http://localhost:3000
-GOOGLE_WEB_CLIENT_ID=...
+# frontend: no .env — dev uses http://localhost:3001; production gets
+# VITE_API_URL from the docker-compose.yml build arg
 ```
 
 ---
@@ -449,7 +443,7 @@ Claude Code automatically loads these files when working on relevant code paths.
 ✅ **Invitation Tokens**: Secure JWT-based household invites with expiration
 ✅ **Password Hashing**: bcrypt with 10 rounds
 ✅ **Input Validation**: All endpoints validate input
-✅ **Secure Storage**: Expo Secure Store for tokens on device
+✅ **Token Storage**: JWT in browser `localStorage` (web PWA)
 
 ---
 
@@ -540,19 +534,6 @@ alertManager.showActionSheet({ options: [...] });
 **Why**: Native Android alerts provide poor UX. Custom modals are animated, consistent, and cross-platform.
 **Location**: `frontend/src/utils/alertUtils.ts` + modal components in `frontend/src/components/`
 
-### Android HTTP Cleartext Traffic
-**Enable HTTP for local development builds**
-```json
-{
-  "plugins": [
-    ["expo-build-properties", {
-      "android": { "usesCleartextTraffic": true }
-    }]
-  ]
-}
-```
-**Why**: Android 9+ blocks HTTP by default. Required for APK builds connecting to local dev server.
-
 ---
 
 ## 🎯 Recent Development
@@ -560,6 +541,10 @@ alertManager.showActionSheet({ options: [...] });
 Current branch: `grocery-list-multiplayer`
 
 Recent changes:
+- **🧹 Expo removed (2026-10)** - Frontend now builds with Vite + react-native-web
+  - `expo-*` modules replaced with web APIs (localStorage, `<input type=file>`, Blob downloads, canvas-confetti)
+  - `@expo/vector-icons` replaced by a vendored Ionicons font component
+  - Native-only paths (WebView "Browse Web" tab, native Google Sign-In, Android/iOS config) deleted
 - **🎨 Custom Alert System** - Replaced all native Alert.alert with custom React Native modals
   - New modal components: ConfirmModal, InfoModal, ActionSheetModal
   - Centralized `alertManager` API for consistent alert handling
@@ -627,19 +612,12 @@ Recent changes:
   - Automatic image caching for faster load times
   - Reduced data usage on repeated recipe views
   - Better performance and memory management
-- **📲 Push Notifications** - Native Android/iOS push notifications via Expo
+- **📲 Push Notifications** *(removed with the native app; the web PWA has no push)* - Native Android/iOS push notifications via Expo
   - Admins receive push notifications when members submit recipes
   - Uses Expo Push Notifications service (works with EAS builds)
   - Notification channels for Android (Recipe Submissions)
   - Tap notification to navigate directly to Household screen
   - Push token management: saved on login, removed on logout
-  - **Firebase/FCM Setup Required**: Push notifications require Firebase Cloud Messaging:
-    1. Create Firebase project + add Android app (package: `com.mealmate.app`)
-    2. Download `google-services.json` → place in `frontend/` (safe to commit, public config only)
-    3. Add `googleServicesFile: './google-services.json'` to android config in `app.config.js`
-    4. Generate FCM V1 Service Account Key from Firebase Console → Project Settings → Service Accounts
-    5. Upload to Expo: `eas credentials -p android` → Push Notifications → FCM V1 Service Account Key
-    6. Also upload via Expo dashboard: Project → Credentials → Android → Push Notifications (FCM V1)
   - **Deploys via the Docker lab**: build + restart both containers on this box with `./scripts/lab-deploy.sh` (`docker compose up -d --build`); no GitHub Actions / Docker Hub / Railway step anymore.
 - **🛒 Grocery List Generation** - Generate shopping lists from planned meals
   - AI-powered ingredient parsing and categorization (Claude Sonnet 4)
@@ -673,7 +651,7 @@ Recent changes:
 
 - [x] AI-powered suggestions (completed - optional Claude API integration)
 - [x] Grocery list generation from meal plans (completed)
-- [x] Push notifications for recipe submissions (completed)
+- [x] Push notifications for recipe submissions (completed; removed with the native app)
 - [x] Recipe photo import with AI (completed)
 - [ ] Household analytics and insights
 - [ ] Recipe sharing beyond households

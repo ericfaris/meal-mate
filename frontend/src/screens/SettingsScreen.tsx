@@ -8,20 +8,15 @@ import {
   Linking,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../components/icons/Ionicons';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import Constants from 'expo-constants';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { planApi } from '../services/api/plans';
 import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
 import { alertManager } from '../utils/alertUtils';
-
-// Get version info from app config (extra values come from version.json via app.config.js)
-const appVersion = Constants.expoConfig?.extra?.appVersion || Constants.expoConfig?.version || '1.0.0';
-const buildNumber = Constants.expoConfig?.extra?.buildNumber || 1;
+import { downloadTextFile } from '../utils/fileUtils';
+import { APP_VERSION as appVersion, BUILD_NUMBER as buildNumber } from '../config/version';
 
 type SettingRowProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -186,27 +181,11 @@ export default function SettingsScreen() {
       const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       const filename = `meal-mate-recipes-${timestamp}.json`;
 
-      // Get the document directory
-      const fileUri = FileSystem.documentDirectory + filename;
-
-      // Write the file
-      await FileSystem.writeAsStringAsync(fileUri, jsonString, {
-        encoding: FileSystem.EncodingType.UTF8,
+      downloadTextFile(filename, jsonString);
+      alertManager.showSuccess({
+        title: 'Export Complete',
+        message: `Your recipes have been saved as ${filename}. Check your downloads folder.`,
       });
-
-      // Share the file
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Export Recipes',
-        });
-      } else {
-        alertManager.showSuccess({
-          title: 'Export Complete',
-          message: `Your recipes have been saved as ${filename}. Check your device's download folder.`,
-        });
-      }
     } catch (error) {
       console.error('Error exporting recipes:', error);
       alertManager.showError({

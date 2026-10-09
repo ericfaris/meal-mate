@@ -8,7 +8,7 @@
  *   node scripts/bump-version.js --set 1.2.3
  *
  * This script updates version.json which is the single source of truth
- * for versioning across the entire project (backend Docker, frontend Expo/EAS).
+ * for versioning across the entire project (backend Docker image, web PWA build).
  */
 
 const fs = require('fs');

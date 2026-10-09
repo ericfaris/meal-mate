@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from '../../components/icons/Ionicons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';

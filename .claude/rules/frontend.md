@@ -6,15 +6,18 @@ paths:
   - "frontend/**/*.jsx"
 ---
 
-# Frontend Development Rules (React Native/Expo)
+# Frontend Development Rules (React Native Web + Vite)
 
 ## Tech Stack
-- **React Native** 0.81.5
-- **Expo** ~54.0.0
-- **React Navigation** (Bottom tabs + Stack navigation)
-- **TypeScript** for type safety
+- **React Native Web** 0.21 (React Native components rendered by react-dom;
+  `react-native` is aliased to `react-native-web` in `vite.config.mts`)
+- **Vite** for dev server + production build (no Expo, no Metro)
+- **React Navigation** v6 (Bottom tabs + native-stack)
+- **TypeScript** for type safety (`npm run typecheck`)
+- **Vitest** for unit tests (`npm test`)
 - **Axios** for HTTP requests
-- **expo-image** for image display with automatic caching
+- Icons: `Ionicons` from `src/components/icons/Ionicons` (vendored font,
+  same API as `@expo/vector-icons`)
 
 ## Project Structure
 
@@ -108,7 +111,7 @@ interface User {
 
 ### Global State
 - Use `AuthContext` for user authentication and token management
-- Token stored in Expo Secure Store
+- Token stored in `localStorage` (`services/storage`)
 - Auto-login on app launch if token is valid
 
 ### Local State
@@ -231,43 +234,27 @@ const date = parseDate(plan.date);
 LoginScreen → auth.login()
   → Backend validates
   → Returns JWT + user
-  → Store in AuthContext + SecureStore
+  → Store in AuthContext + localStorage
   → Navigate to MainTabs
 ```
 
-### Google OAuth Flow (Native — Android/iOS):
+### Google OAuth Flow:
 ```
 LoginScreen → Google Sign-In Button
-  → @react-native-google-signin/google-signin
-  → Google Play Services / iOS native
+  → GoogleSignInButton.tsx: @react-oauth/google GoogleOAuthProvider / GoogleLogin
   → User consent → Get ID token
+  → services/auth/google.ts handleGoogleSignIn
   → Send to /api/auth/google
-  → Backend validates → Returns JWT
-  → Store token → Navigate to MainTabs
-```
-
-**Library**: Uses `@react-native-google-signin/google-signin` (officially recommended by Expo)
-**Note**: Requires custom dev build (cannot use Expo Go)
-**Configuration**: Plugin configured in app.json with iOS URL scheme
-
-### Google OAuth Flow (Web — the shipping PWA):
-```
-LoginScreen → Google Sign-In Button
-  → GoogleSignInButton.tsx branches Platform.OS === 'web'
-  → @react-oauth/google GoogleOAuthProvider / GoogleLogin
-  → User consent → Get ID token
-  → services/auth/google.ts handleGoogleSignIn (web branch)
-  → Send to /api/auth/google  (same backend endpoint as native)
   → Backend validates → Returns JWT → Store token → MainTabs
 ```
 
-**Library**: Uses `@react-oauth/google` on web. This path already works and needs
-no code change — `src/components/auth/GoogleSignInButton.tsx` and
-`src/services/auth/google.ts` both branch web vs native; do not modify them.
-**Configuration**: `GOOGLE_WEB_CLIENT_ID` supplied to the web build.
+**Library**: `@react-oauth/google`.
+**Configuration**: the button fetches the client ID at runtime from
+`GET /api/auth/google/config` (backend `GOOGLE_WEB_CLIENT_ID`); no client ID
+renders no button.
 
 ### Session Persistence:
-- Check for token in SecureStore on app launch
+- Check for token in localStorage on app launch
 - If valid, auto-login (silent authentication)
 - If invalid/expired, show login screen
 
@@ -474,10 +461,12 @@ const styles = StyleSheet.create({
 - Mark as completed after user acknowledges
 
 ### Image Handling:
-- Use `expo-image` for displaying images (automatic caching)
-- Use `expo-image-picker` for selecting images
-- Support camera and gallery
-- Handle permissions properly
+- Use React Native's `Image` (browser HTTP caching applies)
+- Use `pickImageFile()` from `utils/fileUtils.ts` to choose images (a hidden
+  `<input type="file" accept="image/*">`; mobile browsers offer the camera)
+- Use `downloadTextFile()` from `utils/fileUtils.ts` for file exports
+- Bundled images: `import url from '../../assets/x.png'`, then
+  `source={{ uri: url }}` — never `require()` (Vite is ESM-only)
 - Photo import for recipes (multipart/form-data upload)
 - Admin-only access to photo import feature
 
@@ -540,7 +529,7 @@ api.interceptors.request.use(async (config) => {
 
 ## Testing Considerations
 
-- Test on both iOS and Android
+- Test on mobile and desktop viewport widths (installed PWA + browser)
 - Test with slow network (throttle network in dev tools)
 - Test error states (network failures, invalid data)
 - Test edge cases (empty states, long text, special characters)
@@ -593,10 +582,7 @@ const styles = StyleSheet.create({
 ✅ Use `useFocusEffect` for navigation-dependent loading
 
 ❌ Don't hardcode API URLs
-✅ Use environment variables (app.config.js)
-
-❌ Don't store sensitive data in AsyncStorage
-✅ Use Expo Secure Store for tokens
+✅ Use `VITE_*` build-time env vars (`import.meta.env`)
 
 ❌ Don't ignore loading and error states
 ✅ Always handle loading/error/success states
@@ -607,28 +593,30 @@ const styles = StyleSheet.create({
 ## Development Commands
 
 ```bash
-npm start            # Start Expo dev server
-npm run android      # Run on Android emulator
-npm run ios          # Run on iOS simulator
+npm run dev          # Vite dev server on :8081 (backend on :3001)
+npm run build        # Production build into dist/
+npm run typecheck    # tsc --noEmit
+npm test             # Vitest + logo asset tests
 ```
 
 ## Building for Production (Web PWA)
 
-The app ships **only** as an installable web PWA. There is no native
-(Android/iOS) EAS build path anymore — it was removed in the PWA migration
-(root `docker-compose.yml` + `frontend/Dockerfile.web`).
+The app ships **only** as an installable web PWA. Expo (and the native
+Android/iOS build path) has been removed entirely.
 
-- **Build**: `frontend/Dockerfile.web` runs `npx expo export --platform web`
-  (Metro web bundler) → static `dist/`, served by nginx.
-- **PWA layer**: Metro web does not emit a manifest or service worker. Source
-  PWA files live in `frontend/public/` (`manifest.json`, `service-worker.js`,
-  `icons/`); `frontend/scripts/inject-pwa.js` injects the manifest link + SW
-  registration into `dist/index.html` at build time. `nginx.conf.template` sets
-  `Cache-Control: no-cache` on `index.html`, `manifest.json`, and
-  `service-worker.js` so updates are never stranded.
-- **API URL**: `EXPO_PUBLIC_API_URL=https://mealmate-api.mooseflip.com` is a
-  build arg in `docker-compose.yml`; `src/config/api.ts` also hard-falls-back to
-  that production URL in release builds.
+- **Build**: `frontend/Dockerfile.web` runs `npm ci` + `npm run build` (Vite)
+  → static `dist/`, served by nginx.
+- **PWA layer**: Vite copies `frontend/public/` (`manifest.json`,
+  `service-worker.js`, `icons/`, `fonts/`) into `dist/`;
+  `frontend/scripts/inject-pwa.js` then injects the manifest link + SW
+  registration into `dist/index.html` and stamps the SW cache version.
+  `nginx.conf.template` sets `Cache-Control: no-cache` on `index.html`,
+  `manifest.json`, and `service-worker.js` so updates are never stranded.
+- **API URL**: `VITE_API_URL=https://mealmate-api.mooseflip.com` is a build
+  arg in `docker-compose.yml`; `src/config/api.ts` also hard-falls-back to that
+  production URL in production builds.
+- **Version**: `APP_VERSION`/`BUILD_NUMBER` build args are baked in by
+  `vite.config.mts` (`src/config/version.ts`).
 - **Deploy**: from the repo root run `./scripts/lab-deploy.sh` (stamps
   `APP_VERSION`/`BUILD_NUMBER` from `version.json`, then
   `docker compose up -d --build`). Public URLs are

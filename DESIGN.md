@@ -123,8 +123,8 @@ mood board's type direction:
 
 | Face | Role | File | Fallback stack |
 |---|---|---|---|
-| **Fraunces** (Regular, 400) | Display — wordmark, hero/splash, screen `h1` titles | `frontend/assets/fonts/Fraunces-Regular.ttf` (app), `frontend/public/fonts/Fraunces-Regular.woff2` (web/showcase) | `Georgia, serif` |
-| **Karla** (Regular, 400) | Body — everything else, applied app-wide as the default | `frontend/assets/fonts/Karla-Regular.ttf` (app), `frontend/public/fonts/Karla-Regular.woff2` (web/showcase) | `-apple-system, sans-serif` |
+| **Fraunces** (Regular, 400) | Display — wordmark, hero/splash, screen `h1` titles | `frontend/public/fonts/Fraunces-Regular.woff2` | `Georgia, serif` |
+| **Karla** (Regular, 400) | Body — everything else, applied app-wide as the default | `frontend/public/fonts/Karla-Regular.woff2` | `-apple-system, sans-serif` |
 
 **Why this pairing**: Fraunces is a soft, warm serif with slightly organic
 curves — it reads as "cookbook title" rather than "corporate editorial,"
@@ -138,8 +138,8 @@ system fonts as the personality.
 **Known constraint**: both Fraunces and Karla ship upstream as *variable*
 fonts on Google Fonts (no more static per-weight TTFs). Only the Regular
 (400) static instance of each is bundled here to keep the asset footprint
-small and the RN font-loading path simple (one file → one `fontFamily` name,
-which is how `expo-font`'s `useFonts` works). Numeric `fontWeight` styling
+small and the font-loading path simple (one file → one `@font-face`
+family name). Numeric `fontWeight` styling
 elsewhere in the app (`typography.weights.semibold`, `.bold`) still applies
 on top of the custom font and each platform does its best (synthetic
 bold/emphasis) — it's a known, acceptable degradation, not a bug. If true
@@ -147,15 +147,16 @@ multi-weight display type is wanted later, re-run
 `frontend/scripts/generate-design-tokens-css.js`'s sibling font-fetch step
 (documented inline in this file's git history / the session that produced
 it) against a font that still ships true static weights (e.g. Lora, Zilla
-Slab), or add `@expo-google-fonts/*` packages if the project decides
-runtime-fetched fonts are worth the added dependency.
+Slab), or self-host the variable fonts with a weight-range `@font-face`.
 
 **Where fonts are wired**:
-- `frontend/App.tsx` — `useFonts()` loads both files at launch (blocking
-  splash/loading state until ready), and a one-time `Text.defaultProps` /
-  `TextInput.defaultProps` patch sets Karla as the app-wide default so the
-  ~30 existing screens (which style text via `typography.sizes.*` without
-  ever setting `fontFamily`) pick it up with **zero per-screen edits**.
+- `frontend/index.html` — `@font-face` rules for both faces (and the
+  vendored Ionicons icon font). `frontend/App.tsx` patches
+  `Text.defaultProps` / `TextInput.defaultProps` to make Karla the app-wide
+  default — **but React 19 ignores `defaultProps` on function components**,
+  so this is currently a no-op and body text renders in the system font
+  (true before the Expo removal too). Fixing it needs a different
+  mechanism (e.g. a wrapped `Text` or a global CSS rule).
 - `frontend/src/components/branding/Logo.tsx` and `SplashScreen.tsx` — the
   wordmark and splash tagline explicitly use the display face.
 - `frontend/src/screens/HomeScreen.tsx` — the greeting (`Good evening,
@@ -336,8 +337,8 @@ terracotta. Geometry lives in `frontend/scripts/logoMark.js` (`PATHS.full`
 master and a heavier `PATHS.small` cut used for favicon sizes, 32px and below).
 
 Generated from that file by `node scripts/generateIcons.js` then
-`node scripts/generatePwaAssets.js`: `assets/icon.png`, `adaptive-icon.png`,
-`splash.png`, `favicon.png`, `public/favicon.svg`, `docs/design/logo.svg` and
+`node scripts/generatePwaAssets.js`: `assets/icon.png`, `favicon.png`,
+`public/favicon.svg`, `docs/design/logo.svg` and
 the PWA set under `public/icons/` (`icon-192.png`, `icon-512.png`,
 `maskable-512.png`, `apple-touch-icon.png`). `Logo.tsx` mirrors the geometry
 for in-app use (`variant="light"` is the cream mark alone for terracotta
@@ -351,14 +352,13 @@ All `<link>`/manifest wiring (`frontend/public/manifest.json`,
 
 | File | Role |
 |---|---|
-| `frontend/assets/fonts/Fraunces-Regular.ttf` | Display face, loaded natively via `expo-font` |
-| `frontend/assets/fonts/Karla-Regular.ttf` | Body face, loaded natively via `expo-font` |
-| `frontend/public/fonts/Fraunces-Regular.woff2` | Same face, self-hosted for the web PWA + showcase page `@font-face` |
-| `frontend/public/fonts/Karla-Regular.woff2` | Same face, self-hosted for the web PWA + showcase page `@font-face` |
+| `frontend/public/fonts/Fraunces-Regular.woff2` | Display face, self-hosted; `@font-face` in `index.html` + showcase page |
+| `frontend/public/fonts/Karla-Regular.woff2` | Body face, self-hosted; `@font-face` in `index.html` + showcase page |
+| `frontend/public/fonts/Ionicons.ttf` | Icon font (vendored from `@expo/vector-icons`), rendered by `src/components/icons/Ionicons.tsx` |
 | `frontend/public/design-tokens.css` | Generated CSS custom properties mirroring `theme/index.ts` — **do not hand-edit**, regenerate (see §10) |
 | `frontend/public/design-system.html` | Static showcase page — the live design-system reference |
 | `frontend/scripts/generate-design-tokens-css.js` | Generator script that produces `design-tokens.css` from `theme/index.ts` |
-| `frontend/assets/icon.png`, `adaptive-icon.png`, `favicon.png`, `public/icons/*.png` | Existing app icon set — reviewed, unchanged (§8) |
+| `frontend/assets/icon.png`, `favicon.png`, `public/icons/*.png` | Existing app icon set — reviewed, unchanged (§8) |
 | `docs/design/moodboard-farmhouse-kitchen.png` | The chosen Ideogram mood board (documentation only, not shipped in the app) |
 
 ---

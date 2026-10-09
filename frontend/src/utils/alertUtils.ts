@@ -3,7 +3,7 @@ import { SuccessModalRef } from '../components/SuccessModal';
 import { ConfirmModalRef } from '../components/ConfirmModal';
 import { InfoModalRef } from '../components/InfoModal';
 import { ActionSheetModalRef } from '../components/ActionSheetModal';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../components/icons/Ionicons';
 
 interface AlertOptions {
   title: string;

@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { Ionicons } from '../components/icons/Ionicons';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { planApi, recipeApi } from '../services/api';
