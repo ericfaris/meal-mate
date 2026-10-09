@@ -287,9 +287,9 @@ Generates intelligent meal suggestions with constraints:
 ### Recipe Import
 **Location**: `backend/src/controllers/recipeImport.ts`, `backend/src/controllers/recipePhotoImport.ts`
 
-**URL Import**:
-1. Try `recipe-scraper` library (primary)
-2. Fall back to custom Cheerio parser
+**URL Import** (`backend/src/services/recipeParser.ts`, Cheerio only):
+1. Fetch the page (SSRF-validated URL)
+2. Parse JSON-LD `Recipe` schema, then microdata, then HTML patterns
 3. HTML entity decoding for special characters
 4. No auto-complexity detection (user sets manually)
 
