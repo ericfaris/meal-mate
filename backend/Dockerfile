@@ -11,13 +11,12 @@ FROM node:26-alpine
 RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 
-# Version build arguments
-ARG APP_VERSION=1.0.0
-ARG BUILD_NUMBER=1
+# Repo-root version.json (compose `additional_contexts: repo`) is what
+# /api/version reports (src/utils/version.ts reads /app/version.json).
+COPY --from=repo version.json ./version.json
 
-# Set version as environment variables (available at runtime)
-ENV APP_VERSION=${APP_VERSION}
-ENV BUILD_NUMBER=${BUILD_NUMBER}
+# Optional: only feeds the image label (lab-deploy.sh passes it).
+ARG APP_VERSION=unknown
 
 # Secrets are NOT baked into the image. They are supplied at runtime via the
 # root docker-compose.yml `environment:` section (interpolated from ./.env).

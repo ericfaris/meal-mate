@@ -2,24 +2,12 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import fs from 'fs';
-import path from 'path';
 import { createApp } from './app';
 import { connectDB } from './config/db';
+import { readVersionInfo } from './utils/version';
 
 const PORT = process.env.PORT || 3001;
-
-// Read version from the root version.json
-let appVersion = '1.0.0';
-let buildNumber = 1;
-try {
-  const versionFilePath = path.join(__dirname, '..', '..', 'version.json');
-  const versionData = JSON.parse(fs.readFileSync(versionFilePath, 'utf8'));
-  appVersion = versionData.version || '1.0.0';
-  buildNumber = versionData.buildNumber || 1;
-} catch (error) {
-  console.warn('Could not read version.json, using defaults');
-}
+const { version: appVersion, buildNumber } = readVersionInfo();
 
 const startServer = async () => {
   try {

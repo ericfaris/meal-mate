@@ -2,16 +2,19 @@
 # .env.example). Public entry is the shared Cloudflare tunnel:
 #   https://mealmate.mooseflip.com      -> 127.0.0.1:8600 (web)
 #   https://mealmate-api.mooseflip.com  -> 127.0.0.1:8601 (api)
-# Deploy with scripts/lab-deploy.sh (stamps APP_VERSION/BUILD_NUMBER from version.json).
+# Pushing to main auto-deploys (test.yml -> sentinel /api/deploy); manual
+# redeploy: scripts/lab-deploy.sh. Both images read version.json themselves.
 name: meal-mate
 
 services:
   api:
     build:
       context: ./backend
+      # version.json lives at the repo root, outside the build context.
+      additional_contexts:
+        repo: .
       args:
-        APP_VERSION: ${APP_VERSION:-dev}
-        BUILD_NUMBER: ${BUILD_NUMBER:-0}
+        APP_VERSION: ${APP_VERSION:-unknown}
     image: ericfaris/meal-mate-backend:latest
     restart: unless-stopped
     # Non-root, no privilege escalation, no Linux capabilities. Node app reads
@@ -41,9 +44,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.web
+      additional_contexts:
+        repo: .
       args:
-        APP_VERSION: ${APP_VERSION:-dev}
-        BUILD_NUMBER: ${BUILD_NUMBER:-0}
+        APP_VERSION: ${APP_VERSION:-unknown}
         VITE_API_URL: https://mealmate-api.mooseflip.com
     image: ericfaris/meal-mate-web:latest
     restart: unless-stopped

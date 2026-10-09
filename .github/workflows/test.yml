@@ -1,8 +1,7 @@
 name: Tests
 
 # meal-mate has no root package.json — backend and frontend are separate
-# npm projects. Only backend has a real test script (jest); frontend's is
-# unset, so there's nothing to gate on there yet.
+# npm projects, tested by separate jobs. Both gate the deploy.
 
 on:
   pull_request:
@@ -32,6 +31,34 @@ jobs:
       - name: Run tests
         run: npm test
 
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
   # Runs on a self-hosted runner on the lab host itself — GitHub's own hosted
   # runners can't reach this private host. Gated to push-to-main ONLY
   # (never pull_request) so untrusted PR code can never execute here; this
@@ -41,7 +68,7 @@ jobs:
   # so the health-check covers all of them rather than just one.
   deploy:
     name: Deploy to lab
-    needs: test
+    needs: [test, frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, lab]
     steps:

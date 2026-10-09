@@ -26,7 +26,7 @@ Start the backend first (`cd ../backend && npm run dev`).
 - `index.html` + `src/main.tsx` - entry point; `@font-face` rules for Karla,
   Fraunces and the Ionicons icon font live in `index.html`.
 - `vite.config.mts` - aliases `react-native` to `react-native-web`, bakes in
-  the app version (`APP_VERSION`/`BUILD_NUMBER`, else `../version.json`), and
+  the app version from `../version.json` (`vite/readVersion.ts`), and
   rewrites `require('./icon.png')` calls inside React Native libraries into
   asset imports (React Navigation's header back arrow needs this).
 - `src/components/icons/Ionicons.tsx` - drop-in `Ionicons` component backed
@@ -49,5 +49,8 @@ Development always uses `http://localhost:3001`. Production builds use
 
 ## Deploy
 
-From the repo root: `./scripts/lab-deploy.sh` (builds `Dockerfile.web`:
-`npm ci` → `npm run build` → `inject-pwa.js` → nginx).
+Pushing to `main` auto-deploys (see the root CLAUDE.md); `./scripts/lab-deploy.sh`
+is the manual fallback. `Dockerfile.web` runs `npm ci` → `npm run build` →
+`inject-pwa.js` → nginx, and copies the repo-root `version.json` in through the
+compose `additional_contexts: repo` entry, so a plain `docker build` of this
+directory needs `--build-context repo=..`.

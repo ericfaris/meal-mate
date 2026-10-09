@@ -77,3 +77,18 @@
 - The 2026-10-05 Renovate rule (no minor/major react/react-native bumps)
   was there for Expo pins; react can be upgraded freely now, but RNW and
   React Navigation still need their own peer ranges checked.
+
+## 2026-10-08 — Pushing to main deploys; version stamping fixed
+- `test.yml`'s `deploy` job (self-hosted runner → sentinel `/api/deploy`)
+  auto-deploys every push to main. Running `lab-deploy.sh` right after a push
+  raced it: container-name conflicts plus a stray `Created` container
+  (`<oldid>_meal-mate-api-1`) that blocked the next recreate until removed.
+- Sentinel runs a bare `docker compose up -d --build`, so version build args
+  were never passed and the live API had reported `dev` / build 0 for a while.
+  Fix: compose `additional_contexts: repo: .` + `COPY --from=repo
+  version.json`; app code reads the file first, env second. A root
+  `.dockerignore` (`*`, `!version.json`) keeps `.env`/node_modules out of that
+  context. Lesson: put build metadata where every build route sees it, not in
+  one wrapper script's env.
+- A plain `docker build` of `frontend/` or `backend/` now needs
+  `--build-context repo=..`.

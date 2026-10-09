@@ -1,23 +1,8 @@
 /// <reference types="vitest/config" />
-import fs from 'fs';
 import path from 'path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-
-// Version comes from build args (APP_VERSION/BUILD_NUMBER, stamped by
-// scripts/lab-deploy.sh from version.json). Outside Docker, fall back to the
-// repo-root version.json so `npm run dev` shows the real version too.
-function readVersion() {
-  let version = process.env.APP_VERSION;
-  let buildNumber = process.env.BUILD_NUMBER;
-  const versionFile = path.resolve(import.meta.dirname, '../version.json');
-  if ((!version || !buildNumber) && fs.existsSync(versionFile)) {
-    const v = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
-    version = version || v.version;
-    buildNumber = buildNumber || String(v.buildNumber);
-  }
-  return { version: version || 'dev', buildNumber: buildNumber || '0' };
-}
+import { readVersion } from './vite/readVersion';
 
 // React Native libraries load images with `require('./icon.png')`, even in
 // their ESM builds (e.g. React Navigation's header back arrow). Metro resolved
@@ -46,7 +31,7 @@ export function rnAssetRequires(): Plugin {
 const extensions = ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js', '.jsx', '.json'];
 
 export default defineConfig(({ mode }) => {
-  const { version, buildNumber } = readVersion();
+  const { version, buildNumber } = readVersion(path.resolve(import.meta.dirname, '../version.json'));
   return {
     plugins: [rnAssetRequires(), react()],
     resolve: {
@@ -56,7 +41,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __DEV__: JSON.stringify(mode !== 'production'),
       __APP_VERSION__: JSON.stringify(version),
-      __BUILD_NUMBER__: JSON.stringify(Number(buildNumber) || 0),
+      __BUILD_NUMBER__: JSON.stringify(buildNumber),
       // Some React Native libraries reference `global`.
       global: 'globalThis',
     },
@@ -70,7 +55,7 @@ export default defineConfig(({ mode }) => {
     server: { port: 8081 },
     test: {
       environment: 'jsdom',
-      include: ['src/**/*.test.{ts,tsx}'],
+      include: ['src/**/*.test.{ts,tsx}', 'vite/**/*.test.ts'],
     },
   };
 });

@@ -615,11 +615,11 @@ Android/iOS build path) has been removed entirely.
 - **API URL**: `VITE_API_URL=https://mealmate-api.mooseflip.com` is a build
   arg in `docker-compose.yml`; `src/config/api.ts` also hard-falls-back to that
   production URL in production builds.
-- **Version**: `APP_VERSION`/`BUILD_NUMBER` build args are baked in by
-  `vite.config.mts` (`src/config/version.ts`).
-- **Deploy**: from the repo root run `./scripts/lab-deploy.sh` (stamps
-  `APP_VERSION`/`BUILD_NUMBER` from `version.json`, then
-  `docker compose up -d --build`). Public URLs are
+- **Version**: `vite.config.mts` reads the repo-root `version.json` (copied to
+  `/version.json` in the image via compose `additional_contexts`) and bakes it
+  into `src/config/version.ts`.
+- **Deploy**: pushing to `main` auto-deploys (test.yml → sentinel
+  `/api/deploy`); `./scripts/lab-deploy.sh` is the manual fallback. Public URLs are
   `https://mealmate.mooseflip.com` (web) and
   `https://mealmate-api.mooseflip.com` (API), exposed via the shared Cloudflare
   Tunnel on the self-hosted Docker lab.
