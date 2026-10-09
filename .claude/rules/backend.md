@@ -286,12 +286,12 @@ export const markRecipeAsUsed = async (recipeId: string, date: string) => {
 
 ### Recipe Import (`controllers/recipeImport.ts`, `controllers/recipePhotoImport.ts`)
 
-**URL Import Strategy**:
-1. Try `recipe-scraper` library (primary method)
-2. Fall back to custom Cheerio parser
-3. **HTML entity decoding** for all text fields (titles, ingredients, directions, notes)
-4. Validate and sanitize all data
-5. **No auto-assigned complexity** - user sets manually if desired
+**URL Import Strategy** (`services/recipeParser.ts`, Cheerio only; the unused
+`recipe-scraper` dependency was removed 2026-10-08):
+1. Fetch the page, then parse JSON-LD `Recipe` schema → microdata → HTML patterns
+2. **HTML entity decoding** for all text fields (titles, ingredients, directions, notes)
+3. Validate and sanitize all data
+4. **No auto-assigned complexity** - user sets manually if desired
 
 **HTML Entity Decoding**:
 
@@ -543,18 +543,13 @@ npm test             # Run jest test suite
 npm run seed         # Seed database with sample data
 ```
 
-**`npm ci` gotcha**: `parse-domain` (a transitive dependency of `recipe-scraper`) incorrectly
-lists `jest@^24.9.0` under `dependencies` instead of `devDependencies`, which drags an old,
-conflicting `node-notifier`/`is-wsl`/`semver` tree into `node_modules`. Without the
-`overrides.parse-domain.jest` entry in `package.json` (pinning it to our own top-level `jest`),
-the lockfile `npm install` writes works locally but fails `npm ci` inside the Docker build
-(`node:26-alpine`) with an EUSAGE lock-mismatch error. If you ever touch backend deps and the
-lab `docker compose build` (via `./scripts/lab-deploy.sh`) fails on `npm ci`, regenerate the
-lockfile *inside* the same image the Dockerfile uses before committing:
+**`npm ci` check**: the Docker build runs `npm ci` in `node:26-alpine`, and
+pushing to `main` deploys. After touching backend deps, confirm the lockfile
+installs there before committing:
 ```bash
-docker run --rm -v "$PWD":/app -w /app node:26-alpine sh -c "rm -rf node_modules package-lock.json && npm install && rm -rf node_modules && npm ci"
+docker run --rm -v "$PWD/package.json":/app/package.json:ro -v "$PWD/package-lock.json":/app/package-lock.json:ro -w /app node:26-alpine npm ci --ignore-scripts
 ```
-If that fails, the override may need extending to whatever new package introduced the conflict.
+(The old `overrides.parse-domain.jest` workaround went away with `recipe-scraper`.)
 
 ## Testing Considerations
 
