@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios';
-import { parseRecipeFromUrl } from '../services/recipeParser';
+import { parseRecipeFromUrl, isBotChallengePage } from '../services/recipeParser';
 
 // Factory mock avoids loading the real (ESM) axios package, which jest's
 // default transformIgnorePatterns won't transpile.
@@ -27,6 +27,24 @@ function jsonLdHtml(overrides: Record<string, any> = {}) {
   const json = JSON.stringify({ '@context': 'https://schema.org', '@graph': [recipe] });
   return `<html><head><script type="application/ld+json">${json}</script></head><body></body></html>`;
 }
+
+const CLOUDFLARE_CHALLENGE =
+  '<html lang="en-US"><head><title>Just a moment...</title></head><body>' +
+  '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script></body></html>';
+const DOTDASH_BLOCK_PAGE = '<html><head><title>Simple Page</title></head><body><p>blocked</p></body></html>';
+
+describe('isBotChallengePage', () => {
+  it('recognizes Cloudflare and Dotdash block pages', () => {
+    expect(isBotChallengePage(CLOUDFLARE_CHALLENGE)).toBe(true);
+    expect(isBotChallengePage(DOTDASH_BLOCK_PAGE)).toBe(true);
+  });
+
+  it('never flags a page that carries JSON-LD, or an ordinary page', () => {
+    expect(isBotChallengePage(jsonLdHtml())).toBe(false);
+    expect(isBotChallengePage(jsonLdHtml().replace('<head>', '<head><title>Just a moment...</title>'))).toBe(false);
+    expect(isBotChallengePage('<html><head><title>Easy Meatloaf</title></head><body></body></html>')).toBe(false);
+  });
+});
 
 describe('parseRecipeFromUrl', () => {
   beforeEach(() => {
@@ -78,6 +96,32 @@ describe('parseRecipeFromUrl', () => {
 
     await expect(parseRecipeFromUrl(RECIPE_URL)).rejects.toThrow(/BLOCKED/);
     expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: Budget Bytes returned a 403 directly, then the proxy returned
+  // Cloudflare's challenge page with a 200, and users were told the site had
+  // no structured recipe data.
+  it('reports BLOCKED when the proxy returns a Cloudflare challenge page', async () => {
+    mockedAxios.get
+      .mockRejectedValueOnce({ response: { status: 403 } })
+      .mockResolvedValueOnce({ data: CLOUDFLARE_CHALLENGE });
+
+    await expect(parseRecipeFromUrl(RECIPE_URL)).rejects.toThrow(/^BLOCKED: example\.com/);
+  });
+
+  it('reports BLOCKED when the proxy refuses the domain (451)', async () => {
+    mockedAxios.get
+      .mockRejectedValueOnce({ response: { status: 403 } })
+      .mockRejectedValueOnce({ response: { status: 451 } });
+
+    await expect(parseRecipeFromUrl(RECIPE_URL)).rejects.toThrow(/^BLOCKED:/);
+  });
+
+  it('reports BLOCKED for a challenge page served directly with a 200', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: DOTDASH_BLOCK_PAGE });
+
+    await expect(parseRecipeFromUrl(RECIPE_URL)).rejects.toThrow(/^BLOCKED:/);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
   });
 
   it('does not use the proxy for a plain 404 (no blocking involved)', async () => {
