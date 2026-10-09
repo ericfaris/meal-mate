@@ -78,6 +78,27 @@ async function fetchViaProxy(url: string): Promise<string> {
   return response.data;
 }
 
+// Markers of bot-protection pages that some sites (or the proxy) return in
+// place of the recipe, sometimes with a 200 status: Cloudflare's challenge
+// interstitial and Dotdash Meredith's block page (AllRecipes, Serious Eats,
+// Simply Recipes, ...).
+const BOT_CHALLENGE_MARKERS = [
+  /<title>\s*Just a moment\.\.\.\s*<\/title>/i,
+  /challenges\.cloudflare\.com|cf-chl-|cf_chl_/i,
+  /<title>\s*Simple Page\s*<\/title>/i,
+];
+
+export function isBotChallengePage(html: string): boolean {
+  if (typeof html !== 'string' || html.includes('application/ld+json')) return false;
+  return BOT_CHALLENGE_MARKERS.some((re) => re.test(html));
+}
+
+export const BLOCKED_PREFIX = 'BLOCKED:';
+
+function blockedError(url: string): Error {
+  return new Error(`${BLOCKED_PREFIX} ${new URL(url).hostname} blocks automated access to its recipes.`);
+}
+
 /**
  * Attempts to parse a recipe from a URL using multiple strategies:
  * 1. JSON-LD structured data (Schema.org Recipe)
@@ -122,11 +143,18 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
       try {
         html = await fetchViaProxy(url);
       } catch (proxyError: any) {
-        throw new Error('BLOCKED: This site is blocking automated access. Try a different recipe site like AllRecipes or Serious Eats.');
+        // Includes 451 from the proxy: the publisher has opted out of it.
+        throw blockedError(url);
       }
     } else {
       throw new Error(`Failed to fetch page: ${error.message}`);
     }
+  }
+
+  // A challenge page has no recipe in it; say the site is blocking us rather
+  // than that the page lacks structured data.
+  if (isBotChallengePage(html)) {
+    throw blockedError(url);
   }
 
   const $ = cheerio.load(html);

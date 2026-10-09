@@ -1,8 +1,15 @@
 import { Request, Response } from 'express';
 import Recipe from '../models/recipe';
 import User from '../models/user';
-import { parseRecipeFromUrl } from '../services/recipeParser';
+import { parseRecipeFromUrl, BLOCKED_PREFIX } from '../services/recipeParser';
 import { validateExternalUrl } from '../utils/urlValidation';
+
+// Shown when a site's bot protection stops the import. Photo import is
+// admin-only too, so it's always available to whoever sees this.
+export const blockedImportMessage = (url: string): string => {
+  const site = new URL(url).hostname.replace(/^www\./, '');
+  return `${site} doesn't let apps import its recipes. Open the recipe in your browser, take a screenshot, and import it from the Photo tab, or type it in on the Manual tab.`;
+};
 
 // POST /api/recipes/import - Import recipe from URL
 export const importRecipeFromUrl = async (req: Request, res: Response): Promise<void> => {
@@ -53,10 +60,8 @@ export const importRecipeFromUrl = async (req: Request, res: Response): Promise<
       // Check for specific error types
       const errorMessage = customError.message || '';
 
-      if (errorMessage.includes('BLOCKED')) {
-        res.status(400).json({
-          error: 'This site is blocking recipe imports. Some sites like Food Network use bot protection. Try these alternatives:\n\n• AllRecipes (allrecipes.com)\n• Serious Eats (seriouseats.com)\n• Bon Appetit (bonappetit.com)\n• Budget Bytes (budgetbytes.com)\n• Simply Recipes (simplyrecipes.com)'
-        });
+      if (errorMessage.startsWith(BLOCKED_PREFIX)) {
+        res.status(400).json({ error: blockedImportMessage(url) });
         return;
       }
 

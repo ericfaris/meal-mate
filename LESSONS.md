@@ -92,3 +92,18 @@
   one wrapper script's env.
 - A plain `docker build` of `frontend/` or `backend/` now needs
   `--build-context repo=..`.
+
+## 2026-10-08 — recipe-scraper was dead weight; blocked recipe sites
+- `recipe-scraper` was in package.json but imported nowhere (URL import was
+  already pure Cheerio), yet it supplied every production audit finding.
+  `git grep` a dependency before planning to replace it.
+- AllRecipes / Serious Eats / Simply Recipes (Dotdash Meredith) 403 the lab
+  with a "Simple Page" block page, and the r.jina.ai fallback returns 451:
+  the publisher opted out. Budget Bytes serves a Cloudflare challenge both
+  directly and via the proxy (as a 200). These are deliberate blocks; don't
+  build bypasses (stealth browsers, residential proxies). The parser now
+  recognizes challenge pages and the app points users to Photo import.
+- The old "blocked" message recommended four sites that were themselves
+  blocked. Name only sites verified to work, and recheck when touching it.
+- Stopping dev servers: kill by PID from `lsof -ti tcp:<port>`. `pkill -f
+  "<pattern>"` matches the invoking shell's own command line and kills it.

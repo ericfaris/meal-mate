@@ -255,7 +255,7 @@ export default function RecipeEntryScreen({ route, navigation }: Props) {
       </TouchableOpacity>
 
       <Text style={styles.supportedSites}>
-        Works with most popular recipe sites like AllRecipes, Food Network, NYT Cooking, and more!
+        Works with many recipe sites, like NYT Cooking, Bon Appétit and Food Network. Some sites, including AllRecipes, block imports; use the Photo tab for those.
       </Text>
     </View>
   );
