@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "0.73+ is a deprecated stub that depends on react-native and pulls in its types, which conflict with react-native-web. Stay on 0.72.x.",
+      "matchPackageNames": ["@types/react-native"],
+      "allowedVersions": "<0.73.0"
+    }
+  ]
 }
