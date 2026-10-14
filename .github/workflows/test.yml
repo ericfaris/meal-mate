@@ -71,6 +71,12 @@ jobs:
     needs: [test, frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, lab]
+    # Serialize deploys: back-to-back merges must never run two
+    # `docker compose up --build` at once — an interrupted recreate leaves a
+    # renamed `<id>_meal-mate-api-1` orphan that blocks every later deploy.
+    concurrency:
+      group: meal-mate-lab-deploy
+      cancel-in-progress: false
     steps:
       - name: Trigger sentinel deploy
         run: |
