@@ -18,7 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0",
+    "@anthropic-ai/sdk": "^0.134.0",
     "@types/multer": "^2.0.0",
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
