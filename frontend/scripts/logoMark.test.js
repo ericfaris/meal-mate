@@ -73,7 +73,7 @@ test('generated raster assets have expected sizes', async () => {
     'assets/favicon.png': [48, 48],
     'public/icons/icon-192.png': [192, 192],
     'public/icons/icon-512.png': [512, 512],
-    'public/icons/maskable-512.png': [512, 512],
+    'public/icons/icon-maskable-512.png': [512, 512],
     'public/icons/apple-touch-icon.png': [180, 180],
   };
   for (const [f, [w, h]] of Object.entries(expected)) {
@@ -85,6 +85,27 @@ test('generated raster assets have expected sizes', async () => {
 test('manifest icons and favicon links resolve to real files', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'public/manifest.json'), 'utf8'));
   for (const i of manifest.icons) assert.ok(fs.existsSync(path.join(root, 'public', i.src)), i.src);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon.svg')));
-  assert.ok(fs.readFileSync(path.join(root, 'scripts/inject-pwa.js'), 'utf8').includes('/favicon.svg'));
+  assert.ok(fs.existsSync(path.join(root, 'public/icons/favicon.ico')));
+  const inject = fs.readFileSync(path.join(root, 'scripts/inject-pwa.js'), 'utf8');
+  assert.ok(inject.includes('<link rel="icon" href="/icons/favicon.ico" sizes="any">'));
+  assert.ok(inject.includes('<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">'));
+  for (const f of ['public/welcome/index.html', 'public/design-system.html']) {
+    const html = fs.readFileSync(path.join(root, f), 'utf8');
+    assert.ok(html.includes('href="/icons/favicon.ico"') && !html.includes('favicon.svg'), `${f} favicon link`);
+  }
+});
+
+// House app-icon standard (shared with every mooseflip app): the icon set is
+// rendered from scripts/icons/icon.svg by scripts/icons/build.py (the dimensional
+// Two Cloches). logoMark.js still owns the flat in-app mark (Logo.tsx, logo.svg).
+test('app icon set: favicon.ico holds 16/32/48, maskable is listed, master has both layers', () => {
+  const ico = fs.readFileSync(path.join(root, 'public/icons/favicon.ico'));
+  assert.deepStrictEqual([...ico.subarray(0, 6)], [0, 0, 1, 0, 3, 0]);
+  assert.deepStrictEqual([ico[6], ico[22], ico[38]], [16, 32, 48]);
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'public/manifest.json'), 'utf8'));
+  assert.deepStrictEqual(manifest.icons.map((i) => i.src), ['/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png']);
+  assert.strictEqual(manifest.icons[2].purpose, 'maskable');
+  const svg = fs.readFileSync(path.join(root, 'scripts/icons/icon.svg'), 'utf8');
+  assert.ok(svg.includes('id="bg"') && svg.includes('id="mark"'));
+  assert.ok(svg.includes('#cf6d50') && svg.includes('#8a3620'), 'terracotta tile');
 });

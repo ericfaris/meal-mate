@@ -318,15 +318,18 @@ badge (`#B14E33`); sage is not used in the mark because it is too faint on
 terracotta. Geometry lives in `frontend/scripts/logoMark.js` (`PATHS.full`
 master and a heavier `PATHS.small` cut used for favicon sizes, 32px and below).
 
-Generated from that file by `node scripts/generateIcons.js` then
-`node scripts/generatePwaAssets.js`: `assets/icon.png`, `favicon.png`,
-`public/favicon.svg`, `docs/design/logo.svg` and
-the PWA set under `public/icons/` (`icon-192.png`, `icon-512.png`,
-`maskable-512.png`, `apple-touch-icon.png`). `Logo.tsx` mirrors the geometry
-for in-app use (`variant="light"` is the cream mark alone for terracotta
-headers). `frontend/scripts/logoMark.test.js` fails if the two drift.
-All `<link>`/manifest wiring (`frontend/public/manifest.json`,
-`frontend/scripts/inject-pwa.js`) is unchanged.
+`node scripts/generateIcons.js` writes the flat mark to `docs/design/logo.svg`.
+
+**App icon (house standard, 2026-10-16).** Like every mooseflip app (modelled on
+redline and jambo), the app icon is one bold, dimensional mark on a rich tile:
+the Two Cloches as real cream serving domes with knobs on one shared platter,
+on a terracotta radial (`#cf6d50` → `#8a3620`). Master: `frontend/scripts/icons/icon.svg`
+(`#bg` + `#mark`); `python3 frontend/scripts/icons/build.py` renders
+`public/icons/` (`favicon.ico` 16/32/48, `apple-touch-icon.png` 180,
+`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`) plus Expo's
+`assets/icon.png` (1024) and `assets/favicon.png`. Wiring: `manifest.json`,
+`scripts/inject-pwa.js` (`/icons/favicon.ico`), `public/welcome/` and the
+showcase. `scripts/logoMark.test.js` checks both the flat mark and the icon set.
 
 ---
 
