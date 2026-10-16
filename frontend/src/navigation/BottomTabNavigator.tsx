@@ -74,6 +74,29 @@ export type RootStackParamList = {
   Household: undefined;
 };
 
+// Landing-page header: cream bar on a warm hairline, ink title in the display
+// face. Terracotta is kept for actions (buttons, active tab), not chrome.
+const headerTitleStyle = {
+  fontFamily: typography.families.display,
+  fontSize: 20,
+  fontWeight: '600' as const,
+  color: colors.text,
+};
+const headerBarStyle = {
+  backgroundColor: colors.background,
+  borderBottomWidth: 1,
+  borderBottomColor: colors.border,
+  shadowOpacity: 0,
+  elevation: 0,
+};
+const stackHeaderOptions = {
+  headerStyle: { backgroundColor: colors.background },
+  headerShadowVisible: true,
+  headerTintColor: colors.text,
+  headerTitleStyle,
+  headerBackTitleVisible: false,
+};
+
 const RecipesStack = createNativeStackNavigator<RecipesStackParamList>();
 const PlannerStack = createNativeStackNavigator<PlannerStackParamList>();
 const GroceryStack = createNativeStackNavigator<GroceryStackParamList>();
@@ -95,16 +118,7 @@ function HeaderRight() {
 function RecipesStackNavigator() {
   return (
     <RecipesStack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: colors.textOnPrimary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        headerBackTitleVisible: false,
-      }}
+      screenOptions={stackHeaderOptions}
     >
       <RecipesStack.Screen
         name="RecipesList"
@@ -130,16 +144,7 @@ function RecipesStackNavigator() {
 function PlannerStackNavigator() {
   return (
     <PlannerStack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: colors.textOnPrimary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        headerBackTitleVisible: false,
-      }}
+      screenOptions={stackHeaderOptions}
     >
       <PlannerStack.Screen
         name="PlannerHome"
@@ -176,16 +181,7 @@ function PlannerStackNavigator() {
 function GroceryStackNavigator() {
   return (
     <GroceryStack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: colors.textOnPrimary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        headerBackTitleVisible: false,
-      }}
+      screenOptions={stackHeaderOptions}
     >
       <GroceryStack.Screen
         name="GroceryPicker"
@@ -217,7 +213,7 @@ function TabNavigator() {
   // Calculate tab bar width for desktop - centered with max width
   const getTabBarStyle = () => {
     const baseStyle = {
-      backgroundColor: colors.white,
+      backgroundColor: colors.background,
       borderTopColor: colors.border,
       borderTopWidth: 1,
       paddingTop: spacing.xs,
@@ -263,18 +259,15 @@ function TabNavigator() {
         tabBarStyle: getTabBarStyle(),
         tabBarLabelStyle: {
           fontSize: isWeb && width > 768 ? 13 : 12,
-          fontWeight: '500',
+          fontWeight: '700',
+          letterSpacing: 0.2,
         },
         tabBarItemStyle: isWeb && width > 768 ? {
           paddingVertical: spacing.xs,
         } : undefined,
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: colors.textOnPrimary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerStyle: headerBarStyle,
+        headerTintColor: colors.text,
+        headerTitleStyle: headerTitleStyle,
       })}
     >
       <Tab.Screen
@@ -284,15 +277,11 @@ function TabNavigator() {
           title: 'Home',
           headerTitle: () => (
             <View style={headerStyles.brandContainer}>
-              <LogoIcon size={28} variant="light" />
+              <LogoIcon size={30} />
               <Text style={headerStyles.brandText}>Meal Mate</Text>
             </View>
           ),
           headerRight: () => <HeaderRight />,
-          headerStyle: {
-            backgroundColor: colors.primary,
-          },
-          headerTintColor: colors.textOnPrimary,
         }}
       />
       <Tab.Screen
@@ -333,13 +322,7 @@ export default function RootNavigator() {
         options={{
           headerShown: true,
           title: 'Settings',
-          headerStyle: {
-            backgroundColor: colors.primary,
-          },
-          headerTintColor: colors.textOnPrimary,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          ...stackHeaderOptions,
           presentation: 'card',
         }}
       />
@@ -349,13 +332,7 @@ export default function RootNavigator() {
         options={{
           headerShown: true,
           title: 'Household',
-          headerStyle: {
-            backgroundColor: colors.primary,
-          },
-          headerTintColor: colors.textOnPrimary,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          ...stackHeaderOptions,
           presentation: 'card',
         }}
       />
@@ -370,9 +347,10 @@ const headerStyles = StyleSheet.create({
     gap: spacing.sm,
   },
   brandText: {
-    color: colors.textOnPrimary,
-    fontSize: typography.sizes.h3,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 0.5,
+    color: colors.text,
+    fontFamily: typography.families.display,
+    fontSize: 21,
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
 });

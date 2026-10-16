@@ -7,3 +7,9 @@ declare module '*.png' {
   const url: string;
   export default url;
 }
+
+// react-native-web ships no typings; it implements the react-native API, so
+// reuse those types for the platform shim (src/platform/reactNative.tsx).
+declare module 'react-native-web' {
+  export * from 'react-native';
+}

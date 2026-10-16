@@ -10,7 +10,9 @@ paths:
 
 ## Tech Stack
 - **React Native Web** 0.21 (React Native components rendered by react-dom;
-  `react-native` is aliased to `react-native-web` in `vite.config.mts`)
+  `react-native` is aliased to the platform shim `src/platform/reactNative.tsx`
+  in `vite.config.mts`, which re-exports react-native-web with Text/TextInput
+  that apply the design-system fonts; see DESIGN.md §3)
 - **Vite** for dev server + production build (no Expo, no Metro)
 - **React Navigation** v6 (Bottom tabs + native-stack)
 - **TypeScript** for type safety (`npm run typecheck`)
@@ -425,6 +427,13 @@ navigation.reset({
 ```
 
 ## Styling & Theme
+
+### Landing-page look (DESIGN.md v1.1)
+- Cream headers (`stackHeaderOptions`), terracotta reserved for actions.
+- Section labels: spread `eyebrow` from `theme`; panels/cards: spread `surface`.
+- Switches: `components/ui/ToggleSwitch` inside a row that owns the press.
+- No emoji as UI markers; use Ionicons or the Fraunces italic accent.
+- Don't set `fontFamily` unless you need the display face below 20px.
 
 ### Use Theme Constants:
 ```typescript

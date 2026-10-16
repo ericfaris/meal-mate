@@ -107,3 +107,29 @@
   blocked. Name only sites verified to work, and recheck when touching it.
 - Stopping dev servers: kill by PID from `lsof -ti tcp:<port>`. `pkill -f
   "<pattern>"` matches the invoking shell's own command line and kills it.
+
+## 2026-10-16 — landing page + app retune; auditing the pitch found real bugs
+- Writing marketing copy, then checking each claim against the app, turned
+  up five broken or missing features: the body font never loaded, the
+  "Keep it simple" and "Vegetarian only" preferences didn't exist, the
+  fallback ingredient parser dropped quantities, item authors weren't
+  returned, and invite links were dead. Audit a landing page claim by claim
+  (code and a live run), and keep its mocks pictures of real screens.
+- `Text.defaultProps` is silently ignored in React 19. The "app-wide Karla"
+  was a no-op since the Expo days. Fonts now come from a `react-native`
+  alias shim (`src/platform/reactNative.tsx`). Verify fonts with
+  `getComputedStyle`, not by eye: Karla and the system font look alike.
+- `parseIngredientLine` stripped every leading digit as a "list marker", so
+  "2 lb chicken" became "lb chicken". Production masked it because the AI
+  parser runs there. Test the fallback path explicitly.
+- Recipe complexity was removed on purpose (`eb32bd7`). "Keep it quick" is
+  built on prep + cook time instead. Check `git log -S` before re-adding
+  a field a design or spec assumes exists.
+- Invite links were `mealmate://join/...` (Expo scheme), and the linking
+  config nested routes under a nonexistent `Main` screen. Both are web dead
+  ends now covered by tests (`appUrl.test.ts`, `linking.test.ts`).
+- vitest externalizes node_modules, so React Navigation's CJS build can't
+  see the `react-native` alias. Import pure helpers like `getStateFromPath`
+  from `@react-navigation/core` in tests.
+- Playwright against the local build: start at `/?start`, otherwise the
+  first-visit redirect sends a fresh browser to `/welcome/`.

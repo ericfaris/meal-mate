@@ -8,18 +8,47 @@
 <link rel="icon" href="/favicon.png" />
 <link rel="stylesheet" href="/design-tokens.css" />
 <style>
-  @font-face {
-    font-family: 'Fraunces';
-    src: url('/fonts/Fraunces-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-display: swap;
-  }
-  @font-face {
-    font-family: 'Karla';
-    src: url('/fonts/Karla-Regular.woff2') format('woff2');
-    font-weight: 400;
-    font-display: swap;
-  }
+  /* Same variable files and weight ranges as frontend/index.html */
+  @font-face { font-family: 'Fraunces'; src: url('/fonts/Fraunces-Variable.woff2') format('woff2'); font-weight: 300 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: 'Fraunces'; src: url('/fonts/Fraunces-Italic-Variable.woff2') format('woff2'); font-weight: 300 900; font-style: italic; font-display: swap; }
+  @font-face { font-family: 'Karla'; src: url('/fonts/Karla-Variable.woff2') format('woff2'); font-weight: 300 800; font-display: swap; }
+  h1, h2, h3, .type-sample[data-display] { font-weight: 600; }
+
+  /* v1.1 components (see DESIGN.md §5) */
+  .eyebrow { font-family: var(--type-eyebrow-font); font-size: var(--type-eyebrow-size); line-height: var(--type-eyebrow-line-height); letter-spacing: var(--type-eyebrow-letter-spacing); font-weight: 700; text-transform: uppercase; color: var(--color-primary); }
+  .surface { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 16px; box-shadow: var(--shadow-card); }
+  .switch { width: 42px; height: 24px; border-radius: 12px; background: var(--color-border); padding: 3px; display: inline-block; vertical-align: middle; transition: background var(--motion-micro-interaction-duration); cursor: pointer; border: 0; }
+  .switch i { display: block; width: 18px; height: 18px; border-radius: 9px; background: var(--color-card); transition: transform var(--motion-micro-interaction-duration) var(--motion-micro-interaction-easing); }
+  .switch[aria-checked="true"] { background: var(--color-secondary); }
+  .switch[aria-checked="true"] i { transform: translateX(18px); }
+  .prefs { max-width: 380px; padding: 0 16px; }
+  .prefs .row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--color-border); }
+  .prefs .row:last-child { border-bottom: 0; }
+  .prefs small { display: block; color: var(--color-text-light); font-size: 14px; }
+  .days { display: grid; gap: 8px; max-width: 380px; }
+  .day { display: flex; align-items: center; gap: 16px; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 16px; }
+  .day .d { width: 44px; text-align: center; }
+  .day .d small { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--color-text-muted); }
+  .day .d b { font-family: var(--type-h1-font); font-weight: 600; font-size: 22px; }
+  .day .d em { display: block; font-family: var(--type-h1-font); font-size: 12px; color: var(--color-primary); }
+  .day .m b { display: block; }
+  .day .m span { font-size: 12px; color: var(--color-text-muted); }
+  .day.label { background: transparent; border-style: dashed; }
+  .day.label .m b { font-family: var(--type-h1-font); font-style: italic; font-weight: 400; font-size: 17px; color: var(--color-text-light); }
+  .day.today { border-color: var(--color-primary); border-left-width: 4px; }
+  .day.today .d small, .day.today .d b { color: var(--color-primary); }
+  .day.past { opacity: .72; }
+  .veg { background: var(--color-tag-simple); border-radius: 999px; padding: 1px 7px; font-size: 11px; font-weight: 700; color: var(--color-text); margin-left: 6px; }
+  .aisle-list { max-width: 380px; }
+  .aisle-list .item { display: grid; grid-template-columns: 22px 1fr auto; gap: 16px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--color-border); }
+  .aisle-list .item:last-child { border-bottom: 0; }
+  .box { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--color-text-muted); display: grid; place-items: center; color: #fff; font-size: 14px; }
+  .box.on { background: var(--color-secondary); border-color: var(--color-secondary); }
+  .item small { display: block; font-size: 12px; color: var(--color-text-muted); }
+  .item q { quotes: none; font-variant-numeric: tabular-nums; color: var(--color-text-light); font-size: 14px; }
+  .item.done span:first-of-type { text-decoration: line-through; color: var(--color-text-muted); }
+  .progress { height: 6px; border-radius: 3px; background: var(--color-border); overflow: hidden; max-width: 380px; }
+  .progress i { display: block; height: 100%; width: 35%; background: var(--color-secondary); }
 
   * { box-sizing: border-box; }
   body {
@@ -298,15 +327,15 @@
       <div class="type-sample" style="font-family: var(--type-display-font); font-size: var(--type-display-size); line-height: var(--type-display-line-height); letter-spacing: var(--type-display-letter-spacing);">Meal Mate</div>
     </div>
     <div class="type-row">
-      <div class="type-meta"><strong>h1</strong>Fraunces · 28/34 · screen titles, day names</div>
+      <div class="type-meta"><strong>h1</strong>Fraunces · 28/34 · screen titles</div>
       <div class="type-sample" style="font-family: var(--type-h1-font); font-size: var(--type-h1-size); line-height: var(--type-h1-line-height);">Good evening, Eric</div>
     </div>
     <div class="type-row">
-      <div class="type-meta"><strong>h2</strong>Karla · 24/30 · section headers</div>
+      <div class="type-meta"><strong>h2</strong>Fraunces · 24/30 · section headings</div>
       <div class="type-sample" style="font-family: var(--type-h2-font); font-size: var(--type-h2-size); line-height: var(--type-h2-line-height);">This Week's Plan</div>
     </div>
     <div class="type-row">
-      <div class="type-meta"><strong>h3</strong>Karla · 20/26 · recipe titles, card headers</div>
+      <div class="type-meta"><strong>h3</strong>Fraunces · 20/26 · header titles, card headers</div>
       <div class="type-sample" style="font-family: var(--type-h3-font); font-size: var(--type-h3-size); line-height: var(--type-h3-line-height);">Spaghetti Carbonara</div>
     </div>
     <div class="type-row">
@@ -315,11 +344,19 @@
     </div>
     <div class="type-row">
       <div class="type-meta"><strong>small</strong>Karla · 14/20 · tags, microcopy, labels</div>
-      <div class="type-sample" style="font-family: var(--type-small-font); font-size: var(--type-small-size); line-height: var(--type-small-line-height);">Medium complexity · 30 min</div>
+      <div class="type-sample" style="font-family: var(--type-small-font); font-size: var(--type-small-size); line-height: var(--type-small-line-height);">Vegetarian · 30 min</div>
     </div>
     <div class="type-row">
       <div class="type-meta"><strong>tiny</strong>Karla · 12/16 · timestamps, hints</div>
       <div class="type-sample" style="font-family: var(--type-tiny-font); font-size: var(--type-tiny-size); line-height: var(--type-tiny-line-height);">Last cooked 6 days ago</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>eyebrow</strong>Karla 700 · 12/16 · 1.4px · uppercase section labels</div>
+      <div class="type-sample eyebrow">Tonight's dinner</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta"><strong>italic accent</strong>Fraunces italic · labels, "On the table tonight"</div>
+      <div class="type-sample" style="font-family: var(--type-h1-font); font-style: italic; font-size: 20px; color: var(--color-primary);">On the table tonight</div>
     </div>
   </section>
 
@@ -387,11 +424,41 @@
   </section>
 
   <section>
-    <h2 class="section-title">Components — Tags / Complexity Badges</h2>
+    <h2 class="section-title">Components — Tags</h2>
     <div class="component-row">
-      <span class="tag tag-simple">Simple</span>
-      <span class="tag tag-medium">Medium</span>
-      <span class="tag tag-complex">Complex</span>
+      <span class="tag tag-simple">Vegetarian</span>
+      <span class="tag tag-medium">tagMedium (spare)</span>
+      <span class="tag tag-complex">tagComplex (spare)</span>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Planner day card (all states)</h2>
+    <div class="days">
+      <div class="day past"><div class="d"><small>Mon</small><b>12</b></div><div class="m"><b>Korean beef bowls</b><span>20 min</span></div></div>
+      <div class="day label"><div class="d"><small>Tue</small><b>13</b></div><div class="m"><b>Leftovers</b></div></div>
+      <div class="day today"><div class="d"><small>Fri</small><b>16</b><em>Today</em></div><div class="m"><b>Sheet-pan chicken fajitas</b><span>45 min</span></div></div>
+      <div class="day"><div class="d"><small>Sun</small><b>18</b></div><div class="m"><b>Black bean tacos</b><span>20 min<span class="veg">Vegetarian</span></span></div></div>
+      <div class="day"><div class="d"><small>Mon</small><b>19</b></div><div class="m"><span style="font-style: italic; font-size: 14px;">Nothing planned yet</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Preferences panel + toggle switch (click to toggle)</h2>
+    <div class="surface prefs">
+      <div class="row"><span>Avoid repeats<small>Recent dinners sit out (up to 10 days back)</small></span><button class="switch" role="switch" aria-checked="true" aria-label="Avoid repeats"><i></i></button></div>
+      <div class="row"><span>Keep it quick<small>Favor the shortest prep + cook times</small></span><button class="switch" role="switch" aria-checked="false" aria-label="Keep it quick"><i></i></button></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Components — Store Mode aisle</h2>
+    <p class="eyebrow" style="margin: 0 0 8px;">Produce <span style="color: var(--color-text-muted); float: right;">3</span></p>
+    <div class="progress" style="margin-bottom: 12px;"><i></i></div>
+    <div class="surface aisle-list">
+      <div class="item done"><span class="box on">✓</span><span>garlic<small>Korean beef bowls</small></span><q>3 cloves</q></div>
+      <div class="item"><span class="box"></span><span>yellow onion<small>Turkey chili · Fajitas · Pot roast</small></span><q>4</q></div>
+      <div class="item"><span class="box"></span><span>Milk<small>Added by Jess</small></span><q>1 gal</q></div>
     </div>
   </section>
 
@@ -493,6 +560,11 @@
     el.style.whiteSpace = 'pre';
     radiusRow.appendChild(el);
   }
+</script>
+<script>
+  document.querySelectorAll('.switch').forEach(function (b) {
+    b.addEventListener('click', function () { b.setAttribute('aria-checked', b.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); });
+  });
 </script>
 </body>
 </html>

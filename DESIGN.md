@@ -1,7 +1,7 @@
 # Meal Mate — Design System
 
 **Direction: "Farmhouse Kitchen"**
-Status: v1.0 · 2026-09-14 · uplift pass (see Changelog)
+Status: v1.1 · 2026-10-16 · landing-page retune (see Changelog)
 
 Live showcase: `frontend/public/design-system.html` (served at
 `/design-system.html` on the deployed PWA, e.g.
@@ -79,123 +79,94 @@ which matches the actual use case better than either alternative.
 
 ## 2. Color
 
-Source of truth: `frontend/src/theme/index.ts` → `colors`. All values below
-are unchanged from the existing system (already well-chosen) — carried
-forward, not redesigned.
+Source of truth: `frontend/src/theme/index.ts` → `colors`. v1.1 retuned the
+neutrals and sage to match the marketing page (`/welcome/`): greys now lean
+warm (toward the terracotta) instead of neutral, and sage is deep enough to
+carry icons, switches and progress bars.
 
 | Token | Value | Role | Where used |
 |---|---|---|---|
-| `background` | `#FDFAF6` | Dominant surface (warm cream / parchment) | Screen backgrounds, PWA `theme_color` |
-| `primary` | `#B14E33` | Primary accent (deep terracotta) | Primary buttons, links, focus ring — **5.2:1 contrast with white text (WCAG AA)** |
-| `primaryLight` | `#FDF5F3` | Primary tint | Subtle highlighted backgrounds |
-| `secondary` | `#A8B5A2` | Secondary accent (soft sage) | Tags, secondary highlights |
-| `secondaryLight` | `#F3F6F2` | Secondary tint | Secondary button fills |
-| `success` | `#A7D8A8` | Semantic — good | Confirmed-plan indicators |
-| `text` | `#2D2D2D` | Primary text | Body copy on `background`/`card` — 11.8:1 contrast |
-| `textLight` | `#666666` | Secondary text | Metadata, dates |
-| `textMuted` | `#999999` | Tertiary text | Timestamps, disabled hints |
-| `textOnPrimary` | `#FFFFFF` | Text on `primary` | Primary button labels |
-| `white` / `card` | `#FFFFFF` | Card surface | Cards, modals |
-| `border` | `#E5E5E5` | Structural border | Card/input outlines |
-| `divider` | `#F0F0F0` | Hairline separator | List row dividers |
-| `overlay` | `rgba(0,0,0,0.5)` | Scrim | Modal backdrops |
-| `statusGray` | `#6B7280` | Neutral status | "Eating out" day marker |
-| `error` | `#E57373` | Semantic — bad | Error banners/text |
-| `warning` | `#FFB74D` | Semantic — warn | Warning banners |
-| `tagSimple` | `#C8E6C9` | Complexity badge | Simple recipes |
-| `tagMedium` | `#FFE0B2` | Complexity badge | Medium recipes |
-| `tagComplex` | `#FFCDD2` | Complexity badge | Complex recipes |
-| `focusRing` | `#B14E33` **(new)** | Accessibility | Visible keyboard-focus outline on web (Button/Input) — see §7 |
+| `background` | `#FDFAF6` | Dominant surface (warm cream) | Screen backgrounds, header bars, tab bar, PWA `theme_color` |
+| `primary` | `#B14E33` | Accent (deep terracotta) | Primary buttons, active tab, today's day card, eyebrow labels — **5.2:1 with white text** |
+| `primaryLight` | `#FBEDE8` | Terracotta wash | Skipped-day chips, avatar ring |
+| `secondary` | `#7E9277` | Sage | On-switches, checked boxes, progress fill, leaf/vegetarian icon (3.6:1 on cream: icons and large marks only, never body text) |
+| `secondaryLight` | `#EEF2EC` | Sage wash | Secondary fills, household/info bands |
+| `success` | `#A7D8A8` | Semantic — good | Confetti, confirmed indicators |
+| `linen` | `#F6EFE6` | Recessed surface | Image placeholders, inactive bands |
+| `text` | `#2D2D2D` | Ink | Body copy — 13.6:1 on cream |
+| `textLight` | `#5E5A55` | Secondary text | Metadata, descriptions — 6.6:1 on cream |
+| `textMuted` | `#857D76` | Tertiary text | Timestamps, item sources, hints — 4.0:1 on cream (AA for ≥14px bold / large; used at 12–13px for non-essential metadata only) |
+| `textOnPrimary` | `#FFFFFF` | Text on `primary` | Button labels |
+| `white` / `card` | `#FFFFFF` | Card surface | Cards, panels, modals |
+| `border` | `#E8DFD4` | Warm hairline | Card/input outlines, header and tab-bar rules |
+| `divider` | `#F1EAE1` | Faint separator | List row dividers |
+| `overlay` | `rgba(45,30,20,0.5)` | Warm scrim | Modal backdrops |
+| `statusGray` | `#7A726B` | Neutral status | "Eating out" marker |
+| `error` | `#C8553D` | Semantic — bad | Error text/banners (always paired with an icon or message; it sits near `primary` in hue) |
+| `warning` | `#E0A04A` | Semantic — warn | Warning banners |
+| `tagSimple` / `tagMedium` / `tagComplex` | `#DCEFD9` / `#FCE9CC` / `#F9D9D6` | Soft tag fills | `tagSimple` = the Vegetarian tag; the others are spare tag fills (recipe complexity was removed from the product in `eb32bd7`) |
+| `focusRing` | `#B14E33` | Accessibility | Keyboard-focus outline on web — see §7 |
 
-All swatches render live (with hex values) in the showcase page's Color
-section, generated directly from `design-tokens.css`.
+All swatches render live in the showcase page's Color section, generated
+from `design-tokens.css`.
 
 ---
 
 ## 3. Type
 
-**Previously:** `typography.families.default: undefined` — every screen fell
-back to the OS system font. No display face, no personality, despite the
-theme file's own header claiming a deliberate identity.
+Two self-hosted **variable** fonts (latin subset, from Google Fonts),
+declared in `frontend/index.html` with weight ranges so real weights render
+instead of synthetic bold:
 
-**Now:** two self-hosted faces, both pulled from the "Farmhouse Kitchen"
-mood board's type direction:
-
-| Face | Role | File | Fallback stack |
+| Face | Role | Files | Fallback stack |
 |---|---|---|---|
-| **Fraunces** (Regular, 400) | Display — wordmark, hero/splash, screen `h1` titles | `frontend/public/fonts/Fraunces-Regular.woff2` | `Georgia, serif` |
-| **Karla** (Regular, 400) | Body — everything else, applied app-wide as the default | `frontend/public/fonts/Karla-Regular.woff2` | `-apple-system, sans-serif` |
+| **Fraunces** 300–900, roman + italic | Display — headings, header titles, day numerals, the italic accent ("On the table tonight", Leftovers / Eating Out labels, "Today") | `public/fonts/Fraunces-Variable.woff2`, `Fraunces-Italic-Variable.woff2` | `Georgia, "Times New Roman", serif` |
+| **Karla** 300–800 | Body — everything else | `public/fonts/Karla-Variable.woff2` | `-apple-system, "Segoe UI", Roboto, sans-serif` |
 
-**Why this pairing**: Fraunces is a soft, warm serif with slightly organic
-curves — it reads as "cookbook title" rather than "corporate editorial,"
-which is the exact register the mood board and app purpose call for. Karla
-is a humanist sans with rounded terminals — friendly and highly legible at
-small sizes (grocery-list rows, tags) without competing with Fraunces for
-attention. Neither is a cliché "safe AI pick" (Inter/Roboto/system) or the
-overused Space-Grotesk-style default — see the global rule against shipping
-system fonts as the personality.
+**Why this pairing**: Fraunces reads as "cookbook title," Karla is a warm
+humanist sans that stays legible in grocery rows and tags. Neither is a
+generic default.
 
-**Known constraint**: both Fraunces and Karla ship upstream as *variable*
-fonts on Google Fonts (no more static per-weight TTFs). Only the Regular
-(400) static instance of each is bundled here to keep the asset footprint
-small and the font-loading path simple (one file → one `@font-face`
-family name). Numeric `fontWeight` styling
-elsewhere in the app (`typography.weights.semibold`, `.bold`) still applies
-on top of the custom font and each platform does its best (synthetic
-bold/emphasis) — it's a known, acceptable degradation, not a bug. If true
-multi-weight display type is wanted later, re-run
-`frontend/scripts/generate-design-tokens-css.js`'s sibling font-fetch step
-(documented inline in this file's git history / the session that produced
-it) against a font that still ships true static weights (e.g. Lora, Zilla
-Slab), or self-host the variable fonts with a weight-range `@font-face`.
+### How the faces are applied (the platform shim)
 
-**Where fonts are wired**:
-- `frontend/index.html` — `@font-face` rules for both faces (and the
-  vendored Ionicons icon font). `frontend/App.tsx` patches
-  `Text.defaultProps` / `TextInput.defaultProps` to make Karla the app-wide
-  default — **but React 19 ignores `defaultProps` on function components**,
-  so this is currently a no-op and body text renders in the system font
-  (true before the Expo removal too). Fixing it needs a different
-  mechanism (e.g. a wrapped `Text` or a global CSS rule).
-- `frontend/src/components/branding/Logo.tsx` and `SplashScreen.tsx` — the
-  wordmark and splash tagline explicitly use the display face.
-- `frontend/src/screens/HomeScreen.tsx` — the greeting (`Good evening,
-  Eric`) uses the display face, since it's the first thing read on every
-  app open (a documented key moment, §1).
-- Other screen `h1`s (day names, section titles elsewhere) were **not**
-  swept to the display face in this pass — see "Extending this" below.
+`vite.config.mts` aliases the bare `react-native` import to
+`frontend/src/platform/reactNative.tsx`, which re-exports react-native-web
+with wrapped `Text` and `TextInput`. App code **and** libraries (React
+Navigation's header titles, tab labels) go through it, so:
 
-**Full type scale** (`typography.scale.*` in `theme/index.ts`; the older
-flat `typography.sizes.*` map is kept for the ~30 existing screens that
-already read from it):
+- Text gets **Karla** by default.
+- Text with `fontSize >= 20` gets **Fraunces**, and `bold`/700+ is eased to
+  600 (Fraunces at 700 looks heavy next to Karla).
+- An explicit `fontFamily` always wins (the Ionicons font, monospace codes).
+- Nested Text inherits its parent's face unless it sets its own `fontSize`.
+
+This replaced the v1.0 `Text.defaultProps` hack in `App.tsx`, which React 19
+silently ignores, so v1.0 shipped in the system font everywhere. Regression
+tests: `src/platform/reactNative.test.tsx`.
+
+Use `typography.families.display` explicitly for display moments **below**
+20px (day numerals in the Planner, the italic accents) and spread `eyebrow`
+for small uppercase section labels.
+
+**Full type scale** (`typography.scale.*`; the flat `typography.sizes.*`
+map stays for existing screens):
 
 | Step | Face | Size / Line-height | Letter-spacing | Use |
 |---|---|---|---|---|
-| `display` | Fraunces | 34 / 40 | 0.2px | App wordmark, splash tagline, big hero moments only |
-| `h1` | Fraunces | 28 / 34 | 0px | Screen titles, day names |
-| `h2` | Karla | 24 / 30 | 0px | Section headers |
-| `h3` | Karla | 20 / 26 | 0px | Recipe titles, card headers |
-| `body` | Karla | 16 / 24 | 0px | Default body copy |
-| `small` | Karla | 14 / 20 | 0.1px | Tags, microcopy, form labels |
-| `tiny` | Karla | 12 / 16 | 0.2px | Timestamps, hints, footer text |
-
-Every step renders live, at its real size/weight/line-height, in the
-showcase page's Type section.
-
-**Extending this to more screens**: to move an existing screen title from
-system-default-bold to the display face, add
-`fontFamily: typography.families.display` to that style (see the three
-edits already made in HomeScreen/Logo/SplashScreen as the pattern). This was
-deliberately not done everywhere in this pass — a blanket sweep across ~30
-files was out of scope for a design-system uplift and carries needless
-regression risk; the rollout above covers the highest-impact moments and the
-pattern is now established for whoever extends it next.
+| `display` | Fraunces | 34 / 40 | -0.3px | Wordmark, splash, hero greeting |
+| `h1` | Fraunces | 28 / 34 | -0.2px | Screen titles, recipe title, Tonight's Dinner title |
+| `h2` | Fraunces | 24 / 30 | -0.1px | Section headings ("What's this week like?") |
+| `h3` | Fraunces | 20 / 26 | 0px | Header bar titles, card headers |
+| `body` | Karla | 16 / 24 | 0px | Default copy, recipe names in lists |
+| `small` | Karla | 14 / 20 | 0.1px | Tags, microcopy, buttons in rows |
+| `tiny` | Karla | 12 / 16 | 0.2px | Timestamps, item sources, hints |
+| `eyebrow` | Karla 700, UPPERCASE | 12 / 16 | 1.4px | Terracotta section labels: "TONIGHT'S DINNER", "PREFERENCES", store aisles |
 
 ---
 
 ## 4. Spacing, radius, shadow, motion
 
-All from `theme/index.ts`; unchanged except **motion**, which is new.
+All from `theme/index.ts`.
 
 **Spacing** (px): `xs 4` · `sm 8` · `md 16` · `lg 24` · `xl 32` · `xxl 48`.
 
@@ -204,9 +175,12 @@ All from `theme/index.ts`; unchanged except **motion**, which is new.
 **Shadow** (RN shadow props / CSS box-shadow equivalent):
 | Token | CSS equivalent | Use |
 |---|---|---|
-| `card` | `0 2px 8px rgba(0,0,0,0.08)` | Resting cards |
-| `button` | `0 2px 4px rgba(0,0,0,0.1)` | Buttons at rest |
-| `floating` | `0 4px 12px rgba(0,0,0,0.15)` | Modals, elevated/hovered state |
+| `card` | `0 4px 14px rgba(60,40,25,0.06)` | Resting cards (with a 1px `border`) |
+| `button` | `0 2px 6px rgba(60,40,25,0.12)` | Buttons at rest |
+| `floating` | `0 8px 20px rgba(60,40,25,0.16)` | Modals, menus, FABs |
+
+Shadows are warm brown, not black, and soft: on cream the 1px warm
+`border` does the separating and the shadow only lifts.
 
 **Motion** (new — `theme/index.ts` → `motion`): named duration+easing pairs,
 each tied to a category of transition rather than left as a bare number.
@@ -228,51 +202,59 @@ the actual curve, not just read the numbers.
 
 ## 5. Components
 
-Documented here are the component *patterns* already in use across the app
-(buttons, cards, tags, inputs, banners), now with their token mapping made
-explicit, plus how each renders in the showcase page. This pass did not
-introduce a new shared component library (e.g. a `<Button>` primitive) — the
-~30 screens each style their own `TouchableOpacity`/`View` combinations from
-theme tokens today, and consolidating that into shared components is a
-larger refactor than a design-system pass should take on unprompted (real
-behavioral risk across every screen). The token-level contract below is
-what such a future consolidation should target.
+The screens style their own `TouchableOpacity`/`View` combinations from
+tokens; v1.1 adds two shared style fragments in `theme/index.ts` —
+`eyebrow` (section label) and `surface` (white card, 1px warm border, 16px
+radius, soft card shadow) — plus one primitive, `components/ui/ToggleSwitch`.
+
+### Chrome
+- **Header bar**: cream (`background`) with a 1px `border` rule, ink title
+  in Fraunces 600 at 20px, ink back arrow. Terracotta is kept for actions,
+  not chrome (v1.0 used a terracotta bar). Config: `stackHeaderOptions` /
+  `headerBarStyle` in `navigation/BottomTabNavigator.tsx`.
+- **Tab bar**: cream, top `border` rule, terracotta active label/icon, Karla 700.
 
 ### Buttons
-- **Primary**: `colors.primary` fill, `colors.textOnPrimary` label,
-  `shadows.button` at rest, `borderRadius.full` (pill), `heights.button`
-  (48px). Hover/press should shift toward `shadows.floating` and a
-  `motion.microInteraction` transform — see showcase.
-- **Secondary**: `colors.secondaryLight` fill, `colors.text` label, no
-  shadow.
-- **Disabled**: `colors.divider` fill, `colors.textMuted` label, no shadow,
-  `cursor: not-allowed` (web).
-- Focus (web/keyboard): 2px outline in `colors.focusRing`, 2px offset —
-  never rely on color alone.
+- **Primary**: `primary` fill, white Karla 700 label, pill
+  (`borderRadius.full`). Signature CTA ("Suggest my week", "Start Cooking")
+  is 44–56px tall with a leading or trailing icon.
+- **Row action** (Planner "Suggest"/"Change"): 32px pill, white fill,
+  `border` outline, ink label. "Pick"/"Log" is the filled primary version.
+- **Disabled**: reduced opacity; focus ring as before.
 
-### Cards
-`colors.card` background, `borderRadius.lg` (12px), `shadows.card` at rest;
-an elevated/interactive card (e.g. "today's plan") may use
-`shadows.floating` instead to read as more prominent.
+### Day card (Planner) — mirrors the landing hero
+Row layout: a 44px **date stack** (weekday, 11px uppercase muted, over a
+Fraunces 22px numeral) then the meal. States: **recipe** (Karla 700 title,
+time + Vegetarian tag), **label** (dashed border, transparent fill, Fraunces
+italic "Leftovers" / "Eating Out"), **empty** (italic muted "Nothing planned
+yet"), **today** (terracotta border + 4px terracotta left bar, terracotta
+date, italic "Today"), **past** (72% opacity, sage check; action becomes
+"Change", or "Log" when empty so past weeks can be filled in).
 
-### Tags / complexity badges
-Pill (`borderRadius.full`), `heights.chip` (32px), one of `tagSimple` /
-`tagMedium` / `tagComplex` as background with a darkened version of that
-hue for the label text (kept at existing hand-picked text colors — see
-showcase CSS — since the stored tokens are backgrounds only).
+### Preferences panel (Constraints) — mirrors the landing "Suggest" panel
+`surface` card, rows separated by dashed `border` rules, each row a label +
+description + `ToggleSwitch` (42×24 pill, sage when on; the whole row is
+the hit target with `accessibilityRole="switch"`). Day chips: active days
+white with a muted weekday + Fraunces date; skipped days terracotta wash,
+struck through.
 
-### Inputs
-`heights.input` (48px), `borderRadius.md` (8px), `colors.border` at rest,
-`colors.error` border + an error-red hint line below when invalid, focus
-ring identical to buttons.
+### Store Mode — mirrors the landing grocery mock
+Store logo chips, then a progress row ("Aldi order · 4 of 22 in the cart")
+over a 6px sage bar, then aisles: `eyebrow` header with a count, items in a
+rounded bordered group. Each item: 22px rounded checkbox (sage when
+checked), name, a `tiny` muted **source line** (`utils/groceryItem.ts`: the
+dinners that need it, or "Added by Jess"), and the quantity right-aligned in
+tabular figures.
 
-### Status banners
-Full-width, `borderRadius.md`, one of `colors.success` / `colors.warning` /
-`colors.error` as background with a readable dark/white label — used for
-plan-confirmation, missing-day, and network-error states respectively.
+### Tonight's Dinner (Home)
+Without a photo: white `surface` with a terracotta left bar, italic Fraunces
+"On the table tonight", Fraunces title, meta, primary pill CTA. With a photo:
+the photo with a warm-brown scrim. Label nights use the dashed italic
+treatment.
 
-All variants/states render side by side in the showcase page's Components
-sections.
+### Tags, inputs, banners
+Tags are small pills (`tagSimple` fill for Vegetarian, with a leaf icon).
+Inputs: 48px, `border` outline, focus ring. Banners: unchanged.
 
 ---
 
@@ -352,14 +334,17 @@ All `<link>`/manifest wiring (`frontend/public/manifest.json`,
 
 | File | Role |
 |---|---|
-| `frontend/public/fonts/Fraunces-Regular.woff2` | Display face, self-hosted; `@font-face` in `index.html` + showcase page |
-| `frontend/public/fonts/Karla-Regular.woff2` | Body face, self-hosted; `@font-face` in `index.html` + showcase page |
-| `frontend/public/fonts/Ionicons.ttf` | Icon font (vendored from `@expo/vector-icons`), rendered by `src/components/icons/Ionicons.tsx` |
-| `frontend/public/design-tokens.css` | Generated CSS custom properties mirroring `theme/index.ts` — **do not hand-edit**, regenerate (see §10) |
-| `frontend/public/design-system.html` | Static showcase page — the live design-system reference |
-| `frontend/scripts/generate-design-tokens-css.js` | Generator script that produces `design-tokens.css` from `theme/index.ts` |
-| `frontend/assets/icon.png`, `favicon.png`, `public/icons/*.png` | Existing app icon set — reviewed, unchanged (§8) |
-| `docs/design/moodboard-farmhouse-kitchen.png` | The chosen Ideogram mood board (documentation only, not shipped in the app) |
+| `frontend/public/fonts/Fraunces-Variable.woff2` | Display face, roman, weights 300–900 |
+| `frontend/public/fonts/Fraunces-Italic-Variable.woff2` | Display face, italic accent |
+| `frontend/public/fonts/Karla-Variable.woff2` | Body face, weights 300–800 |
+| `frontend/public/fonts/Ionicons.ttf` | Icon font, rendered by `src/components/icons/Ionicons.tsx` |
+| `frontend/src/platform/reactNative.tsx` | `react-native` shim that applies the faces (§3) |
+| `frontend/public/welcome/index.html` | Marketing landing page (§11) |
+| `frontend/public/design-tokens.css` | Generated from `theme/index.ts` — do not hand-edit (§10) |
+| `frontend/public/design-system.html` | Static showcase page |
+| `frontend/scripts/generate-design-tokens-css.js` | Token → CSS generator |
+| `frontend/assets/icon.png`, `favicon.png`, `public/icons/*.png` | App icon set (§8) |
+| `docs/design/moodboard-farmhouse-kitchen.png` | Original mood board (docs only) |
 
 ---
 
@@ -380,7 +365,27 @@ swatches and spacing scale, so no value is ever hand-copied twice.
 
 ---
 
-## 11. Changelog
+## 11. Landing page
+
+`frontend/public/welcome/index.html`, served at `/welcome/` (nginx:
+`location = /welcome/`, no-cache). It's static HTML with the same tokens
+and self-hosted fonts as the app, plus a small inline script for the
+interactive store-layout demo (its category orders mirror
+`backend/src/controllers/stores.ts`).
+
+- **Entry**: `src/utils/welcome.ts` sends a signed-out first-time visitor at
+  `/` to `/welcome/` once. Its buttons link to `/?start`, which marks it
+  seen. Deep links (`/join/:token`, `/grocery/:id`) and signed-in users are
+  never redirected. The login screen links to it ("What is Meal Mate?").
+- **Truth rule**: every mock on the page is a picture of a real screen
+  (Planner week, preferences panel, Store Mode) and every claim maps to a
+  working feature. When a feature changes, update the page in the same
+  change. Example: the v1 draft showed Simple/Medium/Complex tags, but
+  complexity no longer exists, so the page shows cook times instead.
+
+---
+
+## 12. Changelog
 
 - **2026-09-14** — Initial design system pass ("Farmhouse Kitchen" uplift).
   Added: full type scale + two self-hosted faces (Fraunces display / Karla
@@ -408,3 +413,13 @@ swatches and spacing scale, so no value is ever hand-copied twice.
   guarded by `logoMark.test.js`, now also checking both cuts and that the
   16px favicon keeps its knobs). Bump the release version so the service
   worker cache picks up the new icons.
+- **2026-10-16** — v1.1 "landing" retune, matching the new marketing page
+  (`/welcome/`). Fixed fonts never loading: the `Text.defaultProps` default
+  was a no-op under React 19, so the app rendered in the system font. A
+  `react-native` platform shim now applies Karla/Fraunces, and the fonts
+  ship as variable files with real weights. Warm neutrals, deeper sage,
+  warm borders and shadows. Cream headers and tab bar replace the
+  terracotta header bar. New `eyebrow`/`surface` fragments and a
+  `ToggleSwitch`. Planner day cards, the Constraints preferences panel,
+  Store Mode and Home's Tonight's Dinner were rebuilt to match the landing
+  mocks (§5).

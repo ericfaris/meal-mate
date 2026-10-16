@@ -3,10 +3,23 @@ server {
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
+    # Behind the Cloudflare Tunnel the container's own port/scheme are wrong
+    # for clients; keep redirects (e.g. /welcome -> /welcome/) relative.
+    absolute_redirect off;
 
     # SPA routing - serve index.html for all routes
     location / {
         try_files $uri $uri/ /index.html;
+    }
+
+    # Marketing page (public/welcome/index.html). Short cache so copy edits
+    # show up on the next visit.
+    location = /welcome {
+        return 301 /welcome/;
+    }
+    location = /welcome/ {
+        try_files /welcome/index.html =404;
+        add_header Cache-Control "no-cache";
     }
 
     # PWA control files must never be long-cached or updates strand clients.

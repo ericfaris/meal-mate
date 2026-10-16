@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Household, { IHousehold } from '../models/household';
 import User from '../models/user';
+import { buildInviteUrl } from '../utils/appUrl';
 import { generateInvitationToken, verifyInvitationToken } from '../utils/invitation';
 
 // Create a new household (user becomes HOH/admin)
@@ -89,7 +90,7 @@ export const generateInviteLink = async (req: Request, res: Response) => {
     }
 
     const token = generateInvitationToken(user.householdId.toString());
-    const inviteUrl = `mealmate://join/${token}`;
+    const inviteUrl = buildInviteUrl(token);
 
     res.json({ inviteUrl });
   } catch (error: any) {

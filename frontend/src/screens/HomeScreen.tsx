@@ -10,7 +10,7 @@ import {
 import { Image } from 'react-native';
 import { Ionicons } from '../components/icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius, shadows } from '../theme';
+import { colors, typography, spacing, borderRadius, shadows, eyebrow } from '../theme';
 import { Recipe, Plan } from '../types';
 import { recipeApi } from '../services/api/recipes';
 import { planApi } from '../services/api/plans';
@@ -211,7 +211,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* Today's Dinner Card */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tonight's Dinner</Text>
+          <Text style={styles.sectionEyebrow}>Tonight's dinner</Text>
           {todayPlan ? (
             <TouchableOpacity
               style={styles.todayCard}
@@ -224,59 +224,51 @@ export default function HomeScreen({ navigation }: Props) {
               }}
               activeOpacity={0.9}
             >
-              {todayPlan.recipeId && typeof todayPlan.recipeId !== 'string' ? (
-                <View style={{flex: 1, width: '100%', height: '100%'}}>
-                  {(todayPlan.recipeId as Recipe).imageUrl ? (
-                    <Image
-                      source={{ uri: (todayPlan.recipeId as Recipe).imageUrl }}
-                      style={styles.todayImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.todayImagePlaceholder}>
-                      <Text style={styles.placeholderEmoji}>🍽️</Text>
+              {todayPlan.recipeId && typeof todayPlan.recipeId !== 'string' ? (() => {
+                const recipe = todayPlan.recipeId as Recipe;
+                const hasImage = !!recipe.imageUrl;
+                const minutes = (recipe.prepTime || 0) + (recipe.cookTime || 0);
+                const ink = hasImage ? colors.white : colors.textLight;
+                return (
+                  <View style={[{ flex: 1, width: '100%', height: '100%' }, !hasImage && styles.todayPlain]}>
+                    {hasImage && (
+                      <Image source={{ uri: recipe.imageUrl }} style={styles.todayImage} resizeMode="cover" />
+                    )}
+                    <View style={hasImage ? styles.todayOverlay : styles.todayPlainBody}>
+                      {!hasImage && <Text style={styles.todayEyebrow}>On the table tonight</Text>}
+                      <Text style={hasImage ? styles.todayTitle : styles.todayTitlePlain}>{recipe.title}</Text>
+                      <View style={styles.todayMeta}>
+                        {minutes > 0 && (
+                          <View style={styles.metaItem}>
+                            <Ionicons name="time-outline" size={16} color={ink} />
+                            <Text style={[styles.metaText, { color: ink }]}>{minutes} min</Text>
+                          </View>
+                        )}
+                        {recipe.isVegetarian && (
+                          <View style={styles.metaItem}>
+                            <Ionicons name="leaf" size={15} color={hasImage ? colors.white : colors.secondary} />
+                            <Text style={[styles.metaText, { color: ink }]}>Vegetarian</Text>
+                          </View>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.startCookingButton, !hasImage && styles.startCookingButtonPlain]}
+                        onPress={() => navigateToRecipe(recipe)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.startCookingText, !hasImage && styles.startCookingTextPlain]}>Start Cooking</Text>
+                        <Ionicons name="arrow-forward" size={18} color={hasImage ? colors.primary : colors.textOnPrimary} />
+                      </TouchableOpacity>
                     </View>
-                  )}
-                  <View style={styles.todayOverlay}>
-                    <Text style={styles.todayTitle}>{(todayPlan.recipeId as Recipe).title}</Text>
-                    <View style={styles.todayMeta}>
-                      {(todayPlan.recipeId as Recipe).cookTime != null && (todayPlan.recipeId as Recipe).cookTime! > 0 && (
-                        <View style={styles.metaItem}>
-                          <Ionicons name="time-outline" size={16} color={colors.white} />
-                          <Text style={styles.metaText}>
-                            {(todayPlan.recipeId as Recipe).cookTime} min
-                          </Text>
-                        </View>
-                      )}
-                      {(todayPlan.recipeId as Recipe).complexity && (
-                        <View style={styles.metaItem}>
-                          <Ionicons name="speedometer-outline" size={16} color={colors.white} />
-                          <Text style={styles.metaText}>
-                            {(todayPlan.recipeId as Recipe).complexity}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      style={styles.startCookingButton}
-                      onPress={() => navigateToRecipe(todayPlan.recipeId as Recipe)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.startCookingText}>Start Cooking</Text>
-                      <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                    </TouchableOpacity>
                   </View>
-                </View>
-              ) : todayPlan.label ? (
+                );
+              })() : todayPlan.label ? (
                 <View style={[
                   styles.labelCard,
                   todayPlan.label === 'Eating Out' && styles.eatingOutCard,
                   todayPlan.label === 'Leftovers' && styles.leftoversCard,
                   todayPlan.label === 'TBD' && styles.tbdCard
                 ]}>
-                  <Text style={styles.labelCardEmoji}>
-                    {todayPlan.label === 'Eating Out' ? '🍽️' : todayPlan.label === 'Leftovers' ? '📦' : '❓'}
-                  </Text>
                   <Text style={[
                     styles.labelCardText,
                     todayPlan.label === 'Eating Out' && styles.eatingOutText,
@@ -289,7 +281,6 @@ export default function HomeScreen({ navigation }: Props) {
                 </View>
               ) : (
                 <View style={styles.labelCard}>
-                  <Text style={styles.labelCardEmoji}>🤔</Text>
                   <Text style={styles.labelCardText}>Plan Incomplete</Text>
                   <Text style={styles.labelCardSubtext}>
                     Tap to update tonight's plan
@@ -323,7 +314,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionEyebrow}>Quick actions</Text>
           <View style={styles.actionsRow}>
             {isAdmin && (
               <TouchableOpacity
@@ -366,7 +357,7 @@ export default function HomeScreen({ navigation }: Props) {
         {spotlightRecipe && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recipe Inspiration</Text>
+              <Text style={[styles.sectionEyebrow, { marginBottom: 0 }]}>Recipe inspiration</Text>
               <TouchableOpacity onPress={navigateToRecipes}>
                 <Text style={styles.seeAllLink}>See all</Text>
               </TouchableOpacity>
@@ -479,6 +470,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.md,
   },
+  sectionEyebrow: {
+    ...eyebrow,
+    marginBottom: spacing.md,
+  },
   seeAllLink: {
     fontSize: typography.sizes.small,
     color: colors.primary,
@@ -487,10 +482,46 @@ const styles = StyleSheet.create({
   // Today's Dinner Card
   todayCard: {
     borderRadius: borderRadius.xl,
-    // overflow: 'hidden', // Removed - causes rendering issues on Android
-    height: 220,
+    minHeight: 200,
     backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.card,
+  },
+  todayPlain: {
+    justifyContent: 'center',
+  },
+  todayPlainBody: {
+    padding: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  todayEyebrow: {
+    fontFamily: typography.families.display,
+    fontStyle: 'italic',
+    fontSize: 15,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  todayTitlePlain: {
+    color: colors.text,
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: typography.weights.semibold as any,
+    marginBottom: spacing.xs,
+  },
+  startCookingButtonPlain: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.lg,
+    height: 44,
+  },
+  startCookingTextPlain: {
+    color: colors.textOnPrimary,
+    fontWeight: typography.weights.bold as any,
   },
   todayImage: {
     width: '100%',
@@ -525,7 +556,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: spacing.md,
     paddingTop: spacing.xl * 2,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(45,30,20,0.55)',
     zIndex: 10,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -574,38 +605,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
-    borderWidth: 3,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.background,
   },
-  eatingOutCard: {
-    backgroundColor: '#FFF3E0',
-    borderColor: '#FF9800',
-  },
-  leftoversCard: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#4CAF50',
-  },
-  tbdCard: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#9E9E9E',
-  },
+  eatingOutCard: {},
+  leftoversCard: {},
+  tbdCard: {},
   labelCardEmoji: {
     fontSize: 48,
     marginBottom: spacing.sm,
   },
   labelCardText: {
+    fontFamily: typography.families.display,
+    fontStyle: 'italic',
     fontSize: typography.sizes.h2,
-    fontWeight: typography.weights.bold as any,
+    fontWeight: typography.weights.normal as any,
+    color: colors.textLight,
     marginBottom: spacing.xs,
   },
-  eatingOutText: {
-    color: '#E65100',
-  },
-  leftoversText: {
-    color: '#2E7D32',
-  },
-  tbdText: {
-    color: '#616161',
-  },
+  eatingOutText: {},
+  leftoversText: {},
+  tbdText: {},
   labelCardSubtext: {
     fontSize: typography.sizes.body,
     color: colors.textLight,

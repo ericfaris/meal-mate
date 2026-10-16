@@ -35,7 +35,7 @@ describe('Ionicons', () => {
   // Same precedence as react-native-vector-icons: callers can't clobber the
   // icon font (e.g. via the app-wide Karla default).
   it('keeps the icon font even when the caller style sets fontFamily', () => {
-    const el = render(<Ionicons name="home" style={{ fontFamily: 'Karla-Regular' }} />);
+    const el = render(<Ionicons name="home" style={{ fontFamily: 'Karla' }} />);
     const text = el.querySelector('div,span') as HTMLElement;
     expect(getComputedStyle(text).fontFamily).toContain('Ionicons');
   });

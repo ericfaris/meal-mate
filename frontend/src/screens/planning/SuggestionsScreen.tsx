@@ -108,6 +108,7 @@ export default function SuggestionsScreen({ navigation, route }: Props) {
         {
           avoidRepeats: constraints.avoidRepeats,
           vegetarianOnly: constraints.vegetarianOnly,
+          preferSimple: constraints.preferSimple,
         }
       );
 

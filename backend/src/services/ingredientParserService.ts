@@ -104,7 +104,7 @@ export function parseIngredientsFallback(recipes: IRecipe[]): ParsedIngredient[]
       results.push({
         name,
         quantity,
-        category: guessCategory(name),
+        category: guessCategory(name, quantity),
         recipeId: recipe._id.toString(),
         recipeName: recipe.title,
         originalText: line,
@@ -119,13 +119,15 @@ export function parseIngredientsFallback(recipes: IRecipe[]): ParsedIngredient[]
  * Parse a single ingredient line into name and quantity.
  * Handles patterns like "2 cups flour", "1/2 lb chicken", "salt and pepper"
  */
-function parseIngredientLine(line: string): { name: string; quantity: string } {
-  // Remove leading bullet/dash/number markers
-  const cleaned = line.replace(/^[\s\-\*\u2022\d\.]+\s*/, '').trim();
+export function parseIngredientLine(line: string): { name: string; quantity: string } {
+  // Remove leading list markers ("- ", "• ", "1. ", "2) ") but never the
+  // quantity itself: "2 lb chicken" must keep its 2. (Regression: the old
+  // pattern stripped every leading digit, so quantities were lost.)
+  const cleaned = line.replace(/^\s*(?:[-*\u2022]+\s*|\d+[.)]\s+)/, '').trim();
 
   // Match quantity pattern: number (with optional fraction) + optional unit
   const match = cleaned.match(
-    /^([\d]+(?:[\/\.\s]+[\d]+)?(?:\s*[-–]\s*[\d\/\.]+)?)\s*(cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|quarts?|pints?|gallons?|cans?|packages?|bags?|bunche?s?|cloves?|stalks?|heads?|slices?|pieces?|sticks?|sprigs?)?\s*(?:of\s+)?(.*)/i
+    /^(\d+(?:\.\d+)?(?:\s+\d+\/\d+|\/\d+)?(?:\s*[-–]\s*[\d\/\.]+)?)\s*(cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|quarts?|pints?|gallons?|cans?|packages?|bags?|bunche?s?|cloves?|stalks?|heads?|slices?|pieces?|sticks?|sprigs?|wedges?|jars?|box(?:es)?|bottles?|containers?|blocks?)?\s*(?:of\s+)?(.*)/i
   );
 
   if (match) {
@@ -151,8 +153,16 @@ function parseIngredientLine(line: string): { name: string; quantity: string } {
 /**
  * Basic category guessing by keyword matching.
  */
-function guessCategory(name: string): ParsedIngredient['category'] {
+export function guessCategory(name: string, quantity = ''): ParsedIngredient['category'] {
   const lower = name.toLowerCase();
+
+  // Container/processing words beat the ingredient: "frozen peas" is Frozen,
+  // "crushed tomatoes" from a can and "beef broth" are Pantry.
+  if (/\bfrozen\b/.test(lower)) return 'Frozen';
+  if (/\bcans?\b|\bjars?\b/i.test(quantity) ||
+      /\b(canned|broth|stock|paste|sauce|powder|seasoning|dried|ground (cumin|cinnamon|ginger|pepper))\b/.test(lower)) {
+    return 'Pantry';
+  }
 
   const produce = ['onion', 'garlic', 'tomato', 'pepper', 'lettuce', 'carrot', 'potato', 'celery',
     'broccoli', 'spinach', 'mushroom', 'zucchini', 'cucumber', 'avocado', 'lemon', 'lime',
@@ -160,7 +170,7 @@ function guessCategory(name: string): ParsedIngredient['category'] {
     'bean sprout', 'cabbage', 'kale', 'arugula', 'scallion', 'shallot', 'squash', 'pea'];
 
   const meat = ['chicken', 'beef', 'pork', 'turkey', 'bacon', 'sausage', 'ham', 'steak',
-    'ground', 'salmon', 'shrimp', 'fish', 'tuna', 'lamb', 'crab', 'lobster', 'meat'];
+    'ground', 'chuck', 'roast', 'brisket', 'salmon', 'shrimp', 'fish', 'tuna', 'lamb', 'crab', 'lobster', 'meat'];
 
   const dairy = ['milk', 'cheese', 'butter', 'cream', 'yogurt', 'egg', 'sour cream',
     'mozzarella', 'parmesan', 'cheddar', 'ricotta', 'whipping cream'];
@@ -169,9 +179,9 @@ function guessCategory(name: string): ParsedIngredient['category'] {
 
   const frozen = ['frozen'];
 
-  if (produce.some((k) => lower.includes(k))) return 'Produce';
-  if (meat.some((k) => lower.includes(k))) return 'Meat & Seafood';
   if (dairy.some((k) => lower.includes(k))) return 'Dairy & Eggs';
+  if (meat.some((k) => lower.includes(k))) return 'Meat & Seafood';
+  if (produce.some((k) => lower.includes(k))) return 'Produce';
   if (bakery.some((k) => lower.includes(k))) return 'Bakery';
   if (frozen.some((k) => lower.includes(k))) return 'Frozen';
 
@@ -191,10 +201,11 @@ export function aggregateIngredients(
 
     if (groups.has(key)) {
       const existing = groups.get(key)!;
-      // Merge quantities
+      // Merge quantities: "1" + "2" -> "3", "1 lb" + "1/2 lb" -> "1 1/2 lb";
+      // mismatched units stay readable as "1 lb + 2 cups".
       if (item.quantity) {
         existing.quantity = existing.quantity
-          ? `${existing.quantity} + ${item.quantity}`
+          ? mergeQuantities(existing.quantity, item.quantity)
           : item.quantity;
       }
       if (!existing.recipeIds.includes(item.recipeId)) {
@@ -215,4 +226,73 @@ export function aggregateIngredients(
   }
 
   return Array.from(groups.values());
+}
+
+const UNICODE_FRACTIONS: Record<string, number> = {
+  '½': 1 / 2, '¼': 1 / 4, '¾': 3 / 4, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 1 / 8,
+};
+
+const UNIT_ALIASES: Record<string, string> = {
+  lbs: 'lb', pound: 'lb', pounds: 'lb', cups: 'cup', tablespoon: 'tbsp', tablespoons: 'tbsp',
+  teaspoon: 'tsp', teaspoons: 'tsp', ounce: 'oz', ounces: 'oz', cans: 'can', cloves: 'clove',
+  bags: 'bag', packages: 'package', bunches: 'bunch', heads: 'head', stalks: 'stalk',
+  slices: 'slice', pieces: 'piece', sticks: 'stick', sprigs: 'sprig', grams: 'g', gram: 'g',
+};
+
+/** "1 1/2 cups" -> { amount: 1.5, unit: 'cup' }; null when it isn't a plain amount. */
+export function parseQuantity(q: string): { amount: number; unit: string } | null {
+  const m = q.trim().match(/^((?:\d+(?:\.\d+)?)?\s*(?:\d+\/\d+|[½¼¾⅓⅔⅛])?)\s*([a-zA-Z]*)\.?$/);
+  if (!m || !m[1].trim()) return null;
+  let amount = 0;
+  for (const part of m[1].trim().split(/\s+/)) {
+    if (UNICODE_FRACTIONS[part] !== undefined) amount += UNICODE_FRACTIONS[part];
+    else if (/^\d+\/\d+$/.test(part)) {
+      const [n, d] = part.split('/').map(Number);
+      if (!d) return null;
+      amount += n / d;
+    } else if (/^\d+(?:\.\d+)?[½¼¾⅓⅔⅛]$/.test(part)) {
+      amount += Number(part.slice(0, -1)) + UNICODE_FRACTIONS[part.slice(-1)];
+    } else if (/^\d+(?:\.\d+)?$/.test(part)) amount += Number(part);
+    else return null;
+  }
+  const raw = m[2].toLowerCase();
+  return { amount, unit: UNIT_ALIASES[raw] || raw };
+}
+
+const NICE_FRACTIONS: [number, string][] = [
+  [1 / 8, '1/8'], [1 / 4, '1/4'], [1 / 3, '1/3'], [1 / 2, '1/2'], [2 / 3, '2/3'], [3 / 4, '3/4'],
+];
+
+export function formatAmount(n: number): string {
+  const whole = Math.floor(n + 1e-9);
+  const frac = n - whole;
+  if (frac < 0.01) return String(whole);
+  const nice = NICE_FRACTIONS.find(([v]) => Math.abs(v - frac) < 0.02);
+  if (nice) return whole ? `${whole} ${nice[1]}` : nice[1];
+  return String(Math.round(n * 100) / 100);
+}
+
+const COUNT_UNITS = new Set(['cup', 'can', 'clove', 'bag', 'package', 'head', 'stalk', 'slice', 'piece', 'stick', 'sprig']);
+
+function pluralUnit(unit: string, amount: number): string {
+  if (amount <= 1) return unit;
+  if (unit === 'bunch') return 'bunches';
+  return COUNT_UNITS.has(unit) ? `${unit}s` : unit;
+}
+
+/** Sum two quantities when they share a unit; otherwise join them with " + ". */
+export function mergeQuantities(a: string, b: string): string {
+  const parts = a.split(' + ');
+  const qb = parseQuantity(b);
+  if (qb) {
+    for (let i = 0; i < parts.length; i++) {
+      const qa = parseQuantity(parts[i]);
+      if (qa && qa.unit === qb.unit) {
+        const total = qa.amount + qb.amount;
+        parts[i] = [formatAmount(total), pluralUnit(qa.unit, total)].filter(Boolean).join(' ');
+        return parts.join(' + ');
+      }
+    }
+  }
+  return [...parts, b].join(' + ');
 }

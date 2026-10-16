@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
-import { View, ActivityIndicator, StyleSheet, Text, TextInput } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
+import { linking } from './src/navigation/linking';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
@@ -18,19 +19,8 @@ import { APP_VERSION, BUILD_NUMBER } from './src/config/version';
 console.log(`\n🍽️  Meal Mate v${APP_VERSION} (build ${BUILD_NUMBER})`);
 console.log('━'.repeat(50));
 
-// Design system: apply the body face (Karla) as the app-wide default so the
-// ~30 existing screens (which style text via `typography.sizes.*` without a
-// fontFamily) pick it up automatically, with zero per-screen edits. Any
-// screen/component can still opt into the display face (Fraunces) directly
-// via `typography.families.display` for hero moments. See DESIGN.md "Type".
-// @ts-ignore — defaultProps exists on RN's Text/TextInput at runtime.
-Text.defaultProps = Text.defaultProps || {};
-// @ts-ignore
-Text.defaultProps.style = [{ fontFamily: 'Karla-Regular' }, Text.defaultProps.style];
-// @ts-ignore
-TextInput.defaultProps = TextInput.defaultProps || {};
-// @ts-ignore
-TextInput.defaultProps.style = [{ fontFamily: 'Karla-Regular' }, TextInput.defaultProps.style];
+// Type defaults (Karla body, Fraunces display) are applied by the
+// `react-native` platform shim — see src/platform/reactNative.tsx.
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -69,24 +59,7 @@ function AppContent() {
   return (
     <NavigationContainer
       ref={navigationRef}
-      linking={{
-        // Web linking reads the browser URL directly; prefixes are unused.
-        prefixes: [],
-        config: {
-          screens: {
-            Main: {
-              screens: {
-                Settings: 'join/:token',
-                GroceryTab: {
-                  screens: {
-                    GroceryStoreMode: 'grocery/:listId',
-                  },
-                },
-              },
-            },
-          },
-        },
-      }}
+      linking={linking}
     >
       <BottomTabNavigator />
       

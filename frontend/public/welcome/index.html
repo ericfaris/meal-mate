@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meal Mate · Decide dinner once a week</title>
+<meta name="description" content="Meal Mate turns the recipes your family already loves into a week of dinners and a grocery list sorted the way your store is laid out.">
+<meta name="theme-color" content="#FDFAF6">
+<meta property="og:title" content="Meal Mate">
+<meta property="og:description" content="Decide dinner once a week, not every night.">
+<meta property="og:image" content="/icons/icon-512.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<!-- Marketing page, shipped from frontend/public/welcome/. Same tokens and
+     self-hosted fonts as the app (see DESIGN.md "Landing page"). -->
+<style>
+@font-face { font-family: 'Karla'; src: url('/fonts/Karla-Variable.woff2') format('woff2'); font-weight: 300 800; font-display: swap; }
+@font-face { font-family: 'Fraunces'; src: url('/fonts/Fraunces-Variable.woff2') format('woff2'); font-weight: 300 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Fraunces'; src: url('/fonts/Fraunces-Italic-Variable.woff2') format('woff2'); font-weight: 300 900; font-style: italic; font-display: swap; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<style>
+/* Layout: a cookbook on the counter. One narrative column that reads top to bottom
+   (the 5:14 pm problem, then collect, plan, shop, then the week after), with the
+   phone mockups as the proof beside the words. Tokens follow the app's Farmhouse Kitchen system. */
+:root {
+  --bg: #FDFAF6;
+  --surface: #FFFFFF;
+  --linen: #F6EFE6;
+  --ink: #2D2D2D;
+  --ink-soft: #5E5A55;
+  --ink-faint: #8F8780;
+  --rule: #E8DFD4;
+  --terra: #B14E33;
+  --terra-ink: #FFFFFF;
+  --terra-wash: #FBEDE8;
+  --sage: #7E9277;
+  --sage-wash: #EEF2EC;
+  --tag-simple: #DCEFD9;
+  --tag-medium: #FCE9CC;
+  --tag-complex: #F9D9D6;
+  --tag-ink: #3B3632;
+  --shadow: 0 1px 2px rgba(60,40,25,.06), 0 12px 32px rgba(60,40,25,.10);
+
+  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --body: 'Karla', -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --step-hero: clamp(2.5rem, 6.2vw, 4.6rem);
+  --step-h2: clamp(1.9rem, 4vw, 2.9rem);
+  --step-h3: 1.35rem;
+  --measure: 36rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1C1815; --surface: #26211D; --linen: #221D19; --ink: #F1EAE1; --ink-soft: #C9BFB3;
+    --ink-faint: #998E83; --rule: #3A322C; --terra: #E2795B; --terra-ink: #1C1815; --terra-wash: #3A241C;
+    --sage: #9DB394; --sage-wash: #263024; --tag-simple: #2F4A2E; --tag-medium: #4D3A1E; --tag-complex: #4F2A27;
+    --tag-ink: #F1EAE1; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1C1815; --surface: #26211D; --linen: #221D19; --ink: #F1EAE1; --ink-soft: #C9BFB3;
+  --ink-faint: #998E83; --rule: #3A322C; --terra: #E2795B; --terra-ink: #1C1815; --terra-wash: #3A241C;
+  --sage: #9DB394; --sage-wash: #263024; --tag-simple: #2F4A2E; --tag-medium: #4D3A1E; --tag-complex: #4F2A27;
+  --tag-ink: #F1EAE1; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.35); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 1.0625rem; line-height: 1.6; }
+.wrap { max-width: 72rem; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-h2); line-height: 1.1; font-variation-settings: "opsz" 120; }
+h3 { font-size: var(--step-h3); line-height: 1.25; }
+p { margin: 0; }
+a { color: inherit; }
+.eyebrow { font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); }
+.lede { color: var(--ink-soft); font-size: 1.15rem; max-width: var(--measure); }
+.btn { display: inline-flex; align-items: center; gap: .5rem; min-height: 48px; padding: 0 1.4rem; border-radius: 999px; font-weight: 700; text-decoration: none; font-size: 1rem; transition: transform 150ms cubic-bezier(.4,0,.2,1), background 150ms; }
+.btn-primary { background: var(--terra); color: var(--terra-ink); }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-ghost { color: var(--ink); border: 1.5px solid var(--rule); }
+.btn-ghost:hover { border-color: var(--ink-faint); }
+:focus-visible { outline: 3px solid var(--terra); outline-offset: 3px; border-radius: 6px; }
+
+/* Nav */
+.nav { display: flex; align-items: center; justify-content: space-between; padding-block: 1.1rem; }
+.brand { display: flex; align-items: center; gap: .6rem; font-family: var(--display); font-weight: 600; font-size: 1.3rem; text-decoration: none; }
+.brand svg { width: 34px; height: 34px; }
+.nav .btn { min-height: 40px; padding: 0 1.1rem; font-size: .95rem; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 3rem; align-items: center; padding-block: 2.5rem 4.5rem; }
+.hero h1 { font-size: var(--step-hero); line-height: 1.02; font-weight: 600; font-variation-settings: "opsz" 144; margin-block: .9rem 1.3rem; }
+.hero h1 em { font-style: italic; color: var(--terra); font-weight: 400; }
+.hero .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+.hero .fine { margin-top: 1rem; font-size: .9rem; color: var(--ink-faint); }
+
+/* Phone mock */
+.phone { width: min(100%, 340px); margin-inline: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 34px; padding: 14px; box-shadow: var(--shadow); }
+.screen { background: var(--bg); border-radius: 24px; padding: 18px 14px 14px; overflow: hidden; }
+.screen-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; padding-inline: 4px; }
+.screen-head b { font-family: var(--display); font-size: 1.25rem; font-weight: 600; }
+.screen-head span { font-size: .78rem; color: var(--ink-faint); }
+.day { display: grid; grid-template-columns: 2.6rem minmax(0,1fr); gap: .65rem; align-items: center; padding: .6rem .55rem; border-radius: 12px; background: var(--surface); margin-bottom: 6px; border: 1px solid var(--rule); }
+.day .d { text-align: center; line-height: 1.05; }
+.day .d small { display: block; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+.day .d strong { font-family: var(--display); font-size: 1.2rem; font-weight: 600; }
+.day .m { min-width: 0; }
+.day .m div { font-weight: 700; font-size: .93rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day .m span { font-size: .75rem; color: var(--ink-faint); }
+.day.label { background: transparent; border-style: dashed; }
+.day.label .m div { font-weight: 500; color: var(--ink-soft); font-style: italic; font-family: var(--display); }
+.day.today { border-color: var(--terra); box-shadow: inset 3px 0 0 var(--terra); }
+.tag { display: inline-block; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: var(--tag-ink); margin-right: 4px; }
+.t-veg { background: var(--tag-simple); margin: 0 0 0 4px; }
+.day .d em { display: block; font-family: var(--display); font-size: .66rem; color: var(--terra); }
+.day.today .d small, .day.today .d strong { color: var(--terra); }
+
+/* Problem */
+.problem { background: var(--linen); border-block: 1px solid var(--rule); }
+.problem .wrap { padding-block: 5rem; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 3rem; align-items: start; }
+.clock { font-family: var(--display); font-weight: 800; font-size: clamp(5rem, 15vw, 10.5rem); line-height: .85; color: var(--terra); letter-spacing: -0.04em; font-variation-settings: "opsz" 144; font-variant-numeric: tabular-nums; }
+.clock small { display: block; font-size: 1.1rem; font-weight: 400; font-style: italic; letter-spacing: 0; color: var(--ink-soft); margin-top: .8rem; }
+.problem h2 { margin-bottom: 1.2rem; }
+.problem .story { display: grid; gap: 1rem; max-width: var(--measure); color: var(--ink-soft); }
+.dialogue { font-family: var(--display); font-style: italic; font-size: 1.25rem; color: var(--ink); border-left: 2px solid var(--terra); padding-left: 1rem; display: grid; gap: .2rem; }
+.scatter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2.2rem; }
+.scatter div { border-top: 2px solid var(--ink); padding-top: .7rem; }
+.scatter b { display: block; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .3rem; }
+.scatter p { font-size: .95rem; color: var(--ink-soft); }
+.kicker { margin-top: 2.2rem; font-family: var(--display); font-size: 1.35rem; line-height: 1.4; color: var(--ink); max-width: var(--measure); }
+
+/* Steps */
+.turn { padding-block: 5rem 1rem; text-align: left; }
+.turn p { margin-top: 1rem; }
+.step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3.5rem; align-items: center; padding-block: 3.5rem; border-top: 1px solid var(--rule); }
+.step:first-of-type { border-top: 0; }
+.step.flip > .copy { order: 2; }
+.step .num { font-family: var(--display); font-style: italic; color: var(--terra); font-size: 1.05rem; margin-bottom: .6rem; display: block; }
+.step h2 { margin-bottom: 1rem; }
+.step .copy > p { color: var(--ink-soft); max-width: var(--measure); }
+.points { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; gap: .7rem; max-width: var(--measure); }
+.points li { display: grid; grid-template-columns: 1.4rem minmax(0,1fr); gap: .5rem; }
+.points li::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: var(--sage); margin-top: .55rem; }
+.points b { color: var(--ink); }
+
+/* Step 1 visual: recipe card -> parsed recipe */
+.card-pair { display: grid; gap: 1rem; max-width: 26rem; margin-inline: auto; width: 100%; }
+.index-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 1.1rem 1.2rem 1.2rem; transform: rotate(-2deg); box-shadow: var(--shadow);
+  background-image: repeating-linear-gradient(var(--surface) 0 27px, color-mix(in srgb, var(--sage) 35%, transparent) 27px 28px); background-position: 0 2.6rem; }
+.index-card .hand { font-family: var(--display); font-style: italic; font-size: 1.05rem; line-height: 28px; color: var(--ink-soft); }
+.index-card .hand b { font-style: normal; font-weight: 600; color: var(--ink); font-size: 1.2rem; display: block; border-bottom: 2px solid var(--terra); margin-bottom: 4px; }
+.arrow { text-align: center; color: var(--ink-faint); font-size: .85rem; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+.arrow::before, .arrow::after { content: ""; height: 1px; width: 3rem; background: var(--rule); }
+.parsed { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 1.1rem 1.2rem; }
+.parsed h4 { font-family: var(--display); font-size: 1.15rem; margin: 0 0 .25rem; font-weight: 600; }
+.parsed .meta { font-size: .8rem; color: var(--ink-faint); margin-bottom: .7rem; }
+.parsed ul { margin: 0; padding-left: 1.1rem; font-size: .9rem; color: var(--ink-soft); columns: 2; column-gap: 1.5rem; }
+.sources { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.2rem; }
+.chip { font-size: .82rem; font-weight: 600; padding: .3rem .75rem; border-radius: 999px; background: var(--sage-wash); color: var(--ink); border: 1px solid var(--rule); }
+
+/* Step 2 visual: suggest panel */
+.suggest { max-width: 26rem; margin-inline: auto; width: 100%; background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; padding: 1.2rem; box-shadow: var(--shadow); }
+.suggest .row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; border-bottom: 1px dashed var(--rule); font-size: .95rem; gap: 1rem; }
+.suggest .row:last-of-type { border-bottom: 0; }
+.toggle { width: 38px; height: 22px; border-radius: 999px; background: var(--rule); position: relative; flex: none; }
+.toggle.on { background: var(--sage); }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); transition: transform 150ms; }
+.toggle.on::after { transform: translateX(16px); }
+.skipdays { display: flex; gap: 4px; }
+.skipdays span { font-size: .7rem; font-weight: 700; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--linen); color: var(--ink-faint); }
+.skipdays span.off { background: var(--terra-wash); color: var(--terra); text-decoration: line-through; }
+.suggest .go { margin-top: 1rem; width: 100%; justify-content: center; }
+.suggest h4 { margin: 0 0 .4rem; font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
+
+/* Step 3 visual: store mode */
+.store-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: none; }
+.store-chips button { flex: none; font: inherit; font-size: .8rem; font-weight: 700; padding: .35rem .8rem; border-radius: 999px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink-soft); cursor: pointer; }
+.store-chips button[aria-pressed="true"] { background: var(--terra); color: var(--terra-ink); border-color: var(--terra); }
+.progress { height: 6px; background: var(--rule); border-radius: 999px; margin: 4px 4px 12px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--sage); width: 0; transition: width 300ms cubic-bezier(.16,1,.3,1); }
+.aisles { display: flex; flex-direction: column; gap: 8px; }
+.aisle { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: .5rem .7rem; transition: transform 300ms cubic-bezier(.16,1,.3,1); }
+.aisle h5 { margin: 0 0 .2rem; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--terra); display: flex; justify-content: space-between; }
+.aisle h5 span { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.item { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: .5rem; align-items: start; padding: .25rem 0; cursor: pointer; font-size: .88rem; }
+.item input { appearance: none; width: 18px; height: 18px; border: 1.5px solid var(--ink-faint); border-radius: 5px; margin: 2px 0 0; cursor: pointer; display: grid; place-items: center; }
+.item input:checked { background: var(--sage); border-color: var(--sage); }
+.item input:checked::after { content: ""; width: 5px; height: 9px; border: solid var(--surface); border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.item .n { min-width: 0; }
+.item .n small { display: block; color: var(--ink-faint); font-size: .72rem; }
+.item q { quotes: none; font-variant-numeric: tabular-nums; color: var(--ink-soft); font-size: .8rem; }
+.item:has(input:checked) .n { text-decoration: line-through; color: var(--ink-faint); }
+.demo-note { text-align: center; font-size: .82rem; color: var(--ink-faint); margin-top: .8rem; }
+
+/* Household */
+.household { background: var(--sage-wash); border-block: 1px solid var(--rule); }
+.household .wrap { padding-block: 5rem; }
+.household .intro { max-width: 40rem; margin-bottom: 2.6rem; }
+.household .intro p { margin-top: 1rem; color: var(--ink-soft); }
+.roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+.roles h3 { margin-bottom: .5rem; }
+.roles p { color: var(--ink-soft); font-size: .98rem; }
+.hh-proof { margin-top: 2.8rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; max-width: 52rem; }
+.activity { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: .4rem 1.1rem; }
+.activity small { display: block; color: var(--ink-faint); font-size: .8rem; }
+.sub-actions { display: flex; gap: .5rem; padding: .2rem 0 .8rem 2.75rem; }
+.btn-mini { font-size: .8rem; font-weight: 700; padding: .3rem .8rem; border-radius: 999px; border: 1px solid var(--rule); }
+.btn-mini-primary { background: var(--terra); color: var(--terra-ink); border-color: var(--terra); }
+.activity div { display: grid; grid-template-columns: 2rem minmax(0,1fr) auto; gap: .75rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid var(--rule); font-size: .93rem; }
+.activity div:last-child { border-bottom: 0; }
+.avatar { width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: var(--terra-ink); background: var(--terra); }
+.avatar.s { background: var(--sage); }
+.avatar.k { background: var(--ink-soft); color: var(--bg); }
+.activity time { font-size: .78rem; color: var(--ink-faint); white-space: nowrap; }
+
+/* The week after */
+.after { padding-block: 5rem; }
+.after h2 { max-width: 40rem; }
+.timeline { list-style: none; padding: 0; margin: 2.6rem 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; position: relative; }
+.timeline li { border-top: 2px solid var(--rule); padding-top: 1rem; position: relative; }
+.timeline li::before { content: ""; position: absolute; top: -7px; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--sage); }
+.timeline li:last-child { border-top-color: var(--terra); }
+.timeline li:last-child::before { border-color: var(--terra); background: var(--terra); }
+.timeline time { font-family: var(--display); font-style: italic; color: var(--terra); display: block; margin-bottom: .3rem; }
+.timeline p { color: var(--ink-soft); font-size: .98rem; }
+.timeline b { color: var(--ink); display: block; margin-bottom: .2rem; }
+
+/* Practical + CTA */
+.practical { border-top: 1px solid var(--rule); padding-block: 3.5rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+.practical h3 { font-size: 1.1rem; margin-bottom: .4rem; }
+.practical p { color: var(--ink-soft); font-size: .95rem; }
+.cta { background: var(--terra); color: var(--terra-ink); }
+.cta .wrap { padding-block: 4.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2rem; }
+.cta h2 { max-width: 34rem; }
+.cta p { margin-top: .7rem; opacity: .85; }
+.cta .btn { background: var(--bg); color: var(--ink); }
+footer .wrap { padding-block: 2rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; color: var(--ink-faint); font-size: .88rem; }
+
+@media (max-width: 860px) {
+  .hero, .problem .wrap, .step { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .step.flip > .copy { order: 0; }
+  .hero { padding-top: 1.5rem; }
+  .roles, .practical, .hh-proof { grid-template-columns: minmax(0, 1fr); gap: 1.6rem; }
+  .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2rem; }
+}
+@media (max-width: 520px) {
+  .scatter, .timeline { grid-template-columns: minmax(0, 1fr); }
+  .parsed ul { columns: 1; }
+  .nav .btn-ghost { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<header class="wrap nav">
+  <a class="brand" href="#top" aria-label="Meal Mate home">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="var(--terra)"/><g transform="translate(3,3) scale(.94)"><path d="M19 78V50A15.5 15.5 0 0 1 50 50V78M50 50A15.5 15.5 0 0 1 81 50V78" fill="none" stroke="var(--bg)" stroke-width="14"/><circle cx="34.5" cy="19.5" r="7.5" fill="var(--bg)"/><circle cx="65.5" cy="19.5" r="7.5" fill="var(--bg)"/><rect x="8" y="80" width="84" height="9" rx="4.5" fill="var(--bg)"/></g></svg>
+    Meal Mate
+  </a>
+  <a class="btn btn-primary" href="/?start">Open Meal Mate</a>
+</header>
+
+<main id="top">
+  <section class="wrap hero">
+    <div>
+      <span class="eyebrow">Weekly meal planning for the household</span>
+      <h1>Decide dinner once a week, <em>not every night.</em></h1>
+      <p class="lede">Meal Mate turns the recipes your family already loves into a week of dinners, then builds the grocery list in the order your store is laid out. Everyone in the house sees the plan, and anyone can add to the list.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/?start">Plan this week</a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+      <p class="fine">Works in any phone or computer browser. Add it to your home screen like an app.</p>
+    </div>
+
+    <div class="phone" aria-label="Example week in Meal Mate">
+      <div class="screen">
+        <div class="screen-head"><b>This week</b><span>Oct 19 – 25</span></div>
+        <div class="day today"><div class="d"><small>Mon</small><strong>19</strong><em>Today</em></div><div class="m"><div>Sheet-pan chicken fajitas</div><span>35 min</span></div></div>
+        <div class="day label"><div class="d"><small>Tue</small><strong>20</strong></div><div class="m"><div>Leftovers</div></div></div>
+        <div class="day"><div class="d"><small>Wed</small><strong>21</strong></div><div class="m"><div>Turkey chili</div><span>50 min</span></div></div>
+        <div class="day"><div class="d"><small>Thu</small><strong>22</strong></div><div class="m"><div>Lemon orzo with peas</div><span>25 min <i class="tag t-veg">Vegetarian</i></span></div></div>
+        <div class="day label"><div class="d"><small>Fri</small><strong>23</strong></div><div class="m"><div>Eating Out</div></div></div>
+        <div class="day"><div class="d"><small>Sat</small><strong>24</strong></div><div class="m"><div>Grandma’s pot roast</div><span>3 hr 20 min</span></div></div>
+        <div class="day"><div class="d"><small>Sun</small><strong>25</strong></div><div class="m"><div>Black bean tacos</div><span>20 min <i class="tag t-veg">Vegetarian</i></span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="problem" aria-labelledby="problem-h">
+    <div class="wrap">
+      <div class="clock" aria-hidden="true">5:14<small>on a Tuesday</small></div>
+      <div>
+        <h2 id="problem-h">The cooking isn’t the hard part. Deciding is.</h2>
+        <div class="story">
+          <p>Someone is standing in front of an open fridge. Practice ran late, everyone is hungry, and the same conversation starts again.</p>
+          <div class="dialogue"><span>“What do you want for dinner?”</span><span>“I don’t know. What do you want?”</span></div>
+          <p>It happens every night, and it usually lands on the same person. They’re the one who remembers what you had on Sunday, who knows the chicken needs to get used, and who notices you’re out of cumin halfway through the recipe.</p>
+        </div>
+        <div class="scatter">
+          <div><b>The recipes</b><p>Spread across bookmarks, screenshots, a cookbook, and a stained index card in a drawer.</p></div>
+          <div><b>The plan</b><p>Lives in one person’s head, so nobody else can help with it.</p></div>
+          <div><b>The list</b><p>Written on the back of a receipt, missing whatever you’ll need on Thursday.</p></div>
+        </div>
+        <p class="kicker">That work is invisible, and it happens every day. Meal Mate gives it one home, shares it with the whole household, and turns it into a ten-minute job on Sunday.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="how" aria-label="How Meal Mate works">
+    <div class="turn">
+      <span class="eyebrow">How it works</span>
+      <h2>Collect, plan, shop. Then stop thinking about it.</h2>
+    </div>
+
+    <article class="step">
+      <div class="copy">
+        <span class="num">Step one</span>
+        <h2>Put every recipe in one place.</h2>
+        <p>Bring in the recipes you already cook, however you have them. Meal Mate pulls out the ingredients, steps, and cook times so every recipe looks the same and is ready to plan with.</p>
+        <ul class="points">
+          <li><span><b>Paste a link</b> from almost any recipe site. No more scrolling past the life story to find the ingredients.</span></li>
+          <li><span><b>Snap a photo</b> of a cookbook page or a handwritten card, and Meal Mate reads it for you.</span></li>
+          <li><span><b>Type in your own</b> for the dishes that never had a recipe at all.</span></li>
+        </ul>
+      </div>
+      <div class="card-pair" aria-hidden="true">
+        <div class="index-card"><div class="hand"><b>Pot Roast (Grandma)</b>3 lb chuck roast · 4 carrots<br>2 onions · 1 c beef broth<br>Sear, then low &amp; slow 3 hrs…</div></div>
+        <div class="arrow">read from a photo</div>
+        <div class="parsed">
+          <h4>Grandma’s pot roast</h4>
+          <div class="meta">Prep 20 min · Cook 3 hr · Serves 6</div>
+          <ul><li>3 lb chuck roast</li><li>4 carrots</li><li>2 yellow onions</li><li>1 cup beef broth</li><li>2 tbsp tomato paste</li><li>Salt and pepper</li></ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="step flip">
+      <div class="copy">
+        <span class="num">Step two</span>
+        <h2>Plan the whole week in about a minute.</h2>
+        <p>Tell Meal Mate what this week looks like and tap Suggest. You get seven dinners drawn from your own recipes. Keep the ones you like and swap the ones you don’t, one day at a time.</p>
+        <ul class="points">
+          <li><span><b>No accidental repeats.</b> Recent dinners sit out, up to ten days back.</span></li>
+          <li><span><b>Easy nights stay easy.</b> Keep it quick favors the shortest prep and cook times, and Vegetarian only does what it says.</span></li>
+          <li><span><b>Real life fits in.</b> Mark a night as Leftovers or Eating Out, or plan last week to keep track of what you actually ate.</span></li>
+        </ul>
+      </div>
+      <div class="suggest" aria-hidden="true">
+        <h4>What’s this week like?</h4>
+        <div class="row">Avoid repeats <span class="toggle on"></span></div>
+        <div class="row">Keep it quick <span class="toggle on"></span></div>
+        <div class="row">Vegetarian only <span class="toggle"></span></div>
+        <div class="row">Skip <span class="skipdays"><span>M</span><span>T</span><span>W</span><span>T</span><span class="off">F</span><span>S</span><span>S</span></span></div>
+        <span class="btn btn-primary go">Suggest my week</span>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="copy">
+        <span class="num">Step three</span>
+        <h2>Shop in aisle order, without the second trip.</h2>
+        <p>One tap turns the week into a grocery list. Meal Mate adds up the same ingredient across recipes, sorts everything by section, and puts the sections in the order of the store you’re standing in.</p>
+        <ul class="points">
+          <li><span><b>Three recipes need onions?</b> You see “3 yellow onions” once, and which dinners they’re for.</span></li>
+          <li><span><b>Your store, your route.</b> Layouts for Aldi, Costco, Kroger, Meijer, Trader Joe’s, Walmart and more, or set up your own.</span></li>
+          <li><span><b>Staples remembered.</b> Coffee, bananas, and paper towels go on with one tap, so they never get forgotten.</span></li>
+        </ul>
+      </div>
+      <div class="phone">
+        <div class="screen">
+          <div class="screen-head"><b>Week of Oct 19</b><span id="prog-label">0 of 12 in the cart</span></div>
+          <div class="store-chips" role="group" aria-label="Choose a store">
+            <button type="button" data-store="Aldi" aria-pressed="true">Aldi</button>
+            <button type="button" data-store="Trader Joe's" aria-pressed="false">Trader Joe’s</button>
+            <button type="button" data-store="Walmart" aria-pressed="false">Walmart</button>
+            <button type="button" data-store="Kroger" aria-pressed="false">Kroger</button>
+          </div>
+          <div class="progress"><i id="prog"></i></div>
+          <div class="aisles" id="aisles"></div>
+        </div>
+      </div>
+    </article>
+    <p class="demo-note" style="margin-top:-2rem;margin-bottom:3rem">Try it: switch stores, or check off a few items. Press and hold an item in the app to see the original recipe lines.</p>
+  </section>
+
+  <section class="household" aria-labelledby="hh-h">
+    <div class="wrap">
+      <div class="intro">
+        <span class="eyebrow">For the whole household</span>
+        <h2 id="hh-h">Everyone at the table, on the same page.</h2>
+        <p>Invite your partner, the kids, or the roommates by sending a link. The plan and the list belong to the house, so the person who plans isn’t the only one who knows what’s for dinner.</p>
+      </div>
+      <div class="roles">
+        <div><h3>One list everyone adds to</h3><p>Whoever finishes the milk puts it on the list, and the list shows who added it, so nothing turns into a mystery item.</p></div>
+        <div><h3>A recipe box you keep tidy</h3><p>Household admins own the recipe collection and decide what gets added. Members can fix a typo or tweak a recipe they cook often.</p></div>
+        <div><h3>Ideas from everyone</h3><p>Found something on TikTok? Members send in a recipe link, and the admin approves it into the rotation or declines it with a note.</p></div>
+      </div>
+      <div class="hh-proof">
+        <div class="activity" aria-label="Example: items the household added to the list">
+          <div><span class="avatar">J</span><span><b>Milk</b><small>Added by Jess</small></span><time>1 gal</time></div>
+          <div><span class="avatar s">S</span><span><b>Paper towels</b><small>Added by Sam</small></span><time>1</time></div>
+        </div>
+        <div class="activity submission" aria-label="Example: a recipe suggestion waiting for approval">
+          <div><span class="avatar s">S</span><span><b>Korean beef bowls</b><small>Submitted by Sam</small></span><time>Pending</time></div>
+          <p class="sub-actions"><span class="btn-mini btn-mini-primary">Approve</span><span class="btn-mini">Deny with a note</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap after" aria-labelledby="after-h">
+    <span class="eyebrow">What a week looks like</span>
+    <h2 id="after-h">Ten minutes on Sunday buys back every weeknight.</h2>
+    <ol class="timeline">
+      <li><time>Sunday evening</time><p><b>Plan</b>Tap Suggest, swap Wednesday, mark Friday for eating out. Done before the dishes are.</p></li>
+      <li><time>Monday, 6 pm</time><p><b>Shop</b>Walk the store front to back with the list in aisle order. One trip covers the week.</p></li>
+      <li><time>Wednesday, 8 am</time><p><b>Share</b>Your partner sees chili is tonight and pulls the turkey out of the freezer without being asked.</p></li>
+      <li><time>Tuesday, 5:14 pm</time><p><b>Nothing to decide</b>It’s leftovers night, and everyone already knows it.</p></li>
+    </ol>
+  </section>
+
+  <section class="wrap practical" aria-label="The details">
+    <div><h3>On the phone you already have</h3><p>Meal Mate runs in the browser on iPhone, Android, or a laptop. Add it to your home screen and it opens like any other app. No app store needed.</p></div>
+    <div><h3>Sign in your way</h3><p>Use your Google account or an email and password. Your recipes and plans are private to you and the people you invite.</p></div>
+    <div><h3>Plan forward or look back</h3><p>Fill in next week, or log what you actually ate last week. Meal Mate counts how often each recipe makes the plan, so you can see the family favorites.</p></div>
+  </section>
+
+  <section class="cta" aria-labelledby="cta-h">
+    <div class="wrap">
+      <div>
+        <h2 id="cta-h">Make Tuesday at 5:14 the quiet part of the day.</h2>
+        <p>Bring in a few recipes and plan your first week tonight.</p>
+      </div>
+      <a class="btn" href="/?start">Start planning</a>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>Meal Mate · Plan your week, love your meals.</span><a href="/?start">mealmate.mooseflip.com</a></div></footer>
+
+<script>
+(function () {
+  // Category orders mirror the app's seeded store layouts (backend/src/controllers/stores.ts).
+  var LAYOUTS = {
+    "Aldi":         ["Produce","Bakery","Dairy & Eggs","Meat & Seafood","Pantry","Frozen","Household"],
+    "Trader Joe's": ["Produce","Dairy & Eggs","Meat & Seafood","Bakery","Frozen","Pantry","Household"],
+    "Walmart":      ["Produce","Meat & Seafood","Dairy & Eggs","Bakery","Frozen","Pantry","Household"],
+    "Kroger":       ["Produce","Bakery","Dairy & Eggs","Meat & Seafood","Frozen","Pantry","Household"]
+  };
+  var ITEMS = {
+    "Produce":        [["Yellow onions","3","Fajitas · Chili · Pot roast"],["Bell peppers","3","Fajitas"],["Carrots","4","Pot roast"]],
+    "Bakery":         [["Flour tortillas","2 packs","Fajitas · Tacos"]],
+    "Dairy & Eggs":   [["Milk","1 gal","Added by Jess"],["Parmesan","1 wedge","Lemon orzo"]],
+    "Meat & Seafood": [["Chicken thighs","2 lb","Fajitas"],["Chuck roast","3 lb","Pot roast"]],
+    "Pantry":         [["Black beans","2 cans","Tacos · Chili"]],
+    "Frozen":         [["Peas","1 bag","Lemon orzo"]],
+    "Household":      [["Paper towels","1","Added by Sam"]]
+  };
+  var total = 0; Object.keys(ITEMS).forEach(function (k) { total += ITEMS[k].length; });
+  var aislesEl = document.getElementById('aisles');
+  var nodes = {};
+
+  Object.keys(ITEMS).forEach(function (cat) {
+    var box = document.createElement('div');
+    box.className = 'aisle';
+    var h = document.createElement('h5');
+    h.innerHTML = '<b></b><span></span>';
+    h.firstChild.textContent = cat;
+    h.lastChild.textContent = ITEMS[cat].length;
+    box.appendChild(h);
+    ITEMS[cat].forEach(function (it, i) {
+      var id = 'g-' + cat.replace(/\W+/g, '') + '-' + i;
+      var label = document.createElement('label');
+      label.className = 'item'; label.htmlFor = id;
+      label.innerHTML = '<input type="checkbox"><span class="n"></span><q></q>';
+      label.firstChild.id = id;
+      label.children[1].textContent = it[0];
+      var s = document.createElement('small'); s.textContent = it[2]; label.children[1].appendChild(s);
+      label.children[2].textContent = it[1];
+      box.appendChild(label);
+    });
+    nodes[cat] = box;
+  });
+
+  function render(store) {
+    // FLIP: remember positions, reorder, then animate from old to new.
+    var before = {};
+    Object.keys(nodes).forEach(function (c) { if (nodes[c].isConnected) before[c] = nodes[c].getBoundingClientRect().top; });
+    LAYOUTS[store].forEach(function (c) { aislesEl.appendChild(nodes[c]); });
+    Object.keys(before).forEach(function (c) {
+      var dy = before[c] - nodes[c].getBoundingClientRect().top;
+      if (!dy) return;
+      nodes[c].style.transition = 'none';
+      nodes[c].style.transform = 'translateY(' + dy + 'px)';
+      requestAnimationFrame(function () { requestAnimationFrame(function () { nodes[c].style.transition = ''; nodes[c].style.transform = ''; }); });
+    });
+  }
+
+  document.querySelectorAll('.store-chips button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.store-chips button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      render(b.dataset.store);
+    });
+  });
+
+  aislesEl.addEventListener('change', function () {
+    var done = aislesEl.querySelectorAll('input:checked').length;
+    document.getElementById('prog').style.width = (done / total * 100) + '%';
+    document.getElementById('prog-label').textContent = done + ' of ' + total + ' in the cart';
+  });
+
+  render('Aldi');
+  document.getElementById('prog-label').textContent = '0 of ' + total + ' in the cart';
+})();
+</script>
+
+</body>
+</html>

@@ -39,6 +39,7 @@ export interface SuggestionConstraints {
   daysToSkip: number[]; // [0=Mon, 1=Tue, ..., 6=Sun]
   avoidRepeats: boolean;
   vegetarianOnly: boolean;
+  preferSimple?: boolean; // "Keep it quick": shortest prep + cook times first
   useAI?: boolean;
 }
 
@@ -95,6 +96,9 @@ export interface GroceryItem {
   recipeNames: string[];
   isChecked: boolean;
   originalTexts: string[];
+  // Set on items people add by hand; the API resolves it to the member's name.
+  addedBy?: { _id: string; name: string } | string;
+  addedAt?: string;
 }
 
 export interface GroceryList {

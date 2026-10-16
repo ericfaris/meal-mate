@@ -91,7 +91,7 @@ export default function PlannerScreen() {
           onPress={() => setShowTutorial(true)}
           activeOpacity={0.6}
         >
-          <Ionicons name="help-circle-outline" size={24} color={colors.textOnPrimary} />
+          <Ionicons name="help-circle-outline" size={24} color={colors.textLight} />
         </TouchableOpacity>
       ),
     });
@@ -195,6 +195,9 @@ export default function PlannerScreen() {
     });
   };
 
+  const formatMinutes = (m: number): string =>
+    m >= 60 ? `${Math.floor(m / 60)} hr${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`;
+
   const getDayName = (dateStr: string): string => {
     return formatDateString(dateStr, { weekday: 'long' });
   };
@@ -260,201 +263,122 @@ export default function PlannerScreen() {
     });
   };
 
-  const renderPlan = ({ item, index }: { item: Plan; index: number }) => {
-    const today = isToday(item.date);
-    const past = isPast(item.date);
-    const isFirstCard = index === 0;
-    const allPlanned = plans.length === 7 && plans.every(plan => plan.recipeId || plan.label);
-
-    return (
-      <View style={[
-        styles.planCard,
-        today && styles.planCardToday,
-        past && styles.planCardPast,
-        isFirstCard && allPlanned && styles.planCardFirst
-      ]}>
-        <View style={styles.planHeader}>
-          <View>
-            <Text style={[
-              styles.dayName,
-              today && styles.dayNameToday,
-              past && styles.dayNamePast
-            ]}>
-              {getDayName(item.date)}
-              {today && ' (Today)'}
-            </Text>
-            <Text style={[styles.dateText, past && styles.dateTextPast]}>{formatDate(item.date)}</Text>
-          </View>
-          <View style={styles.badgeContainer}>
-            {past && (
-              <View style={styles.completedBadge}>
-                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-              </View>
-            )}
-          </View>
+  // Suggest/Pick for upcoming days; past days get "Log" (pick what you
+  // actually ate) so a week can be filled in after the fact.
+  const renderDayActions = (date: string, past: boolean, planned: boolean) => {
+    const disabled = recipeCount === 0;
+    // A past day that already has a meal only needs a quiet "Change".
+    if (past && planned) {
+      return (
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, disabled && styles.actionButtonDisabled]}
+            onPress={() => handlePickMeal(date)}
+            disabled={disabled}
+          >
+            <Text style={[styles.actionButtonText, disabled && styles.actionButtonTextDisabled]}>Change</Text>
+          </TouchableOpacity>
         </View>
-
-        {item.recipeId ? (
-          <View style={styles.recipeContainer}>
-            <View style={styles.recipeContent}>
-              {item.recipeId.imageUrl && (
-                <Image
-                  source={{ uri: item.recipeId.imageUrl }}
-                  style={styles.recipeImage}
-                  resizeMode="cover"
-                />
-              )}
-              <View style={styles.recipeInfo}>
-                <Text style={styles.recipeTitle}>{item.recipeId.title}</Text>
-                <View style={styles.recipeMeta}>
-                  {item.recipeId.isVegetarian && (
-                    <View style={styles.tag}>
-                      <Text style={styles.tagText}>🥬 Vegetarian</Text>
-                    </View>
-                  )}
-                  {item.recipeId.complexity && (
-                    <View style={[styles.tag, styles.complexityTag]}>
-                      <Text style={styles.tagText}>
-                        {item.recipeId.complexity === 'simple' ? '⚡ Quick' :
-                         item.recipeId.complexity === 'medium' ? '⏱️ Medium' : '👨‍🍳 Complex'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </View>
-            {!past && <View style={styles.actionButtons}>
-              {isAdmin && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                    onPress={() => handleSuggestMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                    onPress={() => handlePickMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>}
-          </View>
-        ) : item.label ? (
-          <View style={styles.labelMainContainer}>
-            <View style={[
-              styles.labelBadge,
-              item.label === 'Eating Out' && styles.labelBadgeEatingOut,
-              item.label === 'Leftovers' && styles.labelBadgeLeftovers,
-              item.label === 'TBD' && styles.labelBadgeTBD
-            ]}>
-              <Text style={styles.labelEmoji}>
-                {item.label === 'Eating Out' ? '🍽️' : item.label === 'Leftovers' ? '📦' : '❓'}
-              </Text>
-              <Text style={[
-                styles.labelText,
-                item.label === 'Eating Out' && styles.labelTextEatingOut,
-                item.label === 'Leftovers' && styles.labelTextLeftovers,
-                item.label === 'TBD' && styles.labelTextTBD
-              ]}>{item.label}</Text>
-            </View>
-            {!past && <View style={styles.actionButtons}>
-              {isAdmin && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                    onPress={() => handleSuggestMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                    onPress={() => handlePickMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>}
-          </View>
-        ) : (
-          <View style={styles.emptyMealContainer}>
-            <Text style={styles.emptyText}>No meal planned</Text>
-            {!past && <View style={styles.actionButtons}>
-              {isAdmin && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                    onPress={() => handleSuggestMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                    onPress={() => handlePickMeal(item.date)}
-                    disabled={recipeCount === 0 || past}
-                  >
-                    <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>}
-          </View>
+      );
+    }
+    return (
+      <View style={styles.actionButtons}>
+        {!past && (
+          <TouchableOpacity
+            style={[styles.actionButton, disabled && styles.actionButtonDisabled]}
+            onPress={() => handleSuggestMeal(date)}
+            disabled={disabled}
+          >
+            <Text style={[styles.actionButtonText, disabled && styles.actionButtonTextDisabled]}>Suggest</Text>
+          </TouchableOpacity>
         )}
+        <TouchableOpacity
+          style={[styles.actionButton, styles.pickButton, disabled && styles.pickButtonDisabled]}
+          onPress={() => handlePickMeal(date)}
+          disabled={disabled}
+        >
+          <Text style={[styles.pickButtonText, disabled && styles.pickButtonTextDisabled]}>{past ? 'Log' : 'Pick'}</Text>
+        </TouchableOpacity>
       </View>
     );
   };
 
+  // Landing-page day row: weekday + date numeral on the left, the meal on the
+  // right. Label days (Leftovers, Eating Out) are dashed and set in italic;
+  // today carries a terracotta outline and inset bar.
+  const renderDayCard = (date: string, plan: Plan | null, showActions: boolean) => {
+    const today = isToday(date);
+    const past = isPast(date);
+    const label = plan?.label;
+    const recipe = plan?.recipeId;
+    const minutes = recipe ? (recipe.prepTime || 0) + (recipe.cookTime || 0) : 0;
+
+    return (
+      <View
+        key={date}
+        testID={`day-${date}`}
+        style={[
+          styles.planCard,
+          !!label && styles.planCardLabel,
+          today && styles.planCardToday,
+          past && styles.planCardPast,
+        ]}
+      >
+        <View style={styles.dateStack}>
+          <Text style={[styles.dateDow, today && styles.dateDowToday]}>
+            {formatDateString(date, { weekday: 'short' })}
+          </Text>
+          <Text style={[styles.dateNum, today && styles.dateNumToday]}>
+            {formatDateString(date, { day: 'numeric' })}
+          </Text>
+          {today && <Text style={styles.todayText}>Today</Text>}
+        </View>
+
+        <View style={styles.planBody}>
+          <View style={styles.planMain}>
+            {recipe ? (
+              <>
+                <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
+                <View style={styles.recipeMeta}>
+                  {minutes > 0 && (
+                    <View style={styles.metaItem}>
+                      <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                      <Text style={styles.metaText}>{formatMinutes(minutes)}</Text>
+                    </View>
+                  )}
+                  {recipe.isVegetarian && (
+                    <View style={[styles.tag, styles.tagVeg]}>
+                      <Ionicons name="leaf" size={11} color={colors.secondary} />
+                      <Text style={styles.tagText}>Vegetarian</Text>
+                    </View>
+                  )}
+                </View>
+              </>
+            ) : label ? (
+              <Text style={styles.labelText}>{label === 'TBD' ? 'To be decided' : label}</Text>
+            ) : (
+              <Text style={styles.emptyText}>Nothing planned yet</Text>
+            )}
+          </View>
+          {past && (recipe || label) ? (
+            <Ionicons name="checkmark-circle" size={18} color={colors.secondary} />
+          ) : null}
+          {showActions && renderDayActions(date, past, !!(recipe || label))}
+        </View>
+      </View>
+    );
+  };
+
+  const renderPlan = ({ item }: { item: Plan; index: number }) =>
+    renderDayCard(item.date, item, isAdmin);
+
   const renderEmptyWeek = () => {
     const { startStr } = getWeekDates(weekOffset);
     const days = [];
-
     // Show Mon - Sun (7 days)
     for (let i = 0; i < 7; i++) {
-      // Use timezone-safe date utilities
-      const dateStr = addDays(startStr, i);
-      const past = isPast(dateStr);
-
-      days.push(
-        <View key={dateStr} style={[styles.planCard, styles.planCardEmpty]}>
-          <View style={styles.planHeader}>
-            <View>
-              <Text style={styles.dayName}>
-                {getDayName(dateStr)}
-              </Text>
-              <Text style={styles.dateText}>{formatDate(dateStr)}</Text>
-            </View>
-          </View>
-          <View style={styles.emptyMealContainer}>
-            <Text style={styles.emptyText}>No meal planned</Text>
-            {!past && <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, (recipeCount === 0 || past) && styles.actionButtonDisabled]}
-                onPress={() => handleSuggestMeal(dateStr)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.actionButtonText, (recipeCount === 0 || past) && styles.actionButtonTextDisabled]}>Suggest</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.pickButton, (recipeCount === 0 || past) && styles.pickButtonDisabled]}
-                onPress={() => handlePickMeal(dateStr)}
-                disabled={recipeCount === 0 || past}
-              >
-                <Text style={[styles.pickButtonText, (recipeCount === 0 || past) && styles.pickButtonTextDisabled]}>Pick</Text>
-              </TouchableOpacity>
-            </View>}
-          </View>
-        </View>
-      );
+      days.push(renderDayCard(addDays(startStr, i), null, true));
     }
-
     return days;
   };
 
@@ -501,6 +425,8 @@ export default function PlannerScreen() {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => setWeekOffset(weekOffset - 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Previous week"
           activeOpacity={0.6}
         >
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
@@ -513,6 +439,8 @@ export default function PlannerScreen() {
         <TouchableOpacity
           style={styles.navButton}
           onPress={() => setWeekOffset(weekOffset + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Next week"
           activeOpacity={0.6}
         >
           <Ionicons name="chevron-forward" size={24} color={colors.primary} />
@@ -747,191 +675,146 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   planCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.border,
-    ...shadows.card,
-  },
-  planCardToday: {
-    borderLeftColor: colors.primary,
-  },
-  planCardPast: {
-    backgroundColor: '#F5F5F5',
-  },
-  planCardEmpty: {
-    opacity: 0.7,
-  },
-  planCardFirst: {
-    marginTop: spacing.lg,
-  },
-  planHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  dayName: {
-    fontSize: typography.sizes.h3,
-    fontWeight: typography.weights.bold as any,
-    color: colors.text,
+  planCardLabel: {
+    backgroundColor: 'transparent',
+    borderStyle: 'dashed',
   },
-  dayNameToday: {
+  planCardToday: {
+    borderColor: colors.primary,
+    borderLeftWidth: 4,
+    paddingLeft: spacing.md - 3,
+  },
+  planCardPast: {
+    opacity: 0.72,
+  },
+  dateStack: {
+    width: 44,
+    alignItems: 'center',
+  },
+  dateDow: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: typography.weights.bold as any,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+  },
+  dateDowToday: {
     color: colors.primary,
   },
-  dayNamePast: {
-    color: colors.textMuted,
+  dateNum: {
+    fontFamily: typography.families.display,
+    fontSize: 22,
+    lineHeight: 26,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.text,
   },
-  dateText: {
-    fontSize: typography.sizes.small,
-    color: colors.textLight,
-    marginTop: 2,
+  dateNumToday: {
+    color: colors.primary,
   },
-  dateTextPast: {
-    color: colors.textMuted,
+  todayText: {
+    fontFamily: typography.families.display,
+    fontStyle: 'italic',
+    fontSize: 12,
+    color: colors.primary,
   },
-  badgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  completedBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmedBadge: {
-    backgroundColor: colors.success,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmedText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: typography.weights.bold as any,
-  },
-  recipeContainer: {
-    marginTop: spacing.xs,
-  },
-  recipeContent: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  recipeImage: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.border,
-  },
-  recipeInfo: {
+  planBody: {
     flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  planMain: {
+    flex: 1,
+    minWidth: 120,
   },
   recipeTitle: {
     fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium as any,
+    fontWeight: typography.weights.bold as any,
     color: colors.text,
-    marginBottom: spacing.xs,
   },
   recipeMeta: {
     flexDirection: 'row',
+    alignItems: 'center',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    marginTop: 2,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  metaText: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textMuted,
   },
   tag: {
-    backgroundColor: colors.secondaryLight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
   },
-  complexityTag: {
-    backgroundColor: colors.primaryLight,
+  tagVeg: {
+    backgroundColor: colors.tagSimple,
   },
   tagText: {
-    fontSize: typography.sizes.small,
+    fontSize: 11,
+    fontWeight: typography.weights.bold as any,
     color: colors.text,
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
+    gap: spacing.xs,
   },
   actionButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
+    height: 32,
+    justifyContent: 'center',
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
   },
   actionButtonText: {
-    fontSize: typography.sizes.body,
-    color: colors.textOnPrimary,
-    fontWeight: typography.weights.medium as any,
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.bold as any,
+    color: colors.text,
   },
   pickButton: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
+    backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   pickButtonText: {
-    fontSize: typography.sizes.body,
-    color: colors.primary,
-    fontWeight: typography.weights.medium as any,
-  },
-  emptyMealContainer: {
-    alignItems: 'center',
-  },
-  labelMainContainer: {
-    marginTop: spacing.xs,
-  },
-  labelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.sm,
-  },
-  labelBadgeEatingOut: {
-    backgroundColor: '#FFF3E0',
-    borderWidth: 2,
-    borderColor: '#FF9800',
-  },
-  labelBadgeLeftovers: {
-    backgroundColor: '#E8F5E9',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  labelBadgeTBD: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 2,
-    borderColor: '#9E9E9E',
-  },
-  labelEmoji: {
-    fontSize: 24,
-    marginRight: spacing.sm,
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.bold as any,
+    color: colors.textOnPrimary,
   },
   labelText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold as any,
-  },
-  labelTextEatingOut: {
-    color: '#E65100',
-  },
-  labelTextLeftovers: {
-    color: '#2E7D32',
-  },
-  labelTextTBD: {
-    color: '#616161',
+    fontFamily: typography.families.display,
+    fontStyle: 'italic',
+    fontSize: 17,
+    color: colors.textLight,
   },
   emptyText: {
-    fontSize: typography.sizes.body,
-    color: colors.textLight,
     fontStyle: 'italic',
+    fontSize: typography.sizes.small,
+    color: colors.textMuted,
   },
   emptyContainer: {
     flex: 1,

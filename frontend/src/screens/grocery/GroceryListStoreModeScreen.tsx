@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '../../components/icons/Ionicons';
 import { Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
+import { colors, typography, spacing, borderRadius, shadows, eyebrow } from '../../theme';
 import { getStoreAsset } from '../../utils/storeAssets';
 import { GroceryList, GroceryItem, Store } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
@@ -23,6 +23,7 @@ import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import AddStapleModal from '../../components/AddStapleModal';
 import ManageStoresModal from '../../components/ManageStoresModal';
 import { alertManager } from '../../utils/alertUtils';
+import { itemSourceLine, listProgress } from '../../utils/groceryItem';
 
 type Props = {
   navigation: any;
@@ -291,6 +292,22 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
         })}
       </ScrollView>
 
+      {/* Progress — "4 of 12 in the cart" */}
+      {(() => {
+        const { done, total, ratio } = listProgress(list.items);
+        return (
+          <View style={[styles.progressWrap, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
+            <View style={styles.progressLabels}>
+              <Text style={styles.progressLabel}>{selectedStore ? `${selectedStore.name} order` : 'All sections'}</Text>
+              <Text style={styles.progressCount} testID="store-progress">{done} of {total} in the cart</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.round(ratio * 100)}%` }]} />
+            </View>
+          </View>
+        );
+      })()}
+
       {/* Search */}
       <View style={[styles.searchContainer, { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' }]}>
         <Ionicons name="search-outline" size={18} color={colors.textMuted} />
@@ -327,7 +344,6 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
                 });
               }}
             >
-              <Text style={styles.sectionEmoji}>{section.emoji}</Text>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionCount}>{section.data.length}</Text>
               <Ionicons
@@ -338,20 +354,22 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
             </TouchableOpacity>
           );
         }}
-        renderItem={({ item: { item, originalIndex }, section }) => {
+        renderItem={({ item: { item, originalIndex }, section, index }) => {
           if (collapsedCategories.has(section.title)) return null;
           return (
-            <View style={styles.itemRow}>
+            <View style={[
+              styles.itemRow,
+              index === 0 && styles.itemRowFirst,
+              index === section.data.length - 1 && styles.itemRowLast,
+            ]}>
               <Pressable
                 style={styles.itemRowMain}
                 onPress={() => handleToggleItem(originalIndex)}
                 onLongPress={() => setDrillDownItem(item)}
               >
-                <Ionicons
-                  name={item.isChecked ? 'checkbox' : 'square-outline'}
-                  size={24}
-                  color={item.isChecked ? colors.success : colors.textMuted}
-                />
+                <View style={[styles.checkbox, item.isChecked && styles.checkboxChecked]}>
+                  {item.isChecked && <Ionicons name="checkmark" size={15} color={colors.textOnPrimary} />}
+                </View>
                 <View style={styles.itemInfo}>
                   <Text
                     style={[
@@ -361,15 +379,13 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
                   >
                     {item.name}
                   </Text>
-                  {item.quantity ? (
-                    <Text style={styles.itemQuantity}>{item.quantity}</Text>
+                  {itemSourceLine(item) ? (
+                    <Text style={styles.itemSource} numberOfLines={1}>{itemSourceLine(item)}</Text>
                   ) : null}
                 </View>
-                {item.recipeNames.length > 1 && (
-                  <View style={styles.recipeBadge}>
-                    <Text style={styles.recipeBadgeText}>{item.recipeNames.length}</Text>
-                  </View>
-                )}
+                {item.quantity ? (
+                  <Text style={[styles.itemQuantity, item.isChecked && styles.itemNameChecked]}>{item.quantity}</Text>
+                ) : null}
               </Pressable>
               <Pressable
                 style={styles.removeButton}
@@ -595,47 +611,102 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     color: colors.text,
   },
+  progressWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+  },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  progressLabel: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textMuted,
+  },
+  progressCount: {
+    fontSize: typography.sizes.tiny,
+    fontWeight: typography.weights.bold,
+    color: colors.textLight,
+    fontVariant: ['tabular-nums'],
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: colors.secondary,
+    transitionProperty: 'width',
+    transitionDuration: '300ms',
+  } as any,
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
     gap: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  sectionEmoji: {
-    fontSize: 18,
   },
   sectionTitle: {
     flex: 1,
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.semibold,
-    color: colors.text,
+    ...eyebrow,
   },
   sectionCount: {
-    fontSize: typography.sizes.small,
+    fontSize: typography.sizes.tiny,
+    fontWeight: typography.weights.bold,
     color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
     marginRight: spacing.xs,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.md,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderColor: colors.border,
+  },
+  itemRowFirst: {
+    borderTopWidth: 1,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+  },
+  itemRowLast: {
+    borderBottomLeftRadius: borderRadius.lg,
+    borderBottomRightRadius: borderRadius.lg,
   },
   itemRowMain: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: spacing.lg,
-    paddingVertical: spacing.sm + 4,
+    paddingLeft: spacing.md,
+    paddingVertical: spacing.sm + 2,
     gap: spacing.md,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
   },
   itemInfo: {
     flex: 1,
+    minWidth: 0,
   },
   itemName: {
     fontSize: typography.sizes.body,
@@ -645,28 +716,20 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: colors.textMuted,
   },
+  itemSource: {
+    fontSize: typography.sizes.tiny,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
   itemQuantity: {
     fontSize: typography.sizes.small,
     color: colors.textLight,
-    marginTop: 2,
-  },
-  recipeBadge: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.full,
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontVariant: ['tabular-nums'],
   },
   removeButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
     justifyContent: 'center',
-  },
-  recipeBadgeText: {
-    fontSize: typography.sizes.tiny,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
   },
   staplesButton: {
     position: 'absolute',

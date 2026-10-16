@@ -7,25 +7,26 @@
   /* Color */
   --color-background: #FDFAF6;
   --color-primary: #B14E33;
-  --color-primary-light: #FDF5F3;
-  --color-secondary: #A8B5A2;
-  --color-secondary-light: #F3F6F2;
+  --color-primary-light: #FBEDE8;
+  --color-secondary: #7E9277;
+  --color-secondary-light: #EEF2EC;
   --color-success: #A7D8A8;
+  --color-linen: #F6EFE6;
   --color-text: #2D2D2D;
-  --color-text-light: #666666;
-  --color-text-muted: #999999;
+  --color-text-light: #5E5A55;
+  --color-text-muted: #857D76;
   --color-text-on-primary: #FFFFFF;
   --color-white: #FFFFFF;
   --color-card: #FFFFFF;
-  --color-border: #E5E5E5;
-  --color-divider: #F0F0F0;
-  --color-overlay: rgba(0, 0, 0, 0.5);
-  --color-status-gray: #6B7280;
-  --color-error: #E57373;
-  --color-warning: #FFB74D;
-  --color-tag-simple: #C8E6C9;
-  --color-tag-medium: #FFE0B2;
-  --color-tag-complex: #FFCDD2;
+  --color-border: #E8DFD4;
+  --color-divider: #F1EAE1;
+  --color-overlay: rgba(45, 30, 20, 0.5);
+  --color-status-gray: #7A726B;
+  --color-error: #C8553D;
+  --color-warning: #E0A04A;
+  --color-tag-simple: #DCEFD9;
+  --color-tag-medium: #FCE9CC;
+  --color-tag-complex: #F9D9D6;
   --color-focus-ring: #B14E33;
 
   /* Spacing */
@@ -60,24 +61,24 @@
   --motion-emphasis-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Shadows */
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-floating: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 4px 14px rgba(60, 40, 25, 0.06);
+  --shadow-button: 0 2px 6px rgba(60, 40, 25, 0.12);
+  --shadow-floating: 0 8px 20px rgba(60, 40, 25, 0.16);
 
   /* Type scale */
   --type-display-font: 'Fraunces', Georgia, serif;
   --type-display-size: 34px;
   --type-display-line-height: 40px;
-  --type-display-letter-spacing: 0.2px;
+  --type-display-letter-spacing: -0.3px;
   --type-h1-font: 'Fraunces', Georgia, serif;
   --type-h1-size: 28px;
   --type-h1-line-height: 34px;
-  --type-h1-letter-spacing: 0px;
-  --type-h2-font: 'Karla', -apple-system, sans-serif;
+  --type-h1-letter-spacing: -0.2px;
+  --type-h2-font: 'Fraunces', Georgia, serif;
   --type-h2-size: 24px;
   --type-h2-line-height: 30px;
-  --type-h2-letter-spacing: 0px;
-  --type-h3-font: 'Karla', -apple-system, sans-serif;
+  --type-h2-letter-spacing: -0.1px;
+  --type-h3-font: 'Fraunces', Georgia, serif;
   --type-h3-size: 20px;
   --type-h3-line-height: 26px;
   --type-h3-letter-spacing: 0px;
@@ -93,4 +94,8 @@
   --type-tiny-size: 12px;
   --type-tiny-line-height: 16px;
   --type-tiny-letter-spacing: 0.2px;
+  --type-eyebrow-font: 'Karla', -apple-system, sans-serif;
+  --type-eyebrow-size: 12px;
+  --type-eyebrow-line-height: 16px;
+  --type-eyebrow-letter-spacing: 1.4px;
 }

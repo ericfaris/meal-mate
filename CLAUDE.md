@@ -1,6 +1,6 @@
 # Meal Mate - Project Overview
 
-*Last Updated: 2026-02-04*
+*Last Updated: 2026-10-16*
 
 ---
 
@@ -121,7 +121,7 @@ meal-mate/
 ### Recipe
 - User-owned recipes with ingredients, directions, images
 - Import via URL or photo (Claude Vision API for photo extraction)
-- Tags, complexity (simple/medium/complex), dietary flags
+- Tags, prep/cook time, vegetarian flag (complexity was removed in `eb32bd7`)
 - Tracks `lastUsedDate` for suggestion algorithm
 - `planCount` computed via aggregation
 - Household sharing (admins own recipes, members can edit them)
@@ -277,9 +277,9 @@ Member approval process:
 **Location**: `backend/src/services/suggestionService.ts`
 
 Generates intelligent meal suggestions with constraints:
-- Avoid repeats (10-day lookback window on `lastUsedDate`)
-- Filter by vegetarian preference
-- Prefer simple recipes (sort by complexity)
+- Avoid repeats (adaptive 3–10 day lookback on `lastUsedDate`)
+- Filter by vegetarian preference (`vegetarianOnly`)
+- "Keep it quick" (`preferSimple`): keep the shortest prep + cook times (`applySimplePreference`)
 - Skip specific days (eating out, etc.)
 - Shuffle for variety
 - Household-aware: considers all household recipes for suggestions
@@ -291,7 +291,7 @@ Generates intelligent meal suggestions with constraints:
 1. Fetch the page (SSRF-validated URL)
 2. Parse JSON-LD `Recipe` schema, then microdata, then HTML patterns
 3. HTML entity decoding for special characters
-4. No auto-complexity detection (user sets manually)
+4. Imports title, ingredients, directions, times, servings, image
 
 **Photo Import** (Admin-only):
 1. Uses Claude Vision API (claude-sonnet-4-20250514)
@@ -542,6 +542,22 @@ alertManager.showActionSheet({ options: [...] });
 **Location**: `frontend/src/utils/alertUtils.ts` + modal components in `frontend/src/components/`
 
 ---
+
+## 🌐 Landing page & web entry points
+
+- Marketing page: `frontend/public/welcome/index.html`, served at `/welcome/`.
+  Signed-out first-time visitors at `/` are sent there once
+  (`src/utils/welcome.ts`); its buttons link back to `/?start`. Every mock and
+  claim on it must match a working feature, so update it in the same change
+  when a feature changes (DESIGN.md §11).
+- Web routes (`src/navigation/linking.ts`): `/join/:token` (household invite,
+  opens Settings) and `/grocery/:listId` (Store Mode). Invite links are built
+  by `backend/src/utils/appUrl.ts` (`APP_URL`, defaults to
+  `https://mealmate.mooseflip.com` in production).
+- Fonts: the bare `react-native` import is aliased to
+  `frontend/src/platform/reactNative.tsx`, which applies Karla (body) and
+  Fraunces (fontSize >= 20) to every Text. Don't reintroduce
+  `Text.defaultProps`; React 19 ignores it.
 
 ## 🎯 Recent Development
 

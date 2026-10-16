@@ -8,7 +8,26 @@ export interface SuggestionConstraints {
   daysToSkip: number[]; // [0=Mon, 1=Tue, ..., 6=Sun] - indices of days to skip
   avoidRepeats: boolean;
   vegetarianOnly: boolean;
+  preferSimple?: boolean; // "Keep it quick": lean toward the shortest prep + cook times
   useAI?: boolean;
+}
+
+/** Minutes a recipe asks for (prep + cook); unknown times count as a typical 45. */
+export const UNKNOWN_EFFORT_MINUTES = 45;
+export const effortMinutes = (r: { prepTime?: number; cookTime?: number }): number =>
+  (r.prepTime || 0) + (r.cookTime || 0) || UNKNOWN_EFFORT_MINUTES;
+
+/**
+ * "Keep it quick": keep the `needed` quickest recipes (stable, so the
+ * caller's shuffled/least-recently-planned order still decides among equal
+ * times). With fewer recipes than days, everything stays in, quickest first.
+ */
+export function applySimplePreference<T extends { prepTime?: number; cookTime?: number }>(recipes: T[], needed: number): T[] {
+  return recipes
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => effortMinutes(a.r) - effortMinutes(b.r) || a.i - b.i)
+    .map(({ r }) => r)
+    .slice(0, Math.max(needed, 1));
 }
 
 export interface DaySuggestion {
@@ -67,7 +86,11 @@ export const generateWeekSuggestions = async (
   }
 
   // Get eligible recipes for this user
-  const eligibleRecipes = await getEligibleRecipes(constraints, userId);
+  let eligibleRecipes = await getEligibleRecipes(constraints, userId);
+  if (constraints.preferSimple) {
+    const needed = suggestions.filter((s) => !s.isSkipped).length;
+    eligibleRecipes = applySimplePreference(eligibleRecipes, needed);
+  }
 
   if (eligibleRecipes.length === 0) {
     return suggestions; // Return with no recipes if none available
@@ -186,10 +209,16 @@ export const getAlternativeSuggestion = async (
   // Add some randomness by sorting by updatedAt as secondary
   sort.updatedAt = -1;
 
-  const recipes = await Recipe.find(query).sort(sort).limit(10);
+  let recipes = await Recipe.find(query).sort(sort).limit(10);
 
   if (recipes.length === 0) {
     return null;
+  }
+
+  if (constraints.preferSimple) {
+    // Quick ones (<= a typical weeknight) when there are any, else the quickest.
+    const quick = recipes.filter((r) => effortMinutes(r) <= UNKNOWN_EFFORT_MINUTES);
+    recipes = quick.length > 0 ? quick : applySimplePreference(recipes, 1);
   }
 
   // Return a random one from the top results for variety

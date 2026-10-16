@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { colors, typography, spacing, borderRadius } from '../../theme';
+import { colors, typography, spacing, borderRadius, eyebrow, surface } from '../../theme';
 import { suggestionApi, DaySuggestion } from '../../services/api/suggestions';
 import { SuggestionConstraints } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
@@ -16,6 +16,8 @@ import { PlanningLoader } from '../../components/PlanningLoader';
 import { parseDate, getNextMonday, dateToString, addDays, formatDateString } from '../../utils/dateUtils';
 import { alertManager } from '../../utils/alertUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
+import { Ionicons } from '../../components/icons/Ionicons';
 
 type ConstraintsScreenNavigationProp = NativeStackNavigationProp<
   PlannerStackParamList,
@@ -52,6 +54,8 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
   // Days to cook - all days selected by default
   const [dinnerDays, setDinnerDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [avoidRepeats, setAvoidRepeats] = useState(true);
+  const [preferSimple, setPreferSimple] = useState(false);
+  const [vegetarianOnly, setVegetarianOnly] = useState(false);
   const [useAI, setUseAI] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
 
@@ -98,7 +102,8 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
         startDate: formatStartDate(),
         daysToSkip: getDaysToSkip(),
         avoidRepeats,
-        vegetarianOnly: false,
+        vegetarianOnly,
+        preferSimple,
         useAI,
       };
 
@@ -204,41 +209,58 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
         )}
       </View>
 
-      {/* Filter Toggles */}
+      {/* Preferences — the landing page's "What's this week like?" panel */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Any preferences?</Text>
-
-        <TouchableOpacity
-          style={[styles.toggleRow, avoidRepeats && styles.toggleRowActive]}
-          onPress={() => setAvoidRepeats(!avoidRepeats)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.toggleInfo}>
-            <Text style={styles.toggleLabel}>Avoid recent repeats</Text>
-            <Text style={styles.toggleDescription}>
-              Skip recipes from the last 10 days
-            </Text>
-          </View>
-          <View style={[styles.toggle, avoidRepeats && styles.toggleActive]}>
-            {avoidRepeats && <Text style={styles.toggleCheck}>✓</Text>}
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.toggleRow, useAI && styles.toggleRowActive]}
-          onPress={() => setUseAI(!useAI)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.toggleInfo}>
-            <Text style={styles.toggleLabel}>AI-enhanced suggestions</Text>
-            <Text style={styles.toggleDescription}>
-              Use AI for smarter meal variety
-            </Text>
-          </View>
-          <View style={[styles.toggle, useAI && styles.toggleActive]}>
-            {useAI && <Text style={styles.toggleCheck}>✓</Text>}
-          </View>
-        </TouchableOpacity>
+        <Text style={styles.eyebrow}>Preferences</Text>
+        <Text style={styles.sectionTitle}>What's this week like?</Text>
+        <View style={styles.prefsPanel}>
+          {[
+            {
+              key: 'avoidRepeats',
+              label: 'Avoid repeats',
+              description: 'Recent dinners sit out (up to 10 days back)',
+              value: avoidRepeats,
+              toggle: () => setAvoidRepeats(!avoidRepeats),
+            },
+            {
+              key: 'preferSimple',
+              label: 'Keep it quick',
+              description: 'Favor the shortest prep + cook times',
+              value: preferSimple,
+              toggle: () => setPreferSimple(!preferSimple),
+            },
+            {
+              key: 'vegetarianOnly',
+              label: 'Vegetarian only',
+              description: 'Only recipes marked vegetarian',
+              value: vegetarianOnly,
+              toggle: () => setVegetarianOnly(!vegetarianOnly),
+            },
+            {
+              key: 'useAI',
+              label: 'AI-enhanced variety',
+              description: 'Balance the week (light after heavy, mix it up)',
+              value: useAI,
+              toggle: () => setUseAI(!useAI),
+            },
+          ].map((pref, i, all) => (
+            <TouchableOpacity
+              key={pref.key}
+              testID={`pref-${pref.key}`}
+              style={[styles.prefRow, i === all.length - 1 && styles.prefRowLast]}
+              onPress={pref.toggle}
+              activeOpacity={0.7}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: pref.value }}
+            >
+              <View style={styles.toggleInfo}>
+                <Text style={styles.toggleLabel}>{pref.label}</Text>
+                <Text style={styles.toggleDescription}>{pref.description}</Text>
+              </View>
+              <ToggleSwitch value={pref.value} />
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Generate Button */}
@@ -251,7 +273,8 @@ export default function ConstraintsScreen({ navigation, route }: Props) {
         disabled={dinnerDays.length === 0}
         activeOpacity={0.8}
       >
-        <Text style={styles.generateButtonText}>Generate Plan</Text>
+        <Ionicons name="sparkles-outline" size={20} color={colors.textOnPrimary} />
+        <Text style={styles.generateButtonText}>Suggest my week</Text>
       </TouchableOpacity>
       </ScrollView>
     </View>
@@ -328,41 +351,45 @@ const styles = StyleSheet.create({
   dayChip: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
     alignItems: 'center',
     minWidth: 70,
     position: 'relative',
   },
   strikethrough: {
     position: 'absolute',
-    width: '90%',
+    top: '50%',
+    width: '70%',
     height: 2,
-    backgroundColor: colors.textLight,
-    opacity: 0.4,
+    backgroundColor: colors.primary,
+    opacity: 0.5,
   },
   dayChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.card,
+    borderColor: colors.border,
   },
   dayChipText: {
-    fontSize: typography.sizes.body,
-    fontWeight: typography.weights.medium as any,
-    color: colors.text,
+    fontSize: typography.sizes.small,
+    fontWeight: typography.weights.bold as any,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.primary,
   },
   dayChipTextSelected: {
-    color: colors.white,
+    color: colors.textMuted,
   },
   dayChipDate: {
-    fontSize: typography.sizes.small,
-    color: colors.textLight,
+    fontFamily: typography.families.display,
+    fontSize: 17,
+    fontWeight: typography.weights.semibold as any,
+    color: colors.primary,
     marginTop: 2,
   },
   dayChipDateSelected: {
-    color: colors.white,
-    opacity: 0.9,
+    color: colors.text,
   },
   planningInfo: {
     marginTop: spacing.md,
@@ -376,20 +403,26 @@ const styles = StyleSheet.create({
     color: colors.error || '#DC3545',
     fontStyle: 'italic',
   },
-  toggleRow: {
+  eyebrow: {
+    ...eyebrow,
+    marginBottom: spacing.xs,
+  },
+  prefsPanel: {
+    ...surface,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  prefRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
-    borderWidth: 2,
-    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderStyle: 'dashed',
   },
-  toggleRowActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
+  prefRowLast: {
+    borderBottomWidth: 0,
   },
   toggleInfo: {
     flex: 1,
@@ -405,40 +438,24 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
   },
-  toggle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  toggleCheck: {
-    color: colors.white,
-    fontWeight: typography.weights.bold as any,
-    fontSize: 14,
-  },
   generateButton: {
     backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
+    flexDirection: 'row',
+    gap: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   generateButtonDisabled: {
     opacity: 0.7,
   },
   generateButtonText: {
     color: colors.textOnPrimary,
-    fontSize: typography.sizes.h3,
+    fontFamily: typography.families.body,
+    fontSize: 18,
     fontWeight: typography.weights.bold as any,
   },
   // Responsive desktop/tablet styles

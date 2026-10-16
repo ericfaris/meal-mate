@@ -189,7 +189,7 @@ export const addStaplesToGroceryList = async (req: Request<{ id: string }>, res:
 
     await list.save();
 
-    res.json(list);
+    res.json(await list.populate('items.addedBy', 'name'));
   } catch (error) {
     console.error('Error adding staples to grocery list:', error);
     res.status(500).json({ error: 'Failed to add staples' });

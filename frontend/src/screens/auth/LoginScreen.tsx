@@ -120,6 +120,11 @@ export default function LoginScreen({ onNavigateToSignup }: LoginScreenProps) {
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
+
+        {/* react-native-web renders Text with href as a real <a> link */}
+        <Text style={styles.welcomeLink} {...({ href: '/welcome/' } as any)} accessibilityRole="link">
+          What is Meal Mate?
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -208,6 +213,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  welcomeLink: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
+    fontSize: typography.sizes.small,
+    color: colors.textLight,
+    textDecorationLine: 'underline',
   },
   footerText: {
     fontSize: typography.sizes.body,

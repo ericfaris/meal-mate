@@ -11,57 +11,58 @@
  */
 
 export const colors = {
-  // Primary palette
-  background: '#FDFAF6',      // Warm cream (parchment paper)
-  primary: '#B14E33',         // Deep terracotta (buttons, accents) — 5.2:1 contrast with white text (WCAG AA)
-  primaryLight: '#FDF5F3',    // Light terracotta tint
-  secondary: '#A8B5A2',       // Soft sage (tags, highlights)
-  secondaryLight: '#F3F6F2',  // Light sage tint
+  // Primary palette (v1.1 "landing" retune — matches the marketing page at
+  // /welcome/; see DESIGN.md changelog)
+  background: '#FDFAF6',      // Warm cream (parchment paper) — the page ground
+  primary: '#B14E33',         // Deep terracotta — CTAs, active states, today. 5.2:1 with white text (WCAG AA)
+  primaryLight: '#FBEDE8',    // Terracotta wash — selected chips, skipped days
+  secondary: '#7E9277',       // Sage — leaf/vegetarian marks, toggles, progress (3.6:1 on cream: icons/large only)
+  secondaryLight: '#EEF2EC',  // Sage wash — household/info bands
   success: '#A7D8A8',         // Gentle mint (confirmed plans)
+  linen: '#F6EFE6',           // Linen — recessed bands, image placeholders, inactive day pills
 
-  // Text colors
-  text: '#2D2D2D',            // Dark gray (high contrast)
-  textLight: '#666666',       // Secondary text
-  textMuted: '#999999',       // Tertiary text
+  // Text colors (warm greys biased toward the terracotta, not neutral grey)
+  text: '#2D2D2D',            // Ink — 13.6:1 on cream
+  textLight: '#5E5A55',       // Secondary text — 6.6:1 on cream
+  textMuted: '#857D76',       // Tertiary text, timestamps — 4.0:1 on cream
   textOnPrimary: '#FFFFFF',   // Text on terracotta buttons
 
   // UI colors
   white: '#FFFFFF',
   card: '#FFFFFF',
-  border: '#E5E5E5',
-  divider: '#F0F0F0',
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  border: '#E8DFD4',          // Warm hairline — card and input outlines
+  divider: '#F1EAE1',
+  overlay: 'rgba(45, 30, 20, 0.5)',
 
   // Status colors
-  statusGray: '#6B7280',      // Muted gray (eat out days)
-  error: '#E57373',           // Soft red for errors
-  warning: '#FFB74D',         // Soft orange for warnings
+  statusGray: '#7A726B',      // Muted warm gray (eat out days)
+  error: '#C8553D',           // Brick red for errors (distinct from primary by context + icon)
+  warning: '#E0A04A',         // Honey for warnings
 
-  // Tag colors (for complexity badges)
-  tagSimple: '#C8E6C9',       // Light green
-  tagMedium: '#FFE0B2',       // Light orange
-  tagComplex: '#FFCDD2',      // Light red
+  // Tag colors (for complexity badges) — softened to sit on cream
+  tagSimple: '#DCEFD9',       // Light green
+  tagMedium: '#FCE9CC',       // Light apricot
+  tagComplex: '#F9D9D6',      // Light rose
 
   // Accessibility
   focusRing: '#B14E33',       // Visible focus outline — same hue as primary, used at full opacity with a 2px offset ring (web) so it never reads as a stray shadow
 };
 
 export const typography = {
-  // Two faces: Fraunces (display) carries the identity on hero/wordmark
-  // moments; Karla (body) is the workhorse for everything else. Both are
-  // self-hosted — see families.files below. Only the Regular (400) static
-  // instance of each is bundled (both ship as variable fonts upstream);
-  // weight hierarchy elsewhere still uses `weights.*` and degrades
-  // gracefully to synthetic/system bolding where a platform doesn't apply
-  // it to a custom font. See DESIGN.md "Type" for the full rationale.
+  // Two faces, both self-hosted variable fonts (latin subset) loaded via
+  // @font-face in index.html: Fraunces (display: headings, dates, numerals,
+  // italic accents) and Karla (body: everything else). The `react-native`
+  // platform shim (src/platform/reactNative.tsx) applies them automatically —
+  // Karla by default, Fraunces at fontSize >= 20 — so screens rarely need to
+  // set fontFamily. Use `families.*` explicitly for display moments below 20px
+  // (day numbers, card titles) or the italic accent. See DESIGN.md "Type".
   families: {
-    display: 'Fraunces-Regular',   // @font-face family name (index.html)
-    body: 'Karla-Regular',
-    // Self-hosted .woff2 files, loaded via @font-face in index.html,
-    // from frontend/public/fonts/ (also used by the showcase page).
+    display: 'Fraunces, Georgia, "Times New Roman", serif',
+    body: 'Karla, -apple-system, "Segoe UI", Roboto, sans-serif',
     files: {
-      display: '/fonts/Fraunces-Regular.woff2',
-      body: '/fonts/Karla-Regular.woff2',
+      display: '/fonts/Fraunces-Variable.woff2',
+      displayItalic: '/fonts/Fraunces-Italic-Variable.woff2',
+      body: '/fonts/Karla-Variable.woff2',
     },
   },
   weights: {
@@ -75,53 +76,60 @@ export const typography = {
   // instead of assembling fontSize/lineHeight by hand.
   scale: {
     display: {
-      fontFamily: 'Fraunces-Regular',
+      fontFamily: 'Fraunces',
       fontSize: 34,
       lineHeight: 40,
-      letterSpacing: 0.2,
-      usage: 'App wordmark, splash tagline, big hero moments only — not for screen titles.',
+      letterSpacing: -0.3,
+      usage: 'App wordmark, splash tagline, hero greetings only — not for screen titles.',
     },
     h1: {
-      fontFamily: 'Fraunces-Regular',
+      fontFamily: 'Fraunces',
       fontSize: 28,
       lineHeight: 34,
-      letterSpacing: 0,
-      usage: 'Screen titles, day names.',
+      letterSpacing: -0.2,
+      usage: 'Screen titles, recipe titles on detail.',
     },
     h2: {
-      fontFamily: 'Karla-Regular',
+      fontFamily: 'Fraunces',
       fontSize: 24,
       lineHeight: 30,
-      letterSpacing: 0,
+      letterSpacing: -0.1,
       usage: 'Section headers.',
     },
     h3: {
-      fontFamily: 'Karla-Regular',
+      fontFamily: 'Fraunces',
       fontSize: 20,
       lineHeight: 26,
       letterSpacing: 0,
-      usage: 'Recipe titles, card headers.',
+      usage: 'Card headers, header bar titles.',
     },
     body: {
-      fontFamily: 'Karla-Regular',
+      fontFamily: 'Karla',
       fontSize: 16,
       lineHeight: 24,
       letterSpacing: 0,
       usage: 'Default body copy.',
     },
     small: {
-      fontFamily: 'Karla-Regular',
+      fontFamily: 'Karla',
       fontSize: 14,
       lineHeight: 20,
       letterSpacing: 0.1,
       usage: 'Tags, microcopy, form labels.',
     },
     tiny: {
-      fontFamily: 'Karla-Regular',
+      fontFamily: 'Karla',
       fontSize: 12,
       lineHeight: 16,
       letterSpacing: 0.2,
       usage: 'Timestamps, hints, legal/footer text.',
+    },
+    eyebrow: {
+      fontFamily: 'Karla',
+      fontSize: 12,
+      lineHeight: 16,
+      letterSpacing: 1.4,
+      usage: 'UPPERCASE bold terracotta label above a section or a store aisle (spread `eyebrow` below).',
     },
   },
   // Legacy flat map kept for existing screens (`typography.sizes.h1`, etc.)
@@ -155,26 +163,28 @@ export const borderRadius = {
   full: 999,
 };
 
+// Warm-tinted shadows (brown, not black) kept soft: on cream the 1px
+// `colors.border` outline does most of the separating; shadow only lifts.
 export const shadows = {
   card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: '#3C2819',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
   button: {
-    shadowColor: '#000',
+    shadowColor: '#3C2819',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     elevation: 2,
   },
   floating: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowColor: '#3C2819',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
     elevation: 6,
   },
 };
@@ -222,6 +232,26 @@ export const motion = {
   },
 };
 
+// Ready-made style fragments for the landing-page look. Spread them into
+// StyleSheet entries: `title: { ...eyebrow }`, `card: { ...surface }`.
+export const eyebrow = {
+  fontFamily: typography.families.body,
+  fontSize: 12,
+  lineHeight: 16,
+  letterSpacing: 1.4,
+  fontWeight: '700' as const,
+  textTransform: 'uppercase' as const,
+  color: colors.primary,
+};
+
+export const surface = {
+  backgroundColor: colors.card,
+  borderWidth: 1,
+  borderColor: colors.border,
+  borderRadius: 16,
+  ...shadows.card,
+};
+
 // Default theme export
 const theme = {
   colors,
@@ -232,6 +262,8 @@ const theme = {
   heights,
   animations,
   motion,
+  eyebrow,
+  surface,
 };
 
 export default theme;

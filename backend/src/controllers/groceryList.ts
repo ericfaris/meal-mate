@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import * as groceryListService from '../services/groceryListService';
 import Staple from '../models/staple';
+import { IGroceryList } from '../models/groceryList';
+
+// Resolve item authors to `{ _id, name }` so the app can show "Added by Jess".
+// Only touches the response; stored items keep the plain user id.
+const withAuthors = (list: IGroceryList) => list.populate('items.addedBy', 'name');
 
 // POST /api/grocery-lists - Create grocery list from plans
 export const createGroceryList = async (req: Request, res: Response): Promise<void> => {
@@ -24,7 +29,7 @@ export const createGroceryList = async (req: Request, res: Response): Promise<vo
     }
 
     const list = await groceryListService.createFromPlans(userId, startDate, endDate, name);
-    res.status(201).json(list);
+    res.status(201).json(await withAuthors(list));
   } catch (error) {
     console.error('Error creating grocery list:', error);
     res.status(500).json({ error: 'Failed to create grocery list' });
@@ -54,7 +59,7 @@ export const getGroceryList = async (req: Request<{ id: string }>, res: Response
       res.status(404).json({ error: 'Grocery list not found' });
       return;
     }
-    res.json(list);
+    res.json(await withAuthors(list));
   } catch (error) {
     console.error('Error fetching grocery list:', error);
     res.status(500).json({ error: 'Failed to fetch grocery list' });
@@ -71,7 +76,7 @@ export const updateGroceryList = async (req: Request<{ id: string }>, res: Respo
       res.status(404).json({ error: 'Grocery list not found' });
       return;
     }
-    res.json(list);
+    res.json(await withAuthors(list));
   } catch (error) {
     console.error('Error updating grocery list:', error);
     res.status(500).json({ error: 'Failed to update grocery list' });
@@ -98,7 +103,7 @@ export const updateGroceryItem = async (req: Request<{ id: string; index: string
       res.status(404).json({ error: 'Grocery list not found' });
       return;
     }
-    res.json(list);
+    res.json(await withAuthors(list));
   } catch (error) {
     console.error('Error updating grocery item:', error);
     res.status(500).json({ error: 'Failed to update grocery item' });
@@ -150,7 +155,7 @@ export const addGroceryItem = async (req: Request<{ id: string }>, res: Response
       }
     }
 
-    res.json(list);
+    res.json(await withAuthors(list));
   } catch (error) {
     console.error('Error adding grocery item:', error);
     res.status(500).json({ error: 'Failed to add grocery item' });
@@ -172,7 +177,7 @@ export const removeGroceryItem = async (req: Request<{ id: string; index: string
       res.status(404).json({ error: 'Grocery list not found' });
       return;
     }
-    res.json(list);
+    res.json(await withAuthors(list));
   } catch (error) {
     console.error('Error removing grocery item:', error);
     res.status(500).json({ error: 'Failed to remove grocery item' });

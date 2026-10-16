@@ -35,7 +35,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [rnAssetRequires(), react()],
     resolve: {
-      alias: { 'react-native': 'react-native-web' },
+      // Bare `react-native` resolves to the platform shim (react-native-web +
+      // the design system's type defaults); the shim imports react-native-web
+      // itself, so the exact-match regex can't recurse.
+      alias: [{ find: /^react-native$/, replacement: path.resolve(import.meta.dirname, 'src/platform/reactNative.tsx') }],
       extensions,
     },
     define: {

@@ -79,7 +79,7 @@ const animations = extractFlatPairs(extractBlock('animations'));
 const typographyBlock = extractBlock('typography');
 const scaleMatch = typographyBlock.match(/scale:\s*\{([\s\S]*?)\n\s*\},\n\s*\/\//);
 const scaleBlock = scaleMatch ? scaleMatch[1] : typographyBlock;
-const steps = ['display', 'h1', 'h2', 'h3', 'body', 'small', 'tiny'];
+const steps = ['display', 'h1', 'h2', 'h3', 'body', 'small', 'tiny', 'eyebrow'];
 const scale = steps.map((s) => ({ step: s, ...extractScaleStep(scaleBlock, s) })).filter((s) => s.fontSize);
 
 const shadowsBlock = extractBlock('shadows');
@@ -141,7 +141,8 @@ for (const m of motion) {
 }
 css += `\n  /* Shadows */\n`;
 for (const s of shadows) {
-  css += `  --shadow-${s.name}: 0 ${s.offsetY}px ${s.radius}px rgba(0, 0, 0, ${s.opacity});\n`;
+  // Matches the warm shadowColor (#3C2819) used by every shadow in theme/index.ts.
+  css += `  --shadow-${s.name}: 0 ${s.offsetY}px ${s.radius}px rgba(60, 40, 25, ${s.opacity});\n`;
 }
 css += `\n  /* Type scale */\n`;
 for (const s of scale) {

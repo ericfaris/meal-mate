@@ -202,14 +202,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.primaryLight,
   },
   avatarImage: {
     width: 32,
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.border,
   },
   avatarText: {
     color: colors.textOnPrimary,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(45,30,20,0.25)',
   },
   menuContainer: {
     position: 'absolute',
@@ -226,8 +226,10 @@ const styles = StyleSheet.create({
     right: spacing.md,
   },
   menu: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
     minWidth: 260,
     ...shadows.floating,
   },
