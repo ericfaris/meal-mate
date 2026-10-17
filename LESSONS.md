@@ -133,3 +133,11 @@
   from `@react-navigation/core` in tests.
 - Playwright against the local build: start at `/?start`, otherwise the
   first-visit redirect sends a fresh browser to `/welcome/`.
+
+## 2026-10-17 — Last Expo leftovers removed
+- Dropped EAS build tasks from `.vscode/tasks.json` and fixed "Start
+  Frontend" (it still ran `npm start`, i.e. the old `expo start`; now
+  `npm run dev`). Removed the unused Expo icons `frontend/assets/icon.png` /
+  `favicon.png` (the PWA uses `public/icons/`), the finished PWA-migration
+  plans, and stale Expo history in CLAUDE.md.
+- "ease-out-expo" in DESIGN.md/theme is an easing curve, not Expo.

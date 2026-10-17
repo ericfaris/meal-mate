@@ -6,7 +6,7 @@ Status: v1.1 · 2026-10-16 · landing-page retune (see Changelog)
 Live showcase: `frontend/public/design-system.html` (served at
 `/design-system.html` on the deployed PWA, e.g.
 `https://mealmate.mooseflip.com/design-system.html`, and locally from
-`frontend/dist/` after `expo export --platform web`).
+`frontend/dist/` after `npm run build` in `frontend/`).
 
 ---
 
@@ -326,8 +326,7 @@ the Two Cloches as real cream serving domes with knobs on one shared platter,
 on a terracotta radial (`#cf6d50` → `#8a3620`). Master: `frontend/scripts/icons/icon.svg`
 (`#bg` + `#mark`); `python3 frontend/scripts/icons/build.py` renders
 `public/icons/` (`favicon.ico` 16/32/48, `apple-touch-icon.png` 180,
-`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`) plus Expo's
-`assets/icon.png` (1024) and `assets/favicon.png`. Wiring: `manifest.json`,
+`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`). Wiring: `manifest.json`,
 `scripts/inject-pwa.js` (`/icons/favicon.ico`), `public/welcome/` and the
 showcase. `scripts/logoMark.test.js` checks both the flat mark and the icon set.
 
@@ -346,7 +345,7 @@ showcase. `scripts/logoMark.test.js` checks both the flat mark and the icon set.
 | `frontend/public/design-tokens.css` | Generated from `theme/index.ts` — do not hand-edit (§10) |
 | `frontend/public/design-system.html` | Static showcase page |
 | `frontend/scripts/generate-design-tokens-css.js` | Token → CSS generator |
-| `frontend/assets/icon.png`, `favicon.png`, `public/icons/*.png` | App icon set (§8) |
+| `frontend/public/icons/*.png` | App icon set (§8) |
 | `docs/design/moodboard-farmhouse-kitchen.png` | Original mood board (docs only) |
 
 ---

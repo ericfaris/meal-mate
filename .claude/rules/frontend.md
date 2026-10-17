@@ -18,8 +18,8 @@ paths:
 - **TypeScript** for type safety (`npm run typecheck`)
 - **Vitest** for unit tests (`npm test`)
 - **Axios** for HTTP requests
-- Icons: `Ionicons` from `src/components/icons/Ionicons` (vendored font,
-  same API as `@expo/vector-icons`)
+- Icons: `Ionicons` from `src/components/icons/Ionicons` (vendored font;
+  `name` / `size` / `color`, typed via `Ionicons.glyphMap`)
 
 ## Project Structure
 

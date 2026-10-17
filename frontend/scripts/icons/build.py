@@ -34,10 +34,7 @@ JOBS = [
     ('icon-maskable-512.png', 512, 'maskable', False),
 ]
 # Project-specific extra renders: (path relative to two levels above this script, size, variant, transparent).
-EXTRA = [
-    ('assets/icon.png', 1024, 'square', False),  # Expo native app icon (OS applies its own mask)
-    ('assets/favicon.png', 48, 'favicon', True),  # Expo web favicon
-]
+EXTRA = []
 
 # Applied in the page to the inline master: clip to a rounded tile, shrink the
 # mark into the maskable safe zone, or swap in the favicon mark.

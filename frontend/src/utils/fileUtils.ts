@@ -1,5 +1,5 @@
-// Browser file helpers (replacing expo-image-picker / expo-file-system /
-// expo-sharing now that the app ships only as a web PWA).
+// Browser file helpers: pick images, read files and download/share blobs in
+// the web PWA.
 
 /**
  * Open the browser's file chooser for a single image. Resolves to an object

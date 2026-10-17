@@ -69,8 +69,6 @@ test('16px favicon still shows both knobs (regression: details closing up)', asy
 
 test('generated raster assets have expected sizes', async () => {
   const expected = {
-    'assets/icon.png': [1024, 1024],
-    'assets/favicon.png': [48, 48],
     'public/icons/icon-192.png': [192, 192],
     'public/icons/icon-512.png': [512, 512],
     'public/icons/icon-maskable-512.png': [512, 512],

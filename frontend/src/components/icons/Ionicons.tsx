@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, TextProps, StyleProp, TextStyle } from 'react-native';
 import glyphMapJson from './ionicons-glyphmap.json';
 
-// Drop-in replacement for @expo/vector-icons' Ionicons: renders the glyph from
+// Ionicons component: renders the glyph from
 // the vendored Ionicons font (public/fonts/Ionicons.ttf, @font-face in
 // index.html). Same API: name / size / color, plus a static glyphMap so
 // `keyof typeof Ionicons.glyphMap` keeps typing icon names.
