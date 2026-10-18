@@ -16,15 +16,15 @@
     "@react-oauth/google": "^0.13.4",
     "axios": "^1.6.5",
     "canvas-confetti": "^1.9.4",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-native-safe-area-context": "~5.10.0",
     "react-native-screens": "~4.30.0",
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.3.0",
     "@types/react-dom": "~19.3.0",
     "@types/react-native": "0.72.8",
     "@vitejs/plugin-react": "6.1.2",
