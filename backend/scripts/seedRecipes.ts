@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Recipe from '../src/models/recipe';
+import User from '../src/models/user';
 
 dotenv.config();
 
@@ -31,13 +33,11 @@ const recipes = [
     title: "Chicken Fajitas",
     ingredientsText: "Chicken breast\nFajita seasoning\nPeppers\nOnions\nRice\nCheese\nFajita soft tacos\nSour cream\nLettuce\nTomatoes",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Chipotle Bowls",
     ingredientsText: "Chicken thighs\nLawry's fajita seasoning\nRice\nChicken tacos",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Ravioli Bake",
@@ -49,13 +49,11 @@ const recipes = [
     title: "Spaghetti Bake",
     ingredientsText: "Ground beef\nTomato sauce\nGarlic\nOnions\nDiced tomatoes\nShredded cheddar cheese\nAngel hair pasta",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Chicken Rice Soup",
     ingredientsText: "Chicken breast\nChopped onions\nChopped celery\nChopped carrots\nCream\nMilk\nWild rice",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Chicken Salad",
@@ -79,19 +77,16 @@ const recipes = [
     title: "Chicken Bacon Ranch Pizza",
     ingredientsText: "Chicken breast\nBacon\nRanch\nMozzarella cheese\nFlatbread",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Pulled Pork",
     ingredientsText: "Pork butt\nBarbecue sauce\nBuns",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Roast",
     ingredientsText: "Roast\nCarrots\nBob Evans potatoes\nOnions\nCream of mushroom",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Grilled Chicken Salads",
@@ -109,7 +104,6 @@ const recipes = [
     title: "Sausage Egg Casserole",
     ingredientsText: "Eggs\nSausage\nCheese\nShredded hash brown potatoes\nToast\nFruit tray",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Pancakes, Eggs, and Bacon",
@@ -145,7 +139,6 @@ const recipes = [
     title: "Ribs",
     ingredientsText: "Pork ribs\nBarbecue sauce\nBaked potatoes",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Ham Steak",
@@ -157,26 +150,44 @@ const recipes = [
     title: "Change Your Life Chicken",
     ingredientsText: "Chicken thighs\nFingerling potatoes\nOnions\nCarrots",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
   {
     title: "Meatloaf",
     ingredientsText: "Ground beef\nBread crumbs\nEggs\nKetchup\nOnions\nMashed potatoes\nCorn",
     directionsText: "Cook as desired.",
-    complexity: "medium" as const,
   },
 ];
 
+const SEED_USER_EMAIL = process.env.SEED_USER_EMAIL || 'dev@meal-mate.local';
+
 async function seedRecipes() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/meal-mate';
-    console.log('Connecting to MongoDB...');
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/meal-mate-dev';
+    // Seeding adds ~27 recipes under a throwaway user; never do that to the live database.
+    const dbName = mongoUri.split('?')[0].split('/').pop();
+    if (dbName === 'meal-mate') {
+      throw new Error("Refusing to seed 'meal-mate' (production). Point MONGODB_URI at meal-mate-dev.");
+    }
+    console.log(`Connecting to MongoDB (${dbName})...`);
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
 
+    let user = await User.findOne({ email: SEED_USER_EMAIL });
+    if (!user) {
+      const password = process.env.SEED_USER_PASSWORD || crypto.randomBytes(9).toString('base64url');
+      user = await User.create({ email: SEED_USER_EMAIL, name: 'Dev User', passwordHash: password, authProvider: 'local', emailVerified: true });
+      console.log(`Created dev user ${SEED_USER_EMAIL} with password: ${password}`);
+    }
+
+    if ((await Recipe.countDocuments({ userId: user._id })) > 0) {
+      console.log(`${SEED_USER_EMAIL} already has recipes; nothing to do.`);
+      await mongoose.disconnect();
+      process.exit(0);
+    }
+
     console.log(`Inserting ${recipes.length} recipes...`);
 
-    const result = await Recipe.insertMany(recipes);
+    const result = await Recipe.insertMany(recipes.map((r) => ({ ...r, userId: user._id })));
     console.log(`Successfully inserted ${result.length} recipes:`);
 
     result.forEach((recipe, index) => {
