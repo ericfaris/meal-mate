@@ -490,7 +490,7 @@ try {
 
 ## Data Migration & Seeding
 
-### Seed Script Example (`scripts/seedData.ts`):
+### Seeding a dev database (`backend/scripts/seedRecipes.ts`, refuses to run against production `meal-mate`). Example shape:
 ```typescript
 import User from './models/user';
 import Recipe from './models/recipe';

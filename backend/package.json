@@ -20,7 +20,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.0.0",
     "@types/multer": "^2.0.0",
-    "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.1.0",
@@ -38,7 +37,6 @@
     "@babel/core": "^8.0.0",
     "@babel/preset-env": "^8.0.0",
     "@babel/preset-typescript": "^8.0.0",
-    "@types/cheerio": "^1.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",

@@ -47,7 +47,7 @@ export const generateWeekSuggestions = async (
   constraints: SuggestionConstraints,
   userId: string
 ): Promise<DaySuggestion[]> => {
-  const { startDate, daysToSkip, avoidRepeats, vegetarianOnly } = constraints;
+  const { startDate, daysToSkip } = constraints;
 
   // Build the 7-day date range
   const suggestions: DaySuggestion[] = [];

@@ -540,7 +540,6 @@ npm run dev          # Start with nodemon (auto-reload)
 npm run build        # TypeScript compilation
 npm start            # Production mode
 npm test             # Run jest test suite
-npm run seed         # Seed database with sample data
 ```
 
 **`npm ci` check**: the Docker build runs `npm ci` in `node:26-alpine`, and
