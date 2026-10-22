@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { Image } from 'react-native';
 import { Ionicons } from '../components/icons/Ionicons';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,7 +17,7 @@ import { suggestionApi } from '../services/api/suggestions';
 import { Plan } from '../types';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
 import { PlannerStackParamList } from '../navigation/BottomTabNavigator';
-import { dateToString, addDays, getNextMonday, parseDate, getTodayString, formatDateString, getMondayOfWeek } from '../utils/dateUtils';
+import { addDays, getNextMonday, parseDate, getTodayString, formatDateString, getMondayOfWeek } from '../utils/dateUtils';
 import PlannerTutorial from '../components/PlannerTutorial';
 import { hasPlannerTutorialCompleted } from '../utils/tutorialStorage';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,7 +30,7 @@ export default function PlannerScreen() {
   const navigation = useNavigation<PlannerScreenNavigationProp>();
   const route = useRoute<PlannerScreenRouteProp>();
   const { user } = useAuth();
-  const { width, isDesktop, isTablet } = useResponsive();
+  const { width } = useResponsive();
 
   // Calculate responsive content width
   const contentMaxWidth = maxContentWidth.default;
@@ -40,7 +39,6 @@ export default function PlannerScreen() {
   // Calculate initial week offset based on route params
   const getInitialWeekOffset = (): number => {
     // Show the week containing today by default
-    const todayStr = getTodayString();
     const currentWeekMonday = getMondayOfWeek();
     const nextMonday = getNextMonday();
 
@@ -56,7 +54,6 @@ export default function PlannerScreen() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(getInitialWeekOffset());
-  const [promptShown, setPromptShown] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [recipeCount, setRecipeCount] = useState(0);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -101,7 +98,6 @@ export default function PlannerScreen() {
     useCallback(() => {
       loadWeekPlans();
       loadRecipeCount();
-      setPromptShown(false); // Reset prompt when screen comes into focus
     }, [weekOffset]) // Reload when weekOffset changes OR when screen comes into focus
   );
 
@@ -185,14 +181,6 @@ export default function PlannerScreen() {
     } catch (error) {
       console.error('Error creating empty plans:', error);
     }
-  };
-
-  const formatDate = (dateStr: string): string => {
-    return formatDateString(dateStr, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   const formatMinutes = (m: number): string =>
@@ -371,16 +359,6 @@ export default function PlannerScreen() {
 
   const renderPlan = ({ item }: { item: Plan; index: number }) =>
     renderDayCard(item.date, item, isAdmin);
-
-  const renderEmptyWeek = () => {
-    const { startStr } = getWeekDates(weekOffset);
-    const days = [];
-    // Show Mon - Sun (7 days)
-    for (let i = 0; i < 7; i++) {
-      days.push(renderDayCard(addDays(startStr, i), null, true));
-    }
-    return days;
-  };
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -116,10 +116,6 @@ export default function HomeScreen({ navigation }: Props) {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const getDayOfWeek = (): string => {
-    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
   };
 
   const navigateToRecipe = (recipe: Recipe) => {

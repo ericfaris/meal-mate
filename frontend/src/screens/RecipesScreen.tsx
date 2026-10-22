@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -38,7 +38,7 @@ export default function RecipesScreen({ navigation }: Props) {
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [activeFilter] = useState<FilterType>('all');
   const [submissionModalVisible, setSubmissionModalVisible] = useState(false);
 
   const { width, isDesktop, isTablet, gridColumns } = useResponsive();
@@ -145,22 +145,6 @@ export default function RecipesScreen({ navigation }: Props) {
     setSubmissionModalVisible(false);
     // Optionally show a success message or refresh data
   };
-
-  const renderFilterChip = (filter: FilterType, label: string) => (
-    <TouchableOpacity
-      style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
-      onPress={() => setActiveFilter(filter)}
-    >
-      <Text
-        style={[
-          styles.filterChipText,
-          activeFilter === filter && styles.filterChipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
 
   const renderSectionHeader = ({ section }: { section: RecipeSection }) => (
     <View style={styles.sectionHeader}>

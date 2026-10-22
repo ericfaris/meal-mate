@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import { suggestionApi, DaySuggestion } from '../../services/api/suggestions';
-import { SuggestionConstraints } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { planApi } from '../../services/api/plans';
 import { formatDateString } from '../../utils/dateUtils';

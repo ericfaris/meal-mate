@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { Staple } from '../../types';
 import { staplesApi } from '../../services/api/staples';
 import AddStapleModal from '../../components/AddStapleModal';
-import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
-import { useAuth } from '../../contexts/AuthContext';
+import { maxContentWidth } from '../../hooks/useResponsive';
 import { alertManager } from '../../utils/alertUtils';
 
 type Props = {
@@ -47,7 +46,6 @@ const CATEGORY_ORDER = [
 ];
 
 export default function StaplesScreen({ navigation, route }: Props) {
-  const { user } = useAuth();
   const listId = route.params?.listId;
   const [staples, setStaples] = useState<Staple[]>([]);
   const [loading, setLoading] = useState(true);

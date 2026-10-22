@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, CommonActions } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { Plan } from '../../types';
 import { PlannerStackParamList } from '../../navigation/BottomTabNavigator';
 import { formatDateString } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';

@@ -13,7 +13,7 @@
  * its own fontSize. Replaces the old `Text.defaultProps` hack in App.tsx,
  * which React 19 silently ignores. See DESIGN.md "Type".
  */
-import React, { createContext, forwardRef, useContext } from 'react';
+import { createContext, forwardRef, useContext } from 'react';
 import {
   StyleSheet,
   Text as RNText,

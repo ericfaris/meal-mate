@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import { GroceryList } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
-import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { maxContentWidth } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
 import { alertManager } from '../../utils/alertUtils';
 
@@ -24,7 +24,6 @@ export default function GroceryListHistoryScreen({ navigation }: Props) {
   const { user } = useAuth();
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [loading, setLoading] = useState(true);
-  const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing } from '../../theme';
+import { colors, typography } from '../../theme';
 
 const INK = '#FDFAF6';
 const SMALL_CUT_MAX = 32;

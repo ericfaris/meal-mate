@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { getStoreAsset } from '../../utils/storeAssets';
 import { GroceryList, GroceryItem, Store } from '../../types';
 import { groceryListApi } from '../../services/api/groceryLists';
 import { storesApi } from '../../services/api/stores';
-import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
+import { maxContentWidth } from '../../hooks/useResponsive';
 import AddStapleModal from '../../components/AddStapleModal';
 import ManageStoresModal from '../../components/ManageStoresModal';
 import { alertManager } from '../../utils/alertUtils';
@@ -56,7 +56,6 @@ export default function GroceryListStoreModeScreen({ navigation, route }: Props)
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [manageStoresVisible, setManageStoresVisible] = useState(false);
   const [reorderingStore, setReorderingStore] = useState<Store | null>(null);
-  const { width } = useResponsive();
 
   const contentMaxWidth = maxContentWidth.default;
 

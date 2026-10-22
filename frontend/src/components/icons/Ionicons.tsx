@@ -1,4 +1,3 @@
-import React from 'react';
 import { Text, TextProps, StyleProp, TextStyle } from 'react-native';
 import glyphMapJson from './ionicons-glyphmap.json';
 

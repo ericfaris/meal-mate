@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Logo } from './Logo';
 import { colors, typography } from '../../theme';
 
@@ -7,7 +7,6 @@ interface SplashScreenProps {
   onAnimationComplete?: () => void;
 }
 
-const { height } = Dimensions.get('window');
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onAnimationComplete,

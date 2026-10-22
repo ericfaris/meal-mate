@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '../components/icons/Ionicons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../theme';
-import { planApi } from '../services/api/plans';
 import { recipeApi } from '../services/api/recipes';
 import { useAuth } from '../contexts/AuthContext';
 import { alertManager } from '../utils/alertUtils';

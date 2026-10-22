@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '../components/icons/Ionicons';
@@ -208,7 +207,7 @@ function GroceryStackNavigator() {
 }
 
 function TabNavigator() {
-  const { isDesktop, isWeb, width } = useResponsive();
+  const { isWeb, width } = useResponsive();
 
   // Calculate tab bar width for desktop - centered with max width
   const getTabBarStyle = () => {

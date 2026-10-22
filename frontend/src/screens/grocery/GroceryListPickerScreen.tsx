@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { colors, typography, spacing, borderRadius, shadows } from '../../theme'
 import { Plan } from '../../types';
 import { planApi } from '../../services/api/plans';
 import { groceryListApi } from '../../services/api/groceryLists';
-import { getTodayString, addDays, parseDate, dateToString } from '../../utils/dateUtils';
+import { getTodayString, addDays, parseDate } from '../../utils/dateUtils';
 import { useResponsive, maxContentWidth } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
 import { alertManager } from '../../utils/alertUtils';

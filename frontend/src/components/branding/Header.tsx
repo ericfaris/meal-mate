@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LogoIcon } from './Logo';
-import { colors, spacing } from '../../theme';
+import { spacing } from '../../theme';
 
 interface HeaderLogoProps {
   tintColor?: string;
