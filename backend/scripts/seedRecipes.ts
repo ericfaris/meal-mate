@@ -162,11 +162,11 @@ const SEED_USER_EMAIL = process.env.SEED_USER_EMAIL || 'dev@meal-mate.local';
 
 async function seedRecipes() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/meal-mate-dev';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/meal-mate-test';
     // Seeding adds ~27 recipes under a throwaway user; never do that to the live database.
     const dbName = mongoUri.split('?')[0].split('/').pop();
     if (dbName === 'meal-mate') {
-      throw new Error("Refusing to seed 'meal-mate' (production). Point MONGODB_URI at meal-mate-dev.");
+      throw new Error("Refusing to seed 'meal-mate' (production). Point MONGODB_URI at meal-mate-test (MONGODB_TEST_URI in .env).");
     }
     console.log(`Connecting to MongoDB (${dbName})...`);
     await mongoose.connect(mongoUri);
